@@ -17,6 +17,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { OpenAILogger } from './utils/init-logger';
+import { parseJSONWatchHistory } from './utils/jsonParser';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3E이미지를 찾을 수 없습니다%3C/text%3E%3C/svg%3E";
@@ -194,6 +196,8 @@ export default function Home() {
   // STEP1-0>>YouTube API를 통해 비디오 정보 가져오고, 키워드 추출
   const fetchVideoInfo = async (videoId: string) => {
     try {
+      console.log('Fetching video info for:', videoId);
+      
       const response = await fetch(
         `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
       );
@@ -206,36 +210,65 @@ export default function Home() {
       
       if (data.items && data.items.length > 0) {
         const videoInfo = data.items[0].snippet;
+        console.log('Retrieved video info:', {
+          title: videoInfo.title,
+          hasDescription: !!videoInfo.description,
+          tagCount: videoInfo.tags?.length || 0
+        });
         
         try {
           // OpenAI로 키워드 추출 시도
           const extractedKeywords = await extractVideoKeywords(videoInfo);
-          console.log('AI가 추출한 키워드:', extractedKeywords);
+          console.log('Extracted keywords:', extractedKeywords);
+
+          if (!extractedKeywords || extractedKeywords.length === 0) {
+            console.warn('No keywords extracted, using tags as fallback');
+            // 실패 시 기본 태그 저장
+            const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
+            const newItem = {
+              videoId,
+              title: videoInfo.title,
+              tags: videoInfo.tags || [],
+              keywords: videoInfo.tags ? videoInfo.tags.slice(0, 5) : [],
+              timestamp: new Date().toISOString()
+            };
+            watchHistory.push(newItem);
+            localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+            return true;
+          }
 
           // 로컬 스토리지에 저장
           const currentHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-          const updatedHistory = [...currentHistory, {
+          const newItem = {
             videoId,
             title: videoInfo.title,
             tags: videoInfo.tags || [],
             keywords: extractedKeywords.map(k => k.keyword),
             timestamp: new Date().toISOString()
-          }];
+          };
+          
+          console.log('Saving to watch history:', {
+            videoId,
+            title: videoInfo.title,
+            keywordCount: extractedKeywords.length
+          });
+          
+          const updatedHistory = [...currentHistory, newItem];
           localStorage.setItem('watchHistory', JSON.stringify(updatedHistory));
-          setWatchHistory(updatedHistory);
 
           return true;
         } catch (error) {
           console.error('키워드 추출 실패:', error);
           // 실패 시 기본 태그 저장
           const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-          watchHistory.push({
+          const newItem = {
             videoId,
             title: videoInfo.title,
             tags: videoInfo.tags || [],
             keywords: videoInfo.tags ? videoInfo.tags.slice(0, 5) : [],
             timestamp: new Date().toISOString()
-          });
+          };
+          watchHistory.push(newItem);
           localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
           return true;
         }
@@ -256,9 +289,11 @@ export default function Home() {
       // 시청기록 항목 추출
       const watchItems = Array.from(doc.querySelectorAll('.content-cell'));
       
+      console.log('Found watch items:', watchItems.length);
+      
       // 시청기록 데이터 추출
       const watchHistory = watchItems
-        .map((item): any => {  // any 타입으로 변경
+        .map((item): any => {
           try {
             const titleElement = item.querySelector('a');
             if (!titleElement) return null;
@@ -298,7 +333,9 @@ export default function Home() {
               channelName,
               date,
               url: `https://youtube.com/watch?v=${videoId}`,
-              keywords: [] as string[]
+              keywords: [], // Initialize empty keywords array
+              tags: [], // Initialize empty tags array
+              timestamp: new Date().toISOString()
             };
           } catch (error) {
             console.error('항목 파싱 실패:', error);
@@ -339,17 +376,31 @@ export default function Home() {
       for (const dateStr of sortedDates) {
         if (totalSelected >= TOTAL_LIMIT) break;
 
+        // Shuffle the videos for this day
         const dailyVideos = groupedByDate[dateStr]
-          .sort((a, b) => b.date.getTime() - a.date.getTime())
+          .sort(() => Math.random() - 0.5) // Randomly shuffle videos within each day
           .slice(0, Math.min(maxVideosPerDay, TOTAL_LIMIT - totalSelected));
 
         selectedVideos = [...selectedVideos, ...dailyVideos];
         totalSelected += dailyVideos.length;
       }
 
-      console.log('파싱된 전체 항목 수:', watchItems.length);
-      console.log('필터링된 시청기록 수:', filteredWatchHistory.length);
-      console.log('최종 선택된 영상 수:', selectedVideos.length);
+      // 파싱 결과 로깅
+      console.log('\n=== Watch History Parse Results ===');
+      console.log('Total items found:', watchItems.length);
+      console.log('After filtering ads:', watchHistory.length);
+      console.log('After date filtering:', filteredWatchHistory.length);
+      console.log('Final selected videos:', selectedVideos.length);
+      console.log('Date range:', {
+        from: dateRange.from?.toISOString(),
+        to: dateRange.to?.toISOString()
+      });
+      console.log('Sample of first 3 videos:', selectedVideos.slice(0, 3).map(v => ({
+        title: v.title,
+        videoId: v.videoId,
+        date: v.date.toISOString()
+      })));
+      console.log('===================================\n');
 
       // 각 비디오 정보 가져오기 (병렬 처리로 최적화)
       let successCount = 0;
@@ -422,57 +473,112 @@ export default function Home() {
   };
   // STEP1-2>>영상 키워드 추출 함수
   const extractVideoKeywords = async (videoInfo: any) => {
-    const prompt = `
-  당신은 YouTube 영상 콘텐츠 분석 전문가입니다. 
-  다음 영상의 정보를 분석하여 가장 적절한 키워드를 추출해주세요.
+    try {
+      console.log('Starting keyword extraction for video:', {
+        title: videoInfo.title,
+        description: videoInfo.description?.slice(0, 100),
+        tags: videoInfo.tags
+      });
 
-  [입력 정보]
-  제목: ${videoInfo.title}
-  설명: ${videoInfo.description?.slice(0, 200)}
-  태그: ${videoInfo.tags ? videoInfo.tags.join(', ') : '없음'}
+      const prompt = `
+당신은 YouTube 시청 기록을 분석해 사용자의 (1) 라이프스타일 (2) YouTube 시청과 관련된 취향과 관심사 (3) YouTube 시청의 목적과 그 가치추구 성향에 대해 깊이 있게 이해할 수 있는 전문가입니다.
+제공되는 YouTube 시청 기록 데이터를 분석하여 사용자의 관심사와 취향을 가장 잘 나타내는 의미 있는 그룹으로 분류하되 인스타그램의 hashtag처럼 함축적이고 직관적이게 만들어 주세요. 단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
+다음 영상의 정보를 분석하여 가장 적절한 키워드를 추출해주세요.
 
-  [추출 기준]
-  1. 주제 관련성: 영상의 핵심 주제를 대표하는 명사 키워드
-  2. 콘텐츠 유형: 영상의 형식이나 장르를 나타내는 명사 키워드
-  3. 감정/톤: 영상의 분위기나 감정을 나타내는 형용사 키워드
-  4. 대상 시청자: 주요 타겟 시청자층을 나타내는 명사 키워드
-  5. 트렌드/이슈: 관련된 시의성 있는명사 키워드
+[입력 정보]
+제목: ${videoInfo.title}
+설명: ${videoInfo.description?.slice(0, 200)}
+태그: ${videoInfo.tags ? videoInfo.tags.join(', ') : '없음'}
 
-  [요구사항]
-  - 정확히 5개의 키워드 추출
-  - 각 키워드는 1-2단어의 한글로 작성
-  - 너무 일반적이거나 모호한 단어 제외
-  - 위의 5가지 기준 중 최소 3가지 이상 포함
-  - 키워드 간의 중복성 최소화
+[추출 기준]
+1. 주제 관련성: 영상의 핵심 주제를 대표하며, 사용자의 시청목적을 드러내는 명사 키워드
+2. 콘텐츠 유형: 영상의 형식이나 장르를 나타내는 명사 키워드
+3. 감정/톤: 영상의 분위기나 감정을 나타내는 형용사 키워드
+4. 대상 시청자: YouTube 영상 시청정보를 바탕으로 한 주요 타겟 시청자층을 나타내는 명사 키워드
+5. 트렌드/이슈: YouTube 영상 시청정보와 관련된 시의성 있는 명사 키워드
 
-  응답 형식: 키워드1, 키워드2, 키워드3, 키워드4, 키워드5
+[요구사항]
+- 정확히 5개의 키워드 추출
+- 각 키워드는 1-2단어의 한글로 작성
+- 너무 일반적이거나 모호한 단어 제외
+- 위의 5가지 기준 중 최소 3가지 이상 포함
+- 키워드 간의 중복성 최소화
 
-  각 키워드 뒤에 해당하는 기준 카테고리를 괄호 안에 표시해주세요.
-  예시: 브이로그(콘텐츠 유형), 일상(주제 관련성), 힐링(감정/톤)`;
+응답 형식: 키워드1, 키워드2, 키워드3, 키워드4, 키워드5
 
-    const completion = await openai.chat.completions.create({
-      messages: [{ role: "user", content: prompt }],
-      model: "gpt-4",
-      temperature: 0.7, // 적당한 창의성 부여
-    });
+각 키워드 뒤에 해당하는 기준 카테고리를 괄호 안에 표시해주세요.
+예시: 브이로그(콘텐츠 유형), 일상(주제 관련성), 힐링(감정/톤)
+- [키워드]를 생성하고 난 다음 { } 안에 어떤 정보를 기반해서 이러한 키워드가 생성되었는지 5문장으로 설명해주세요.`
+;
 
-    // 응답 파싱 및 검증
-    const response = completion.choices[0].message.content?.trim() || '';
-    const keywords = response.split(',').map(k => {
-      const [keyword, category] = k.trim().split('(');
-      return {
-        keyword: keyword.trim(),
-        category: category?.replace(')', '').trim()
-      };
-    });
+      console.log('Sending request to OpenAI for keyword extraction...');
+      
+      // Log request
+      await OpenAILogger.logRequest({
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        prompt: prompt
+      });
 
-    return keywords;
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+      });
+
+      console.log('Received response from OpenAI:', {
+        model: completion.model,
+        usage: completion.usage,
+        contentLength: completion.choices[0].message.content?.length
+      });
+
+      // Log response
+      await OpenAILogger.logResponse({
+        model: completion.model,
+        content: completion.choices[0].message.content || '',
+        usage: completion.usage
+      });
+
+      const response = completion.choices[0].message.content?.trim() || '';
+      console.log('Raw response:', response);
+
+      if (!response) {
+        console.error('Empty response from OpenAI');
+        return [];
+      }
+
+      const keywords = response.split(',').map(k => {
+        const [keyword, category] = k.trim().split('(');
+        return {
+          keyword: keyword.trim(),
+          category: category?.replace(')', '').trim()
+        };
+      }).filter(k => k.keyword && k.category);
+
+      console.log('Extracted keywords:', keywords);
+
+      if (keywords.length === 0) {
+        console.error('No valid keywords extracted');
+        return [];
+      }
+
+      return keywords;
+    } catch (error) {
+      console.error('Error in extractVideoKeywords:', error);
+      return [];
+    }
   };
 
 
   // STEP2>> 통합된 키워드 분석 및 클러스터링 함수
   const analyzeKeywordsWithOpenAI = async (watchHistory: WatchHistoryItem[]) => {
     try {
+      // Log the input data
+      console.log('Starting OpenAI analysis with watch history:', {
+        totalVideos: watchHistory.length,
+        sampleVideos: watchHistory.slice(0, 3)
+      });
+
       // 데이터를 더 작은 청크로 나눕니다 (예: 20개씩)
       const chunkSize = 20;
       const chunks = [];
@@ -506,9 +612,16 @@ export default function Home() {
         .slice(0, 10)
         .map(([keyword]) => keyword);
 
+      // Log the prepared data
+      console.log('Prepared data for OpenAI:', {
+        topKeywords,
+        keywordFrequencies: allKeywordFrequencies,
+        keywordToVideos: allKeywordToVideos
+      });
+
       const prompt = `
-당신은 YouTube 시청 기록을 분석하여 사용자의 취향과 관심사를 깊이 있게 이해하는 전문가입니다.
-다음 시청 기록 데이터를 분석하여 사용자의 관심사와 취향을 가장 잘 나타내는 의미 있는 그룹으로 분류해주세요.
+당신은 YouTube 시청 기록을 분석해 사용자의 (1) 라이프스타일 (2) YouTube 시청과 관련된 취향과 관심사 (3) YouTube 시청의 목적과 그 가치추구 성향에 대해 깊이 있게 이해할 수 있는 전문가입니다.
+제공되는 YouTube 시청 기록 데이터를 분석하여 사용자의 관심사와 취향을 가장 잘 나타내는 의미 있는 그룹으로 분류하되 인스타그램의 hashtag처럼 함축적이고 직관적이게 만들어 주세요. 단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
 
 시청 기록 데이터 (상위 10개 키워드 관련):
 ${topKeywords.map(keyword => 
@@ -519,31 +632,55 @@ ${topKeywords.map(keyword =>
 가장 자주 등장하는 키워드 (상위 10개):
 ${topKeywords.map(keyword => `${keyword} (${allKeywordFrequencies[keyword]}회)`).join('\n')}
 
-분석 요구사항:
-1. 모든 영상이 최소 하나의 그룹에 포함되어야 합니다.
-2. 각 그룹은 최소 3개 이상의 연관된 영상을 포함해야 합니다.
-3. 하나의 영상이 여러 그룹에 포함될 수 있습니다.
-4. 각 그룹은 사용자의 뚜렷한 관심사나 취향을 나타내야 합니다.
-5. 클러스터 수는 최소 5개 이상이어야 합니다.
+요구사항:
+1. 클러스터 수는 최소 5개 이상이어야 합니다. 5개의 클러스터를 만들고 거기에 관련 영상을 포함해 주세요.
+2. 모든 영상이 최소 하나의 그룹에 포함되어야 합니다.
+3. 각 그룹은 최소 3개 이상의 연관된 영상을 포함해야 합니다.
+4. 하나의 영상이 여러 그룹에 포함될 수 있습니다.
+5. 각 그룹은 사용자의 뚜렷한 관심사나 취향을 나타내되 빅키워드와 트렌드키워드가 잘 조합되어야합니다. 
 
 응답 형식:
 CLUSTER_START
-대표키워드: [그룹의 핵심 키워드 또는 인물명]
+대표키워드: [#그룹의 핵심 키워드]
 카테고리: [콘텐츠 카테고리]
-관심영역: [사용자의 관심사와 취향을 2-3문장으로 설명]
+관심영역: [(1) 나의 현재 라이프스타일 (2) YouTube 시청과 관련된 취향과 관심사 (3) YouTube 시청의 목적과 그 가치추구 성향을 반영해 3문장으로 설명]
 연관키워드: [관련 키워드들을 빈도순으로 나열]
-감성태도: [감성과 태도 키워드 3-4개]
+감성태도: [사용자 가치를 반영한 감성과 태도 키워드 3-4개]
 예상영상수: [해당 그룹에 속할 것으로 예상되는 영상 수]
 CLUSTER_END`;
 
+      // Log request
+      await OpenAILogger.logRequest({
+        model: "gpt-4o-mini",
+        temperature: 0.7,
+        max_tokens: 2000,
+        prompt: prompt
+      });
+
+      console.log('Sending request to OpenAI...');
       const completion = await openai.chat.completions.create({
         messages: [{ role: "user", content: prompt }],
-        model: "gpt-4",
+        model: "gpt-4o-mini",
         temperature: 0.7,
         max_tokens: 2000,
       });
 
+      console.log('Received response from OpenAI:', {
+        model: completion.model,
+        usage: completion.usage,
+        contentLength: completion.choices[0].message.content?.length
+      });
+
+      // Log response
+      await OpenAILogger.logResponse({
+        model: completion.model,
+        content: completion.choices[0].message.content || '',
+        usage: completion.usage
+      });
+
       const response = completion.choices[0].message.content || '';
+      console.log('Processing OpenAI response...');
+
       const clusters = response.split('CLUSTER_START')
         .slice(1)
         .map(cluster => {
@@ -595,9 +732,17 @@ CLUSTER_END`;
         })
         .filter(cluster => cluster.related_videos && cluster.related_videos.length >= 3);
 
+      console.log('Analysis completed:', {
+        totalClusters: clusters.length,
+        clusters: clusters.map(c => ({
+          main_keyword: c.main_keyword,
+          videoCount: c.related_videos.length
+        }))
+      });
+
       return clusters;
     } catch (error) {
-      console.error('클러스터 분석 실패:', error);
+      console.error('Error in analyzeKeywordsWithOpenAI:', error);
       throw error;
     }
   };
@@ -656,8 +801,27 @@ CLUSTER_END`;
     if (file) {
       setIsLoading(true);
       setError(null);
-      parseWatchHistory(file)
-        .finally(() => setIsLoading(false));
+      setSuccessCount(0); // Reset success count
+      
+      if (file.name.endsWith('.json')) {
+        parseJSONWatchHistory(file, dateRange, maxVideosPerDay, (current, total) => {
+          setSuccessCount(current);
+        })
+          .then(processedHistory => {
+            setWatchHistory(processedHistory);
+            localStorage.setItem('watchHistory', JSON.stringify(processedHistory));
+          })
+          .catch(error => {
+            setError(error.message);
+          })
+          .finally(() => setIsLoading(false));
+      } else if (file.name.endsWith('.html')) {
+        parseWatchHistory(file)
+          .finally(() => setIsLoading(false));
+      } else {
+        setError('지원하지 않는 파일 형식입니다. .json 또는 .html 파일을 업로드해주세요.');
+        setIsLoading(false);
+      }
     }
   };
   // 드래그 이벤트 핸들러들
@@ -1029,7 +1193,7 @@ CLUSTER_END`;
             <input
               ref={fileInputRef}
               type="file"
-              accept=".html"
+              accept=".json,.html"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -1218,7 +1382,7 @@ CLUSTER_END`;
             </HoverCard>
           </div>
         </div>
-
+                        
         
 
         {watchHistory.length > 0 && (
@@ -1251,7 +1415,6 @@ CLUSTER_END`;
                     setClusters([]);
                     setAnalysisHistory([]);
                     setShowAnalysis(false);
-                    setShowAbstractResults(false);
                   }}
                   variant="outline"
                   className="hover:bg-red-50 text-red-500"
@@ -1340,16 +1503,23 @@ CLUSTER_END`;
                         }}
                         className="w-full px-6 py-4 bg-white hover:bg-gray-50 flex justify-between items-center"
                       >
-                        <div className="flex items-center gap-4">
-                          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                            {cluster.main_keyword}
-                          </span>
-                          <span className="px-3 py-1.5 bg-blue-100 rounded-full text-sm font-medium text-blue-700">
-                            {cluster.category}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            영상 {cluster.related_videos.length}개
-                          </span>
+                        <div className="flex flex-col items-start">
+                          <div className="flex items-center gap-4 mb-1">
+                            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              {cluster.main_keyword}
+                            </span>
+                            <span className="px-3 py-1.5 bg-blue-100 rounded-full text-sm font-medium text-blue-700">
+                              {cluster.category}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              영상 {cluster.related_videos.length}개 {cluster.mood_keyword && `• ${cluster.mood_keyword}`}
+                            </span>
+                          </div>
+                          {cluster.description && (
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2 text-left w-full">
+                              {cluster.description}
+                            </p>
+                          )}
                         </div>
                         <svg
                           className={`w-6 h-6 transform transition-transform ${
@@ -1647,4 +1817,3 @@ CLUSTER_END`;
     </main>
   );
 }
-
