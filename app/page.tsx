@@ -20,8 +20,10 @@ import { ko } from "date-fns/locale";
 import { OpenAILogger } from './utils/init-logger';
 import { parseJSONWatchHistory } from './utils/jsonParser';
 
+import { searchClusterImage_pinterest, PinterestImageData } from '../lib/imageSearch';
+
 // 기본 이미지를 데이터 URI로 정의
-const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3E이미지를 찾을 수 없습니다%3C/text%3E%3C/svg%3E";
+const placeholderImage = '/images/default_image.png'
 
 // OpenAI 클라이언트 초기화 수정
 const openai = new OpenAI({
@@ -94,13 +96,25 @@ type Cluster = {
 // 타입 정의 추가
 type TabType = 'related' | 'recommended';
 
-// 클러스터 이미지 타입 정의
+// 클러스터 이미지 타입 정의 수정
 type ClusterImage = {
   url: string;
-  credit: {
+  // credit 필드를 옵셔널로 만듭니다.
+  credit?: {
     name: string;
     link: string;
   };
+};
+
+// Vision Search 결과 타입 정의 추가
+type VisionSimilarImage = {
+  url: string;
+  score: number;
+};
+
+type VisionLabel = {
+  description: string;
+  score: number;
 };
 
 
@@ -117,6 +131,7 @@ export default function Home() {
   const [clusters, setClusters] = useState<any[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [expandedClusters, setExpandedClusters] = useState<Set<number>>(new Set());
+  // clusterImages state 타입 수정
   const [clusterImages, setClusterImages] = useState<Record<number, ClusterImage | null>>({});
   const [successCount, setSuccessCount] = useState(0);
   const [analysisHistory, setAnalysisHistory] = useState<{
@@ -125,7 +140,11 @@ export default function Home() {
     clusters: any[];
   }[]>([]);
   const [showVisionResults, setShowVisionResults] = useState(false);
-  const [visionSearchResults, setVisionSearchResults] = useState({
+  // visionSearchResults state 타입 수정 및 초기화
+  const [visionSearchResults, setVisionSearchResults] = useState<{
+    similarImages: VisionSimilarImage[];
+    labels: VisionLabel[];
+  }>({
     similarImages: [],
     labels: [],
   });
@@ -863,7 +882,7 @@ CLUSTER_END`;
   // STEP3>>이미지 검색 함수 수정
   const searchClusterImage = async (cluster: any, forceRefresh: boolean = false) => {
     try {
-      console.group('🔍 이미지 검색 시작');
+      console.log('🔍 이미지 검색 시작');
       console.log('클러스터 정보:', {
         main_keyword: cluster.main_keyword,
         category: cluster.category,
@@ -873,18 +892,7 @@ CLUSTER_END`;
       const imageAttemptKey = `imageAttempt_${cluster.main_keyword}`;
       const hasAttempted = localStorage.getItem(imageAttemptKey);
       
-      // forceRefresh가 true인 경우 이전 실패 기록 무시
-      if (!forceRefresh && hasAttempted === 'failed') {
-        console.log('⚠️ 이전 검색 실패 기록 발견:', cluster.main_keyword);
-        console.groupEnd();
-        return {
-          url: placeholderImage,
-          credit: {
-            name: 'Default Image',
-            link: '#'
-          }
-        };
-      }
+     
 
       // 이미지 URL 유효성 검사 함수
       const isImageUrlValid = async (url: string): Promise<boolean> => {
@@ -1029,11 +1037,7 @@ CLUSTER_END`;
         localStorage.setItem(imageAttemptKey, 'failed');
         console.groupEnd();
         return {
-          url: placeholderImage,
-          credit: {
-            name: 'Default Image',
-            link: '#'
-          }
+          url: '/images/default_image.png',
         };
       }
     } catch (error) {
@@ -1044,11 +1048,7 @@ CLUSTER_END`;
       localStorage.setItem(imageAttemptKey, 'failed');
       
       return {
-        url: placeholderImage,
-        credit: {
-          name: 'Default Image',
-          link: '#'
-        }
+        url: '/images/default_image.png',
       };
     }
   };
@@ -1538,88 +1538,120 @@ CLUSTER_END`;
                           {/* 이미지 검색 버튼과 키워드 표시 */}
                           <div className="mb-4 p-4 bg-white rounded-lg">
                             <div className="flex items-center justify-between">
-                              <h5 className="font-semibold text-gray-700">대표 이미지 검색</h5>
+                              <h5 className="font-semibold text-gray-700">대표 이미지 검색 (Pinterest)</h5>
                               <Button
                                 onClick={async () => {
                                   try {
-                                    console.log('이미지 검색 시작:', cluster.main_keyword);
+                                    const keyword = cluster.main_keyword;
+                                    console.log('Pinterest 이미지 검색 시작:', keyword);
                                     
-                                    // 캐시 초기화: localStorage에서 해당 키워드의 이미지 검색 시도 기록 삭제
-                                    const imageAttemptKey = `imageAttempt_${cluster.main_keyword}`;
+                                    // 캐시 초기화
+                                    const imageAttemptKey = `imageAttempt_pinterest_${keyword}`;
                                     localStorage.removeItem(imageAttemptKey);
                                     
-                                    // 기존 저장된 이미지 삭제
-                                    const savedImages = JSON.parse(localStorage.getItem('clusterImages') || '{}');
-                                    delete savedImages[cluster.main_keyword];
-                                    localStorage.setItem('clusterImages', JSON.stringify(savedImages));
-                                    
-                                    // 새로운 이미지 검색
-                                    const image = await searchClusterImage(cluster, true);
-                                    console.log('검색된 이미지:', image);
+                                    // 기존 저장된 이미지 삭제 (clusterImages 상태 및 localStorage)
+                                    const currentSavedImages = JSON.parse(localStorage.getItem('clusterImages') || '{}');
+                                    delete currentSavedImages[keyword]; // 키워드 기준으로 삭제
+                                    localStorage.setItem('clusterImages', JSON.stringify(currentSavedImages));
+                                    setClusterImages(prev => {
+                                      const newImages = { ...prev };
+                                      newImages[index] = null; // 상태에서도 즉시 제거 또는 로딩 상태 표시
+                                      return newImages;
+                                    });
 
-                                    if (image) {
-                                      console.log('이미지 상태 업데이트:', index);
+                                    // Pinterest 이미지 검색 호출
+                                    const pinterestResults = await searchClusterImage_pinterest(keyword, 1); 
+                                    console.log('검색된 Pinterest 이미지:', pinterestResults);
+
+                                    if (pinterestResults && pinterestResults.length > 0 && pinterestResults[0].thumbnailLink) {
+                                      const firstImage = pinterestResults[0];
+                                      // 첫 번째 결과의 썸네일 링크를 url에 저장 (credit 없음)
+                                      const newImage: ClusterImage = { url: firstImage.thumbnailLink };
+                                      
                                       setClusterImages(prev => {
                                         const newImages = { ...prev };
-                                        newImages[index] = image;
-                                        console.log('새 이미지 상태:', newImages);
+                                        newImages[index] = newImage;
                                         return newImages;
                                       });
+                                       // localStorage에도 url만 저장
+                                       const updatedSavedImages = { ...currentSavedImages, [keyword]: newImage };
+                                       localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
+                                       localStorage.setItem(imageAttemptKey, 'success'); // 성공 기록
+                                    } else {
+                                      console.log('Pinterest 이미지를 찾지 못했거나 썸네일 링크가 없습니다.');
+                                      // 이미지를 찾지 못한 경우, 올바른 경로의 default_image URL 사용
+                                      const defaultImageUrl = '/images/default_image.png'; // 올바른 경로로 수정
+                                      const defaultImage: ClusterImage = { url: defaultImageUrl }; 
+                                       setClusterImages(prev => {
+                                         const newImages = { ...prev };
+                                         newImages[index] = defaultImage; // 기본 이미지로 설정
+                                         return newImages;
+                                       });
+                                       // localStorage에서도 default_image URL로 업데이트
+                                       const updatedSavedImages = { ...currentSavedImages, [keyword]: defaultImage }; // 기본 이미지로 저장
+                                       localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
+                                       localStorage.setItem(imageAttemptKey, 'failed'); // 실패 기록
                                     }
                                   } catch (error) {
-                                    console.error('이미지 검색/업데이트 실패:', error);
+                                    console.error('Pinterest 이미지 검색/업데이트 실패:', error);
+                                    // 사용자에게 오류 알림 (toast 등 사용)
+                                    // 오류 발생 시에도 기본 이미지 설정 (선택 사항)
+                                    const defaultImageUrlOnError = '/images/default_image.png'; // 올바른 경로로 수정
+                                    const defaultImageOnError: ClusterImage = { url: defaultImageUrlOnError };
+                                    setClusterImages(prev => {
+                                      const newImages = { ...prev };
+                                      // 에러 발생 시에도 기본 이미지로 설정할 수 있음
+                                      if (!newImages[index]) { // 이미지가 아직 설정되지 않은 경우에만
+                                         newImages[index] = defaultImageOnError;
+                                      }
+                                      return newImages;
+                                    });
                                   }
                                 }}
                                 variant="outline"
-                                className="hover:bg-blue-50"
+                                className="hover:bg-red-50 text-red-600"
                               >
-                                이미지 검색하기
+                                Pinterest에서 검색
                               </Button>
                             </div>
-                            {clusterImages[index] && (
+                            {clusterImages[index]?.url && (
                               <div className="mt-2 text-sm text-gray-500">
-                                검색 키워드: {cluster.main_keyword}
+                                현재 이미지 URL: {clusterImages[index]?.url?.substring(0, 50)}...
                               </div>
                             )}
                           </div>
 
                           {/* 클러스터 대표 이미지 */}
-                          {clusterImages[index] && (
+                          {clusterImages[index]?.url && (
                             <div className="space-y-4">
                               <div className="relative w-full h-64 mb-4 rounded-lg overflow-hidden">
                                 <img
-                                  src={clusterImages[index]?.url || placeholderImage}
+                                  src={clusterImages[index]?.url || placeholderImage} // .url 사용
                                   alt={cluster.main_keyword}
                                   className="w-full h-full object-contain bg-gray-100"
                                   onError={(e) => {
                                     const target = e.target as HTMLImageElement;
                                     console.error('이미지 로드 실패:', target.src);
                                     
-                                    if (target.src === placeholderImage) {
-                                      return;
-                                    }
+                                    if (target.src === placeholderImage) return;
                                     
                                     target.src = placeholderImage;
                                     
                                     setClusterImages(prev => {
                                       const newImages = { ...prev };
-                                      newImages[index] = {
-                                        url: placeholderImage,
-                                        credit: {
-                                          name: 'Default Image',
-                                          link: '#'
-                                        }
-                                      };
+                                      // credit 없이 url만 placeholder로 설정
+                                      newImages[index] = { url: placeholderImage }; 
                                       return newImages;
                                     });
                                   }}
                                 />
-                                <div className="absolute bottom-0 right-0 p-2 text-xs text-white bg-black bg-opacity-50">
-                                  출처: {clusterImages[index]?.credit?.name || 'Default'}
-                                </div>
+                                {/* credit 정보 표시 부분 제거 또는 수정 */}
+                                {/* <div className="absolute bottom-0 right-0 p-2 text-xs text-white bg-black bg-opacity-50">
+                                  출처: {clusterImages[index]?.credit?.name || '-'} 
+                                </div> */}
                               </div>
                               
-                              {/* 핀터레스트 검색 버튼 추가 */}
+                              {/* 핀터레스트 검색 버튼들 */}
                               <div className="flex justify-end gap-2">
                                 <Button
                                   onClick={() => {
