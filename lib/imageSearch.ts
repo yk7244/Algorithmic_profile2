@@ -56,6 +56,8 @@ export async function searchClusterImage_pinterest(
     const requestUrl = `${endpoint}?${params.toString()}`;
     console.log('API 요청 URL:', requestUrl);
     console.log('검색어 (query):', query); 
+    console.log('가공된 검색어 (cleanedQuery):', cleanedQuery); // 가공된 값 로그 추가
+
 
     try {
         const response = await fetch(requestUrl);
@@ -74,11 +76,15 @@ export async function searchClusterImage_pinterest(
         }
 
         // API 응답에서 필요한 정보 추출
-        const images: PinterestImageData[] = data.items.map((item: any) => ({
-        link: item.link, 
-        thumbnailLink: item.image?.thumbnailLink, 
-        title: item.title, 
-        }));
+        const images: PinterestImageData[] = data.items.map((item: any) => {
+          // Log the Pinterest page URL (contextLink)
+          console.log("Pinterest 컨텍스트 링크 (페이지 URL?):", item.image?.contextLink);
+          return {
+            link: item.link, // Keep original link for now, or potentially change to contextLink if needed
+            thumbnailLink: item.image?.thumbnailLink,
+            title: item.title,
+          };
+        });
 
         return images;
 
