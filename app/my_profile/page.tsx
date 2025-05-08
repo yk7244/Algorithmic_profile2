@@ -30,8 +30,14 @@ import {
 } from "@/components/ui/dialog";
 import { useRouter } from 'next/navigation';
 import { myProfileImages } from '../data/dummyProfiles';
-import { ImageData } from '@/types/profile';
-import { useToast } from "@/components/ui/use-toast";
+import { ImageData } from '../types/profile';
+import LogoutButton  from '@/components/LogoutButton';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -1127,6 +1133,30 @@ export default function MyProfilePage() {
     "흥미로운 패턴을 발견했습니다!",
     "당신만의 특별한 별명을 생성중입니다..."
   ];
+//YS DB 연결
+  useEffect(() => {
+    const fetchProfileFromSupabase = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+  
+      const { data, error } = await supabase
+        .from('ProfileData')
+        .select('nickname, description')
+        .eq('id', userId)
+        .single();
+  
+      if (!error && data) {
+        setProfile({
+          nickname: data.nickname,
+          description: data.description,
+        });
+      }
+    };
+  
+    fetchProfileFromSupabase();
+  }, []);
+  
 
   const [bgColor, setBgColor] = useState('bg-white');
 
@@ -1561,6 +1591,10 @@ ${imageData.map((image: any, index: number) => `
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
+      {/* 로그아웃 버튼 삽입 */}
+      <div className="absolute top-20 right-4 z-50">
+        <LogoutButton />
+      </div>
       {/* 생성 중 다이얼로그 */}
       <Dialog open={showGeneratingDialog} onOpenChange={setShowGeneratingDialog}>
         <DialogContent className="sm:max-w-[500px] bg-black/95 border-none text-white">

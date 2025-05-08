@@ -4,21 +4,61 @@ import { Button } from '@/components/ui/button';
 import { Github } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import supabase from '@/lib/supabase';
+import { useEffect } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
 
+  // 로그인 후 세션 확인 + 프로필 자동 생성 + 리디렉션
+  useEffect(() => {
+    const syncUserProfile = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const session = sessionData?.session;
+      if (!session) return;
+
+      const uid = session.user.id;
+
+      // 1. 이미 프로필이 있는지 확인
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('ProfileData')
+        .select('*')
+        .eq('id', uid)
+        .single();
+
+      if (!existingProfile && !fetchError) {
+        // 2. 없으면 새로 생성
+        const { error: insertError } = await supabase.from('ProfileData').insert({
+          id: uid,
+          nickname: session.user.user_metadata?.full_name || '익명',
+          description: '',
+          avatar_url: session.user.user_metadata?.avatar_url || '',
+        });
+
+        if (insertError) {
+          console.error('프로필 생성 실패:', insertError.message);
+        } else {
+          console.log('✅ 프로필이 성공적으로 생성되었습니다.');
+        }
+      }
+
+      // 3. 완료되면 마이 프로필 페이지로 이동
+      router.push('/my_profile');
+    };
+
+    syncUserProfile();
+  }, [router]);
+
+  // GitHub / Google OAuth 로그인
   const handleOAuthLogin = async (provider: 'github' | 'google') => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: 'http://localhost:3000/my_profile', // Vercel 배포 시 주소 바꿔야 함
+        redirectTo: 'http://localhost:3000', // Google/GitHub에 등록한 redirect URI와 동일
       },
     });
 
     if (error) {
       console.error(`OAuth login error: ${error.message}`);
-      // 에러 메시지를 사용자에게 띄우고 싶다면 상태로 관리 가능
     }
   };
 
