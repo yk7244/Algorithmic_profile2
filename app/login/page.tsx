@@ -1,18 +1,25 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Button } from '@/components/ui/button';
+import { Github } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import supabase from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const handleGithubLogin = () => {
-    router.push("/my_profile");
-  };
+  const handleOAuthLogin = async (provider: 'github' | 'google') => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: 'http://localhost:3000/my_profile', // Vercel 배포 시 주소 바꿔야 함
+      },
+    });
 
-  const handleGoogleLogin = () => {
-    router.push("/my_profile");
+    if (error) {
+      console.error(`OAuth login error: ${error.message}`);
+      // 에러 메시지를 사용자에게 띄우고 싶다면 상태로 관리 가능
+    }
   };
 
   return (
@@ -20,16 +27,24 @@ export default function LoginPage() {
       <div className="w-full max-w-sm space-y-4">
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-bold">시작하기</h1>
-          <p className="text-gray-500">
-            소셜 계정으로 간편하게 시작하세요
-          </p>
+          <p className="text-gray-500">소셜 계정으로 간편하게 시작하세요</p>
         </div>
         <div className="space-y-3">
-          <Button variant="outline" size="lg" className="w-full" onClick={handleGithubLogin}>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={() => handleOAuthLogin('github')}
+          >
             <Github className="mr-2 h-5 w-5" />
             GitHub로 계속하기
           </Button>
-          <Button variant="outline" size="lg" className="w-full" onClick={handleGoogleLogin}>
+          <Button
+            variant="outline"
+            size="lg"
+            className="w-full"
+            onClick={() => handleOAuthLogin('google')}
+          >
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -57,4 +72,4 @@ export default function LoginPage() {
       </div>
     </main>
   );
-} 
+}
