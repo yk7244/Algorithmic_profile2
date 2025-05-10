@@ -184,22 +184,7 @@ export const myProfileImages: ImageData[] = [
 
 // 다른 사용자들의 프로필 데이터
 export const dummyProfiles: ProfileData[] = [
-  
-    id: 3,
-    nickname: "미식 탐험가",
-    description: "전 세계의 다양한 음식과 요리 문화에 관심이 많습니다. 맛있는 음식을 찾아다니며 새로운 맛의 경험을 기록합니다.",
-    images: [
-      {
-        id: "food-1",
-        src: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
-        main_keyword: "피자",
-        sub_keyword: "이탈리안",
-        mood_keyword: "행복",
-        description: "정통 나폴리 피자의 풍미와 향을 담은 순간",
-        category: "food",
-        width: 580,
-        height: 400,
-        r{
+  {
     id: 1,
     nickname: "자연 탐험가",
     description: "자연과 풍경에 관심이 많은 사용자입니다. 산과 바다, 숲을 좋아하며 여행을 통해 다양한 자연 경관을 탐험합니다.",
@@ -409,7 +394,22 @@ export const dummyProfiles: ProfileData[] = [
       }
     ]
   },
-  {otate: -2,
+  {
+    id: 3,
+    nickname: "미식 탐험가",
+    description: "전 세계의 다양한 음식과 요리 문화에 관심이 많습니다. 맛있는 음식을 찾아다니며 새로운 맛의 경험을 기록합니다.",
+    images: [
+      {
+        id: "food-1",
+        src: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
+        main_keyword: "피자",
+        sub_keyword: "이탈리안",
+        mood_keyword: "행복",
+        description: "정통 나폴리 피자의 풍미와 향을 담은 순간",
+        category: "food",
+        width: 580,
+        height: 400,
+        rotate: -2,
         left: "15%",
         top: "10%",
         keywords: ["피자", "이탈리안", "맛집", "미식", "요리"],

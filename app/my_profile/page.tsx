@@ -13,7 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Edit2, Save, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
+import { Edit2, Save, CheckCircle2, RefreshCw, Search, X, Link } from "lucide-react";
 import {
   Tabs,
   TabsContent,
@@ -1719,6 +1719,9 @@ ${imageData.map((image: any, index: number) => `
                     </>
                   )}
                 </Button>
+                <Button asChild variant="ghost" size="sm" className="text-base font-medium hover:text-primary">
+                <Link href="/update">업데이트</Link>
+              </Button>
                 
                 {/* 별명 생성 버튼 */}
                 <Button
