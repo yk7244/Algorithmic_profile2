@@ -1,8 +1,6 @@
-import { fetchVideoInfo } from './videoInfo';
-import { OpenAILogger } from './init-logger';
+import { fetchVideoMetadata } from './videoInfo';
 
-// Define types for JSON watch history
-interface JSONWatchHistoryItem {
+export interface JSONWatchHistoryItem {
   titleUrl?: string;
   title: string;
   time: string;
@@ -10,150 +8,132 @@ interface JSONWatchHistoryItem {
   header?: string;
 }
 
-interface ProcessedWatchHistoryItem {
+export interface ProcessedWatchHistoryItem {
   videoId: string;
   title: string;
-  channel: string;
   date: Date;
-  keywords: string[];
+  description?: string;
+  channel: string;
   tags: string[];
+  keywords: string[];
   timestamp: string;
 }
 
-// Function to parse JSON watch history
+// JSON 파일 파싱 함수
 export const parseJSONWatchHistory = async (
   file: File,
-  dateRange?: { from: Date | undefined; to: Date | undefined },
+  dateRange?: { from?: Date; to?: Date },
   maxVideosPerDay: number = 5,
   onProgress?: (current: number, total: number) => void
 ): Promise<ProcessedWatchHistoryItem[]> => {
   try {
-    console.log('Starting JSON watch history parsing...');
-    
+    console.log('📁 Starting JSON watch history parsing...');
     const text = await file.text();
-    const data = JSON.parse(text);
-    
-    if (!data || !Array.isArray(data)) {
-      throw new Error('Invalid JSON format: Expected an array');
+    let rawData = JSON.parse(text);
+
+    // watchHistory 내부에 있을 수 있음
+    if (!Array.isArray(rawData)) {
+      if (Array.isArray(rawData.watchHistory)) {
+        rawData = rawData.watchHistory;
+      } else {
+        throw new Error("❌ JSON 구조 오류: 배열이 아닙니다.");
+      }
     }
 
-    console.log(`Found ${data.length} items in JSON file`);
+    console.log(`🔍 총 ${rawData.length}개의 기록을 발견했습니다.`);
 
-    // Extract and validate required fields
-    const watchItems = data
+    const mapped = rawData
       .map((item: JSONWatchHistoryItem) => {
-        // Skip survey items and other non-video content
-        if (item.header === 'YouTube' && item.title === 'Answered survey question') {
-          return null;
-        }
+        if (!item.titleUrl || !item.titleUrl.includes('/watch')) return null;
 
-        // Skip items without titleUrl
-        if (!item.titleUrl) {
-          return null;
-        }
-
-        // Skip non-YouTube URLs
-        if (!item.titleUrl.includes('youtube.com/watch')) {
-          return null;
-        }
-
-        // Extract video ID from titleUrl
         const videoIdMatch = item.titleUrl.match(/v=([^&]+)/);
-        if (!videoIdMatch) {
-          return null;
-        }
+        if (!videoIdMatch) return null;
 
         const videoId = videoIdMatch[1];
-        if (!videoId) {
-          return null;
-        }
-
         const date = new Date(item.time);
-        
+        if (isNaN(date.getTime())) return null;
+
         return {
           videoId,
           title: item.title,
-          channel: item.subtitles?.[0]?.name || 'Unknown Channel',
           date,
-          keywords: [], // Initialize empty keywords array
-          tags: [] // Initialize empty tags array
+          timestamp: item.time,
+          tags: [],
+          keywords: [],
+          channel: item.subtitles?.[0]?.name || 'Unknown Channel',
         };
       })
-      .filter((item): item is NonNullable<typeof item> => item !== null);
+      .filter((item): item is ProcessedWatchHistoryItem => item !== null);
 
-    console.log(`Processed ${watchItems.length} valid items`);
+    console.log(`✅ 유효한 항목: ${mapped.length}개`);
 
-    // Apply date range filtering if specified
-    let filteredItems = watchItems;
-    if (dateRange?.from && dateRange?.to) {
-      filteredItems = watchItems.filter(item => 
-        item.date >= dateRange.from! && item.date <= dateRange.to!
-      );
-      console.log(`Filtered to ${filteredItems.length} items within date range`);
+    // 날짜 필터링
+    const filtered = mapped.filter((item) => {
+      if (dateRange?.from && item.date < dateRange.from) return false;
+      if (dateRange?.to && item.date > dateRange.to) return false;
+      return true;
+    });
+
+    console.log(`📆 필터링된 항목: ${filtered.length}개`);
+
+    // 날짜별 그룹 + 하루 최대
+    const groupedByDate: Record<string, ProcessedWatchHistoryItem[]> = {};
+    for (const item of filtered) {
+      const dateKey = item.date.toISOString().split('T')[0];
+      if (!groupedByDate[dateKey]) groupedByDate[dateKey] = [];
+      if (groupedByDate[dateKey].length < maxVideosPerDay) {
+        groupedByDate[dateKey].push(item);
+      }
     }
-
-    // Group by date and limit videos per day
-    const groupedByDate = filteredItems.reduce((acc, item) => {
-      const dateStr = item.date.toISOString().split('T')[0];
-      if (!acc[dateStr]) {
-        acc[dateStr] = [];
-      }
-      if (acc[dateStr].length < maxVideosPerDay) {
-        acc[dateStr].push(item);
-      }
-      return acc;
-    }, {} as Record<string, typeof filteredItems>);
 
     const selectedItems = Object.values(groupedByDate).flat();
-    console.log(`Selected ${selectedItems.length} items after grouping and limiting`);
+    console.log(`🧩 최종 선택된 항목: ${selectedItems.length}개`);
 
-    // Process videos in batches to fetch additional info
-    const processedItems: ProcessedWatchHistoryItem[] = [];
-    let processedCount = 0;
-    const totalItems = selectedItems.length;
-
-    // Update progress at the start
-    if (onProgress) {
-      onProgress(0, totalItems);
-    }
+    const processed: ProcessedWatchHistoryItem[] = [];
+    let count = 0;
 
     for (const item of selectedItems) {
       try {
-        const success = await fetchVideoInfo(item.videoId);
-        if (success) {
-          processedItems.push({
+        const enriched = await fetchVideoMetadata(item.videoId);
+
+        if (enriched) {
+          processed.push({
             videoId: item.videoId,
-            title: item.title,
-            channel: item.channel,
+            title: enriched.title || item.title,
             date: item.date,
-            keywords: [], // Will be populated by fetchVideoInfo
-            tags: [], // Will be populated by fetchVideoInfo
-            timestamp: new Date().toISOString()
+            description: enriched.description || '',
+            channel: enriched.channel || item.channel,
+            tags: enriched.tags || [],
+            keywords: enriched.keywords || [],
+            timestamp: item.timestamp,
+          });
+        } else {
+          console.warn(`⚠️ ${item.videoId} 처리 실패, 기본값으로 진행`);
+          processed.push({
+            ...item,
+            description: '',
+            tags: [],
+            keywords: [],
           });
         }
-        processedCount++;
-        
-        // Update progress after each item
-        if (onProgress) {
-          onProgress(processedCount, totalItems);
-        }
       } catch (error) {
-        console.error(`Failed to process video ${item.videoId}:`, error);
-        processedCount++;
-        if (onProgress) {
-          onProgress(processedCount, totalItems);
-        }
+        console.error(`❌ ${item.videoId} 처리 중 에러 발생:`, error);
+        processed.push({
+          ...item,
+          description: '',
+          tags: [],
+          keywords: [],
+        });
       }
+
+      count++;
+      onProgress?.(count, selectedItems.length);
     }
 
-    console.log(`Successfully processed ${processedItems.length} items`);
-
-    // Save to localStorage
-    localStorage.setItem('watchHistory', JSON.stringify(processedItems));
-
-    return processedItems;
-  } catch (error) {
-    console.error('Error parsing JSON watch history:', error);
-    throw error;
+    console.log(`🎉 처리 완료: ${processed.length}개 저장됨`);
+    return processed;
+  } catch (err) {
+    console.error('❌ JSON 파싱 오류:', err);
+    throw err;
   }
-}; 
+};

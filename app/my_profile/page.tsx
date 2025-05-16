@@ -31,7 +31,6 @@ import {
 import { useRouter } from 'next/navigation';
 import { myProfileImages } from '../data/dummyProfiles';
 import { ImageData } from '../types/profile';
-import LogoutButton  from '@/components/LogoutButton';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -1135,27 +1134,58 @@ export default function MyProfilePage() {
   ];
 //YS DB 연결
   useEffect(() => {
-    const fetchProfileFromSupabase = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id;
-      if (!userId) return;
-  
-      const { data, error } = await supabase
+  const fetchProfileFromSupabase = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return;
+
+    const { data, error } = await supabase
+      .from('ProfileData')
+      .select('nickname, description')
+      .eq('id', userId)
+      .single();
+
+    if (error && error.code === 'PGRST116') {
+      console.log("Profile not found, creating default profile...");
+
+      const { error: insertError } = await supabase.from('ProfileData').insert({
+        id: userId,
+        nickname: '새로운 사용자',
+        description: '자동 생성된 기본 프로필입니다.'
+      });
+
+      if (insertError) {
+        console.error("프로필 생성 실패:", insertError);
+        return;
+      }
+
+      const { data: newData, error: retryError } = await supabase
         .from('ProfileData')
         .select('nickname, description')
         .eq('id', userId)
         .single();
-  
-      if (!error && data) {
+
+      if (!retryError && newData) {
         setProfile({
-          nickname: data.nickname,
-          description: data.description,
+          nickname: newData.nickname,
+          description: newData.description,
         });
       }
-    };
-  
-    fetchProfileFromSupabase();
-  }, []);
+    } else if (!error && data) {
+      setProfile({
+        nickname: data.nickname,
+        description: data.description,
+      });
+    } else {
+      console.error("프로필 조회 오류:", error);
+    }
+  };
+
+  // ✅ 함수 실행
+  fetchProfileFromSupabase();
+}, []); // ✅ useEffect 의존성 배열까지 포함
+
+
   
 
   const [bgColor, setBgColor] = useState('bg-white');
@@ -1591,10 +1621,6 @@ ${imageData.map((image: any, index: number) => `
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
-      {/* 로그아웃 버튼 삽입 */}
-      <div className="absolute top-20 right-4 z-50">
-        <LogoutButton />
-      </div>
       {/* 생성 중 다이얼로그 */}
       <Dialog open={showGeneratingDialog} onOpenChange={setShowGeneratingDialog}>
         <DialogContent className="sm:max-w-[500px] bg-black/95 border-none text-white">

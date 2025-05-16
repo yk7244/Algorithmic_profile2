@@ -42,16 +42,26 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 //localstorage->watchHistory 에 배열로 들어감
-type WatchHistoryItem = {
-  title: string;
+// type WatchHistoryItem = {
+//   title: string;
+//   videoId: string;
+//   keywords: string[];
+//   tags?: string[];
+//   timestamp?: string;
+//   url?: string;
+//   date?: any;  // any 타입으로 변경
+//   channelName?: string;  // 옵셔널로 변경
+// };
+
+interface WatchHistoryItem {
   videoId: string;
-  keywords: string[];
+  title: string;
+  channel?: string;
+  date: Date; // 실제 시청 시간
+  keywords?: string[];
   tags?: string[];
-  timestamp?: string;
-  url?: string;
-  date?: any;  // any 타입으로 변경
-  channelName?: string;  // 옵셔널로 변경
-};
+}
+
 
 // 클러스터 타입 수정
 type Category = 
@@ -209,6 +219,86 @@ export default function Home() {
       migrateLocalStorageData();
     }
   }, []);
+
+const ensureProfileExists = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('ProfileData')
+    .select('id')
+    .eq('id', userId)
+    .single();
+
+  if (error && error.code === 'PGRST116') {
+    // 406: not found
+    const { error: insertError } = await supabase.from('ProfileData').insert({
+      id: userId,
+      nickname: '새 사용자',
+      description: '자동 생성된 프로필입니다'
+    });
+
+    if (insertError) {
+      throw new Error(`Profile 생성 실패: ${insertError.message}`);
+    }
+  } else if (error) {
+    throw new Error(`Profile 존재 확인 중 오류: ${error.message}`);
+  }
+};
+
+
+ //워치 히스토리 저장 supabase 
+const uploadWatchHistoryToSupabase = async (watchHistory: {
+  videoId: string;
+  title: string;
+  description?: string;
+  channel: string;
+  tags: string[];
+  keywords: string[];
+  date: Date;
+  url?: string;
+}[]): Promise<void> => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const session = sessionData?.session;
+  if (!session) return;
+
+  const userId = session.user.id;
+
+  // ✅ ProfileData row가 없을 경우 자동 생성
+  await ensureProfileExists(userId);
+
+  // 중복 제거 (userId + videoId 기준)
+  const deduped = Array.from(
+    new Map(watchHistory.map(item => [`${userId}-${item.videoId}`, item])).values()
+  );
+
+  const uploadData = deduped.map((item) => ({
+    user_id: userId,
+    embed_id: item.videoId,
+    title: item.title,
+    description: item.description || null,
+    url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
+    channel_name: item.channel || 'Unknown Channel',
+    timestamp: item.date.getTime(),
+    keywords: item.keywords,
+    tags: item.tags,
+    is_watched: true,
+    watched_at: item.date.toISOString()
+  }));
+
+  const { error } = await supabase
+    .from("WatchHistoryItem")
+    .upsert(uploadData, {
+      onConflict: ['user_id', 'embed_id']
+    });
+
+  if (error) {
+    console.error('❌ Supabase 업로드 실패:', error);
+    alert('Supabase 업로드에 실패했습니다. 콘솔을 확인해주세요.');
+  } else {
+    console.log(`✅ Supabase에 ${uploadData.length}개 시청기록 업로드 성공!`);
+  }
+};
+
+
+
 
  
 
@@ -472,6 +562,12 @@ export default function Home() {
       if (savedHistory.length > 0) {
         const clusters = await analyzeKeywordsWithOpenAI(savedHistory);
         localStorage.setItem('watchClusters', JSON.stringify(clusters));
+
+        await uploadWatchHistoryToSupabase(selectedVideos); // 또는 watchHistory
+
+// 성공 알림
+        alert(`${successCount}개의 시청기록이 처리되었고 Supabase에 업로드되었습니다.`);
+
 
         console.log('분석 완료:', {
           totalVideos: savedHistory.length,
@@ -826,9 +922,11 @@ CLUSTER_END`;
         parseJSONWatchHistory(file, dateRange, maxVideosPerDay, (current, total) => {
           setSuccessCount(current);
         })
-          .then(processedHistory => {
+          .then(async (processedHistory) => {
             setWatchHistory(processedHistory);
             localStorage.setItem('watchHistory', JSON.stringify(processedHistory));
+            
+            await uploadWatchHistoryToSupabase(processedHistory);
           })
           .catch(error => {
             setError(error.message);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from "next/link";
 import { Menu, HelpCircle, Youtube, Sparkles } from "lucide-react";
@@ -14,10 +15,33 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export function Navbar() {
   const pathname = usePathname();
   const isMainPage = pathname === '/';
+
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    fetchUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    window.location.href = '/';
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -74,7 +98,7 @@ export function Navbar() {
           )}
         </div>
 
-        <nav className="hidden md:flex pr-[20px]">
+        <nav className="hidden md:flex pr-[20px] items-center gap-4">
           {!isMainPage && (
             <>
               <Button asChild variant="ghost" size="sm" className="text-base font-medium hover:text-primary">
@@ -87,11 +111,20 @@ export function Navbar() {
                   시청기록
                 </Link>
               </Button>
-              <Button asChild variant="ghost" size="sm" className="text-base font-medium hover:text-primary">
-                <Link href="/login">
-                  로그인
-                </Link>
-              </Button>
+              {!user ? (
+                <Button asChild variant="ghost" size="sm" className="text-base font-medium hover:text-primary">
+                  <Link href="/login">
+                    로그인
+                  </Link>
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700">{user.user_metadata?.full_name || '익명 사용자'}</span>
+                  <Button onClick={handleLogout} variant="outline" className="text-sm text-red-600 hover:text-red-800">
+                    로그아웃
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </nav>
@@ -123,11 +156,17 @@ export function Navbar() {
                         시청기록
                       </Link>
                     </Button>
-                    <Button asChild variant="ghost" size="lg" className="w-full h-auto py-8 text-2xl font-medium justify-start">
-                      <Link href="/login">
-                        로그인
-                      </Link>
-                    </Button>
+                    {!user ? (
+                      <Button asChild variant="ghost" size="lg" className="w-full h-auto py-8 text-2xl font-medium justify-start">
+                        <Link href="/login">
+                          로그인
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button onClick={handleLogout} variant="ghost" size="lg" className="w-full h-auto py-8 text-2xl font-medium justify-start text-red-600">
+                        로그아웃
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
@@ -137,4 +176,4 @@ export function Navbar() {
       </div>
     </header>
   );
-} 
+}
