@@ -1560,7 +1560,7 @@ ${imageData.map((image: any, index: number) => `
     generateUserProfile();
   }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
 
-  //수정확인  ....
+  //수정확인
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
