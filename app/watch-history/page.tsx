@@ -59,15 +59,15 @@ export default function WatchHistoryPage() {
 
       {/* 하단 고정 바 */}
       <div className="fixed bottom-0 left-0 w-full z-50">
-        <div className="w-full h-20 flex items-center justify-end px-8"
+        <div className="w-full h-14 flex items-center justify-end px-8"
           style={{
             background: "linear-gradient(90deg, #cfd4f7 0%, #6d7cf7 100%)"
           }}
         >
           <Link href="/update">
             <button
-              className="bg-white text-black font-semibold rounded-full px-10 py-4 shadow-lg text-lg hover:bg-gray-100 transition"
-              style={{ minWidth: 200 }}
+              className="bg-white text-black font-semibold rounded-full px-6 py-2 shadow-lg text-sm hover:bg-gray-100 transition"
+              style={{ minWidth: 120 }}
             >
               프로필 업데이트 하기
             </button>
