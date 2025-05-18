@@ -387,9 +387,9 @@ export default function UpdatePage() {
       {/* 이 부분은 매우 길어서 여기서는 간략하게 표시합니다. */}
       <div className="flex flex-col items-center space-y-8 text-center relative z-10 ">
         <p>시청 기록 업로드 및 분석 페이지 (내용 구성 필요)</p>
-      </div>
+    </div>
       {error && <p className="text-red-500 mt-4">{error}</p>}
       <div className="h-20"></div> 
     </main>
   );
-}
+} 

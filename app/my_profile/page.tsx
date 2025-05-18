@@ -1128,7 +1128,8 @@ export default function MyProfilePage() {
     "당신만의 특별한 별명을 생성중입니다..."
   ];
 
-  const [bgColor, setBgColor] = useState('bg-white');
+  // 배경색 상태
+  const [bgColor, setBgColor] = useState('bg-[#F2F2F2]');
 
   const colorOptions = [
     { name: '화이트', class: 'bg-white' },
@@ -1691,9 +1692,9 @@ ${imageData.map((image: any, index: number) => `
         <div className="max-w-[1200px] mx-auto">
           {/* 기존 제목과 설명 (검색 모드가 아닐 때만 표시) */}
           {!isSearchMode && (
-            <div className="absolute z-30 pl-8 max-w-[600px] space-y-6">
+            <div className="absolute z-30 pl-8 max-w-[600px] space-y-6 pt-[140px]">
               <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">
+                <h1 className="text-4xl font-bold tracking-tight">
                   {profile.nickname ? `${profile.nickname}의 무드보드` : 'My 무드보드'}
                 </h1>
               </div>
@@ -1720,8 +1721,8 @@ ${imageData.map((image: any, index: number) => `
                   )}
                 </Button>
                 <Button asChild variant="ghost" size="sm" className="text-base font-medium hover:text-primary">
-                <Link href="/update">업데이트</Link>
-              </Button>
+                  <Link href="/update">업데이트</Link>
+                </Button>
                 
                 {/* 별명 생성 버튼 */}
                 <Button
