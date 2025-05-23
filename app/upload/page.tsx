@@ -19,8 +19,10 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { OpenAILogger } from '../utils/init-logger';
 import { parseJSONWatchHistory } from '../utils/jsonParser';
+import { prepareWatchHistoryItems } from '../utils/prepareWatchHistoryItems';
 
 import { searchClusterImage_pinterest, PinterestImageData } from '@/lib/imageSearch';
+import {fetchClusterHistoryFromSupabase, saveClustersToSupabase} from '@/lib/supabase/cluster'
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -244,12 +246,14 @@ const ensureProfileExists = async (userId: string) => {
 };
 
 
+
  //워치 히스토리 저장 supabase 
 const uploadWatchHistoryToSupabase = async (watchHistory: {
   videoId: string;
   title: string;
   description?: string;
   channel: string;
+  channelId?: string;
   tags: string[];
   keywords: string[];
   date: Date;
@@ -261,14 +265,15 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
 
   const userId = session.user.id;
 
-  // ✅ ProfileData row가 없을 경우 자동 생성
+  // ✅ 1. ProfileData 없으면 생성
   await ensureProfileExists(userId);
 
-  // 중복 제거 (userId + videoId 기준)
+  // ✅ 2. 중복 제거 (user_id + videoId 기준)
   const deduped = Array.from(
     new Map(watchHistory.map(item => [`${userId}-${item.videoId}`, item])).values()
   );
 
+  // ✅ 3. WatchHistoryItem 업로드 데이터 준비
   const uploadData = deduped.map((item) => ({
     user_id: userId,
     embed_id: item.videoId,
@@ -276,6 +281,7 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
     description: item.description || null,
     url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
     channel_name: item.channel || 'Unknown Channel',
+    channel_id: item.channelId || null,
     timestamp: item.date.getTime(),
     keywords: item.keywords,
     tags: item.tags,
@@ -283,19 +289,55 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
     watched_at: item.date.toISOString()
   }));
 
-  const { error } = await supabase
+  // ✅ 4. WatchHistoryItem 테이블에 업로드
+  const { error: historyError } = await supabase
     .from("WatchHistoryItem")
     .upsert(uploadData, {
       onConflict: ['user_id', 'embed_id']
     });
 
-  if (error) {
-    console.error('❌ Supabase 업로드 실패:', error);
-    alert('Supabase 업로드에 실패했습니다. 콘솔을 확인해주세요.');
-  } else {
-    console.log(`✅ Supabase에 ${uploadData.length}개 시청기록 업로드 성공!`);
+  if (historyError) {
+    console.error('❌ WatchHistoryItem 업로드 실패:', historyError);
+    alert('시청기록 업로드에 실패했습니다. 콘솔을 확인해주세요.');
+    return;
   }
+
+  // ✅ 5. videos 테이블에 업로드 데이터 준비
+  const videoData = deduped.map((item) => ({
+    id: item.videoId,
+    title: item.title,
+    description: item.description || null,
+    url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
+    channel_id: item.channelId || null,
+    channel_name: item.channel || 'Unknown Channel',
+    tags: Array.isArray(item.tags) ? item.tags : [],
+    keywords: Array.isArray(item.keywords) ? item.keywords : [],
+    thumbnail_url: item.thumbnailUrl || null, // optional if available
+    view_count: item.viewCount ?? 0,
+    like_count: item.likeCount ?? 0,
+    comment_count: item.commentCount ?? 0,
+    last_fetched_at: new Date().toISOString() // ✅ 꼭 포함
+  }));
+
+
+  // ✅ 6. videos 테이블에 업로드 (id 기준 중복 방지)
+  const { error: videosError } = await supabase
+    .from("videos")
+    .upsert(videoData, {
+      onConflict: ['id']
+    });
+
+  if (videosError) {
+    console.error('❌ videos 업로드 실패:', videosError);
+    alert('비디오 정보 업로드에 실패했습니다. 콘솔을 확인해주세요.');
+  } else {
+    console.log(`✅ Supabase에 ${videoData.length}개 비디오 정보 업로드 성공!`);
+  }
+
+  // ✅ 7. 완료 메시지
+  console.log(`✅ Supabase에 ${uploadData.length}개 시청기록 업로드 성공!`);
 };
+
 
 
 
@@ -303,289 +345,211 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
  
 
   // STEP1-0>>YouTube API를 통해 비디오 정보 가져오고, 키워드 추출
-  const fetchVideoInfo = async (videoId: string) => {
+  const saveToVideosTable = async (
+    videoId: string,
+    videoInfo: any,
+    extractedKeywords: string[] = []
+  ) => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+    if (!session) return;
+
+    const snippet = videoInfo.snippet || {};
+    const statistics = videoInfo.statistics || {};
+
+    const payload = {
+      id: videoId,
+      title: snippet.title || 'Untitled',
+      description: snippet.description || '',
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+      channel_id: snippet.channelId || null,
+      channel_name: snippet.channelTitle || 'Unknown Channel',
+      tags: Array.isArray(snippet.tags) ? snippet.tags : [],
+      keywords: extractedKeywords,
+      thumbnail_url: snippet.thumbnails?.default?.url || null,
+      view_count: Number(statistics.viewCount ?? 0),
+      like_count: Number(statistics.likeCount ?? 0),
+      comment_count: Number(statistics.commentCount ?? 0),
+      last_fetched_at: new Date().toISOString(), // ✅ 절대 null/undefined가 되지 않도록 보장
+    };
+
+    const { error } = await supabase
+      .from('videos')
+      .upsert(payload, {
+        onConflict: ['id'],
+      });
+
+    if (error) {
+      console.error('❌ videos 테이블 저장 실패:', error);
+    } else {
+      console.log(`✅ 영상(${videoId}) 정보 videos 테이블에 저장 완료`);
+    }
+  };
+
+
+
+
+
+// ✅ 메인 함수
+  const fetchVideoInfo = async (videoId: string): Promise<boolean> => {
     try {
       console.log('Fetching video info for:', videoId);
-      
+
       const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
       );
-      
+
       if (!response.ok) {
         throw new Error('YouTube API 요청 실패');
       }
 
       const data = await response.json();
-      
+
       if (data.items && data.items.length > 0) {
-        const videoInfo = data.items[0].snippet;
+        const videoItem = data.items[0]; // includes snippet and statistics
+        const snippet = videoItem.snippet;
+        const statistics = videoItem.statistics;
+
         console.log('Retrieved video info:', {
-          title: videoInfo.title,
-          hasDescription: !!videoInfo.description,
-          tagCount: videoInfo.tags?.length || 0
+          title: snippet.title,
+          hasDescription: !!snippet.description,
+          tagCount: snippet.tags?.length || 0
         });
-        
+
+        let extractedKeywords: string[] = [];
+
         try {
-          // OpenAI로 키워드 추출 시도
-          const extractedKeywords = await extractVideoKeywords(videoInfo);
+          const result = await extractVideoKeywords(snippet);
+          extractedKeywords = result?.map(k => k.keyword) || [];
           console.log('Extracted keywords:', extractedKeywords);
-
-          if (!extractedKeywords || extractedKeywords.length === 0) {
-            console.warn('No keywords extracted, using tags as fallback');
-            // 실패 시 기본 태그 저장
-            const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-            const newItem = {
-              videoId,
-              title: videoInfo.title,
-              tags: videoInfo.tags || [],
-              keywords: videoInfo.tags ? videoInfo.tags.slice(0, 5) : [],
-              timestamp: new Date().toISOString()
-            };
-            watchHistory.push(newItem);
-            localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
-            return true;
-          }
-
-          // 로컬 스토리지에 저장
-          const currentHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-          const newItem = {
-            videoId,
-            title: videoInfo.title,
-            tags: videoInfo.tags || [],
-            keywords: extractedKeywords.map(k => k.keyword),
-            timestamp: new Date().toISOString()
-          };
-          
-          console.log('Saving to watch history:', {
-            videoId,
-            title: videoInfo.title,
-            keywordCount: extractedKeywords.length
-          });
-          
-          const updatedHistory = [...currentHistory, newItem];
-          localStorage.setItem('watchHistory', JSON.stringify(updatedHistory));
-
-          return true;
-        } catch (error) {
-          console.error('키워드 추출 실패:', error);
-          // 실패 시 기본 태그 저장
-          const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-          const newItem = {
-            videoId,
-            title: videoInfo.title,
-            tags: videoInfo.tags || [],
-            keywords: videoInfo.tags ? videoInfo.tags.slice(0, 5) : [],
-            timestamp: new Date().toISOString()
-          };
-          watchHistory.push(newItem);
-          localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
-          return true;
+        } catch (err) {
+          console.error('❌ 키워드 추출 실패, 태그로 대체');
+          extractedKeywords = snippet.tags ? snippet.tags.slice(0, 5) : [];
         }
+
+        // ✅ YouTube API의 원본 videoItem 전체 전달
+        await saveToVideosTable(videoId, videoItem, extractedKeywords);
+
+        // ⏬ LocalStorage 저장
+        const newItem = {
+          videoId,
+          title: snippet.title,
+          tags: snippet.tags || [],
+          keywords: extractedKeywords,
+          timestamp: new Date().toISOString()
+        };
+
+        const currentHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
+        localStorage.setItem('watchHistory', JSON.stringify([...currentHistory, newItem]));
+
+        return true;
       }
+
       return false;
     } catch (error) {
       console.error('비디오 정보 가져오기 실패:', error);
-      throw error;
+      return false;
     }
   };
+
+
+
   // STEP1-1>>HTML 파일 파싱 함수 수정
   const parseWatchHistory = async (file: File) => {
-    try {
-      const text = await file.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, 'text/html');
-      
-      // 시청기록 항목 추출
-      const watchItems = Array.from(doc.querySelectorAll('.content-cell'));
-      
-      console.log('Found watch items:', watchItems.length);
-      
-      // 시청기록 데이터 추출
-      const watchHistory = watchItems
-        .map((item): any => {
-          try {
-            const titleElement = item.querySelector('a');
-            if (!titleElement) return null;
+  try {
+    const text = await file.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+    const watchItems = Array.from(doc.querySelectorAll('.content-cell'));
+    console.log('Found watch items:', watchItems.length);
 
-            const title = titleElement.textContent?.split(' 을(를) 시청했습니다.')[0];
-            if (!title) return null;
-
-            const videoUrl = titleElement.getAttribute('href') || '';
-            const videoId = videoUrl.match(/(?:v=|youtu\.be\/)([^&?]+)/)?.[1];
-
-            const channelElement = item.querySelector('a:nth-child(3)');
-            const channelName = channelElement?.textContent || '';
-
-            const dateText = item.textContent || '';
-            const dateMatch = dateText.match(/\d{4}\.\s*\d{1,2}\.\s*\d{1,2}/);
-            if (!dateMatch) return null;
-
-            const date = new Date(dateMatch[0].replace(/\./g, '-'));
-
-            // 광고 영상 필터링
-            const isAd = (
-              title.includes('광고') || 
-              title.includes('Advertising') ||
-              title.includes('AD:') ||
-              channelName.includes('광고') ||
-              videoUrl.includes('/ads/') ||
-              videoUrl.includes('&ad_type=') ||
-              videoUrl.includes('&adformat=')
-            );
-
-            if (isAd) return null;
-            if (!videoId) return null;
-
-            return {
-              title,
-              videoId,
-              channelName,
-              date,
-              url: `https://youtube.com/watch?v=${videoId}`,
-              keywords: [], // Initialize empty keywords array
-              tags: [], // Initialize empty tags array
-              timestamp: new Date().toISOString()
-            };
-          } catch (error) {
-            console.error('항목 파싱 실패:', error);
-            return null;
-          }
-        })
-        .filter(item => item !== null);
-
-      // 날짜 필터링 로직 추가
-      const filteredWatchHistory = watchHistory.filter(item => {
-        if (!dateRange.from || !dateRange.to) return true;
-        const itemDate = new Date(item.date);
-        return itemDate >= dateRange.from && itemDate <= dateRange.to;
-      });
-
-      if (filteredWatchHistory.length === 0) {
-        throw new Error('선택한 기간에 시청기록이 없습니다.');
-      }
-
-      // 날짜별로 그룹화
-      const groupedByDate = filteredWatchHistory.reduce((acc: { [key: string]: any[] }, item) => {
-        const dateStr = item.date.toISOString().split('T')[0];
-        if (!acc[dateStr]) {
-          acc[dateStr] = [];
-        }
-        acc[dateStr].push(item);
-        return acc;
-      }, {});
-
-      // 날짜별로 정렬
-      const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
-      // 각 날짜에서 maxVideosPerDay만큼 선택하고, 전체 200개로 제한
-      let selectedVideos: any[] = [];
-      let totalSelected = 0;
-      const TOTAL_LIMIT = 200;
-
-      for (const dateStr of sortedDates) {
-        if (totalSelected >= TOTAL_LIMIT) break;
-
-        // Shuffle the videos for this day
-        const dailyVideos = groupedByDate[dateStr]
-          .sort(() => Math.random() - 0.5) // Randomly shuffle videos within each day
-          .slice(0, Math.min(maxVideosPerDay, TOTAL_LIMIT - totalSelected));
-
-        selectedVideos = [...selectedVideos, ...dailyVideos];
-        totalSelected += dailyVideos.length;
-      }
-
-      // 파싱 결과 로깅
-      console.log('\n=== Watch History Parse Results ===');
-      console.log('Total items found:', watchItems.length);
-      console.log('After filtering ads:', watchHistory.length);
-      console.log('After date filtering:', filteredWatchHistory.length);
-      console.log('Final selected videos:', selectedVideos.length);
-      console.log('Date range:', {
-        from: dateRange.from?.toISOString(),
-        to: dateRange.to?.toISOString()
-      });
-      console.log('Sample of first 3 videos:', selectedVideos.slice(0, 3).map(v => ({
-        title: v.title,
-        videoId: v.videoId,
-        date: v.date.toISOString()
-      })));
-      console.log('===================================\n');
-
-      // 각 비디오 정보 가져오기 (병렬 처리로 최적화)
-      let successCount = 0;
-      const batchSize = 3; // 한 번에 처리할 비디오 수를 3개로 줄임
-      const totalVideos = selectedVideos.length;
-
-      // 각 비디오 정보 가져오기
-      for (let i = 0; i < selectedVideos.length; i += batchSize) {
-        const batch = selectedVideos.slice(i, i + batchSize);
-        console.log(`배치 ${Math.floor(i/batchSize) + 1} 처리 시작:`, batch);
-
+    // HTML에서 기본 정보 파싱
+    const rawHistory = watchItems
+      .map((item): any | null => {
         try {
-          const results = await Promise.all(
-            batch.map(async (item) => {
-              try {
-                console.log(`비디오 처리 시작: ${item.videoId}`);
-                const success = await fetchVideoInfo(item.videoId);
-                console.log(`비디오 처리 결과: ${item.videoId} - ${success ? '성공' : '실패'}`);
-                return success;
-              } catch (error) {
-                console.error(`비디오 정보 가져오기 실패 (${item.videoId}):`, error);
-                return false;
-              }
-            })
-          );
+          const titleElement = item.querySelector('a');
+          if (!titleElement) return null;
 
-          // 성공한 비디오 수 업데이트
-          const batchSuccessCount = results.filter(Boolean).length;
-          successCount += batchSuccessCount;
-          
-          console.log(`배치 처리 완료: ${batchSuccessCount}개 성공 (총 ${successCount}/${totalVideos})`);
-          
-          // 상태 업데이트
-          setSuccessCount(successCount);
-          
-          // API 호출 간격 조절 (2초로 증가)
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        } catch (error) {
-          console.error(`배치 처리 중 오류 발생:`, error);
+          const title = titleElement.textContent?.split(' 을(를) 시청했습니다.')[0];
+          const videoUrl = titleElement.getAttribute('href') || '';
+          const videoId = videoUrl.match(/(?:v=|youtu\.be\/)([^&?]+)/)?.[1];
+          const channelElement = item.querySelector('a:nth-child(3)');
+          const channelName = channelElement?.textContent || '';
+
+          const dateText = item.textContent || '';
+          const dateMatch = dateText.match(/\d{4}\.\s*\d{1,2}\.\s*\d{1,2}/);
+          const date = dateMatch ? new Date(dateMatch[0].replace(/\./g, '-')) : null;
+
+          // 필터링 조건
+          if (!title || !videoId || !date) return null;
+          const isAd = title.includes('광고') || channelName.includes('광고') || videoUrl.includes('/ads/');
+          if (isAd) return null;
+
+          return {
+            videoId,
+            title,
+            channel: channelName,
+            date,
+            url: `https://youtube.com/watch?v=${videoId}`,
+            tags: [],
+            keywords: []
+          };
+        } catch (e) {
+          console.warn('HTML 항목 파싱 실패:', e);
+          return null;
         }
-      }
+      })
+      .filter(Boolean);
 
-      // 최종 결과 확인
-      const savedHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-      console.log('저장된 시청 기록:', savedHistory);
-      
-      alert(`${successCount}개의 시청기록이 성공적으로 처리되었습니다! (총 ${totalVideos}개 중)`);
-
-      // 저장된 시청 기록 분석
-      if (savedHistory.length > 0) {
-        const clusters = await analyzeKeywordsWithOpenAI(savedHistory);
-        localStorage.setItem('watchClusters', JSON.stringify(clusters));
-
-        await uploadWatchHistoryToSupabase(selectedVideos); // 또는 watchHistory
-
-// 성공 알림
-        alert(`${successCount}개의 시청기록이 처리되었고 Supabase에 업로드되었습니다.`);
-
-
-        console.log('분석 완료:', {
-          totalVideos: savedHistory.length,
-          totalClusters: clusters.length,
-          topCategories: clusters.slice(0, 3).map(c => ({
-            category: c.main_keyword,
-            strength: c.strength
-          }))
-        });
-      } else {
-        console.error('저장된 시청 기록이 없습니다.');
-        alert('시청 기록이 저장되지 않았습니다. 다시 시도해주세요.');
-      }
-    } catch (err) {
-      console.error('시청기록 파싱 실패:', err);
-      setError(err instanceof Error ? err.message : '시청기록 파일 처리 중 오류가 발생했습니다.');
+    if (rawHistory.length === 0) {
+      throw new Error('파싱된 시청기록이 없습니다.');
     }
-  };
+
+    // 날짜 필터링
+    const filtered = rawHistory.filter(item => {
+      if (!dateRange.from || !dateRange.to) return true;
+      const d = new Date(item.date);
+      return d >= dateRange.from && d <= dateRange.to;
+    });
+
+    if (filtered.length === 0) {
+      throw new Error('선택한 기간 내 유효한 시청기록이 없습니다.');
+    }
+
+    // 날짜별 그룹화 및 maxVideosPerDay 적용
+    const grouped = filtered.reduce((acc: { [key: string]: any[] }, item) => {
+      const key = item.date.toISOString().split('T')[0];
+      acc[key] = acc[key] || [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+
+    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    const TOTAL_LIMIT = 200;
+    let selected: any[] = [];
+    for (const dateStr of sortedDates) {
+      if (selected.length >= TOTAL_LIMIT) break;
+      const shuffled = grouped[dateStr].sort(() => Math.random() - 0.5);
+      selected.push(...shuffled.slice(0, Math.min(maxVideosPerDay, TOTAL_LIMIT - selected.length)));
+    }
+
+    console.log('📦 최종 선택된 영상 수:', selected.length);
+
+    // ✅ 공통 메타데이터 보완 (YouTube + OpenAI 기반)
+    const enriched = await prepareWatchHistoryItems(selected);
+
+    // 저장 및 업로드
+    localStorage.setItem('watchHistory', JSON.stringify(enriched));
+    await uploadWatchHistoryToSupabase(enriched);
+
+    alert(`${enriched.length}개의 시청기록을 처리하고 Supabase에 업로드했습니다.`);
+  } catch (err: any) {
+    console.error('❌ HTML 파싱 실패:', err);
+    setError(err.message || '시청기록 파싱 중 오류가 발생했습니다.');
+  }
+};
+
   // STEP1-2>>영상 키워드 추출 함수
   const extractVideoKeywords = async (videoInfo: any) => {
     try {
@@ -861,46 +825,51 @@ CLUSTER_END`;
       throw error;
     }
   };
+
+
   // STEP2-1>> 클러스터링 버튼 핸들러
   const handleCluster = async () => {
     try {
       setIsLoading(true);
+
+      // 1. 키워드 클러스터 분석
       const newClusters = await analyzeKeywordsWithOpenAI(watchHistory);
-      
-      // 새로운 분석 결과 생성
+
+      // 2. Supabase 세션 및 저장
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (userId) {
+        await saveClustersToSupabase(userId, newClusters);
+      }
+
+      // 3. 분석 히스토리 저장 (localStorage)
       const newAnalysis = {
         id: new Date().getTime().toString(),
         date: new Date().toLocaleString(),
         clusters: newClusters
       };
-
-      // 기존 분석 기록 불러오기
       const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
       const updatedAnalyses = [...savedAnalyses, newAnalysis];
-
-      // 저장
       localStorage.setItem('analysisHistory', JSON.stringify(updatedAnalyses));
       setAnalysisHistory(updatedAnalyses);
-      
-      // 현재 클러스터 설정
+
+      // 4. 클러스터 상태 반영
       setClusters(newClusters);
 
-      // 클러스터 이미지 가져오기
+      // 5. 클러스터 이미지 검색 및 저장
       const clusterImagesData: Record<number, any> = {};
       for (let i = 0; i < newClusters.length; i++) {
         const image = await searchClusterImage(newClusters[i], true);
         clusterImagesData[i] = image;
       }
 
-      // ImageData 형식으로 변환
       const profileImages = newClusters.map((cluster: any, index: number) => {
         const imageUrl = clusterImagesData[index]?.url || placeholderImage;
         return transformClusterToImageData(cluster, index, imageUrl);
       });
 
-      // 프로필 이미지 데이터 저장
       localStorage.setItem('profileImages', JSON.stringify(profileImages));
-      
+
       setShowAnalysis(true);
     } catch (error) {
       console.error('클러스터링 실패:', error);
@@ -909,6 +878,48 @@ CLUSTER_END`;
       setIsLoading(false);
     }
   };
+const loadPreviousClusters = async () => {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const userId = sessionData?.session?.user?.id;
+
+  if (!userId) {
+    console.warn('유저 세션 없음');
+    return;
+  }
+
+  try {
+    const history = await fetchClusterHistoryFromSupabase(userId);
+
+    if (history.length > 0) {
+      const latest = history[0]; // 가장 최근 분석
+
+      // 클러스터 포맷 통일 (Supabase → local format)
+      const convertedClusters = latest.video_cluster_assignments.map((assign: any) => ({
+        videoId: assign.video_id,
+        label: assign.label,
+        distance: assign.distance,
+      }));
+
+      const clusterObj = {
+        id: latest.id,
+        main_keyword: latest.main_keyword,
+        category: latest.category,
+        mood_keyword: latest.mood_keyword,
+        description: latest.description,
+        keywords: latest.keyword_list?.split(',') || [],
+        related_videos: convertedClusters
+      };
+
+      setClusters([clusterObj]);
+      setShowAnalysis(true);
+      console.log('✅ Supabase 클러스터 로드 완료');
+    } else {
+      console.log('❕ 불러올 클러스터 기록 없음');
+    }
+  } catch (e) {
+    console.error('❌ 클러스터 불러오기 실패:', e);
+  }
+};
 
   // 파일 업로드 핸들러
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1150,6 +1161,20 @@ CLUSTER_END`;
       };
     }
   };
+
+  useEffect(() => {
+  const loadClusterHistory = async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const userId = sessionData?.session?.user?.id;
+    if (!userId) return;
+
+    const clusterHistory = await fetchClusterHistoryFromSupabase(userId);
+    setAnalysisHistory(clusterHistory);
+  };
+
+  loadClusterHistory();
+}, []);
+
   // 메인 컴포넌트에서 클러스터 이미지 설정 부분 수정
   useEffect(() => {
     const fetchClusterImages = async () => {
@@ -1534,17 +1559,25 @@ CLUSTER_END`;
               <div className="mb-6">
                 <h3 className="text-lg font-medium mb-3">분석 기록</h3>
                 <div className="flex flex-wrap gap-2">
-                  {analysisHistory.map((analysis, index) => (
+                  {analysisHistory.map((clusterSet, index) => (
                     <Button
-                      key={analysis.id}
-                      onClick={() => {
-                        setClusters(analysis.clusters);
-                        setShowAnalysis(true);
+                      key={clusterSet.id || index}
+                      onClick={async () => {
+                        setIsLoading(true);
+                        try {
+                          const clustersFromDB = await fetchSingleClusterSetWithVideos(clusterSet); // 아래 참고
+                          setClusters(clustersFromDB);
+                          setShowAnalysis(true);
+                        } catch (e) {
+                          console.error('클러스터 불러오기 실패:', e);
+                        } finally {
+                          setIsLoading(false);
+                        }
                       }}
                       variant="outline"
                       className="hover:bg-blue-50"
                     >
-                      분석 {index + 1} ({analysis.date})
+                      분석 {index + 1} ({new Date(clusterSet.created_at).toLocaleDateString()})
                     </Button>
                   ))}
                 </div>
