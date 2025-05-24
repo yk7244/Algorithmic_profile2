@@ -1,5 +1,6 @@
-import { fetchVideoInfo } from './videoInfo';
-import { OpenAILogger } from './init-logger';
+//import { fetchVideoInfo } from '../VideoAnalysis/fetchVideoInfo';
+import {fetchVideoInfo} from '../VideoAnalysis/videoKeyword';
+import { OpenAILogger } from '../../utils/init-logger';
 
 // Define types for JSON watch history
 interface JSONWatchHistoryItem {
