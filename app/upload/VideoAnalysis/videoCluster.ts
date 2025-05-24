@@ -365,7 +365,7 @@ CLUSTER_END`;
       prompt: prompt
     });
 
-    console.log('Sending request to OpenAI...');
+    console.log('클러스터 분석 시작...');
     const completion = await openai.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
       model: "gpt-4o-mini",

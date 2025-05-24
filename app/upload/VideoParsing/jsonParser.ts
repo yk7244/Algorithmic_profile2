@@ -120,15 +120,16 @@ export const parseJSONWatchHistory = async (
 
     for (const item of selectedItems) {
       try {
-        const success = await fetchVideoInfo(item.videoId);
-        if (success) {
-          processedItems.push({
-            videoId: item.videoId,
-            title: item.title,
+        const videoInfo = await fetchVideoInfo(item.videoId);
+        console.log('⭐️videoInfo:', videoInfo);
+        if (videoInfo != null) {
+            processedItems.push({
+            videoId: videoInfo.videoId,
+            title: videoInfo.title,
             channel: item.channel,
             date: item.date,
-            keywords: [], // Will be populated by fetchVideoInfo
-            tags: [], // Will be populated by fetchVideoInfo
+            keywords: videoInfo.keywords, // Will be populated by fetchVideoInfo
+            tags: videoInfo.tags, // Will be populated by fetchVideoInfo
             timestamp: new Date().toISOString()
           });
         }
