@@ -453,13 +453,11 @@ function DraggableImage({
           style={{
             ...style,
             position: 'absolute',
-            width: image.width * (image.desired_self ? image.sizeWeight * 2 : image.sizeWeight * 4),
-            height: (image.height + 80) * (image.desired_self ? image.sizeWeight * 2 : image.sizeWeight * 4),
+            width: image.width * (image.desired_self ? image.sizeWeight * 2 : image.sizeWeight * 10),
+            height: (image.height + 80) * (image.desired_self ? image.sizeWeight * 2 : image.sizeWeight * 10),
             left: image.left,
             top: image.top,
-            transform: transform ? 
-              `translate3d(${transform.x + (positions[image.id]?.x || 0)}px, ${transform.y + (positions[image.id]?.y || 0)}px, 0) rotate(${image.rotate}deg)` :
-              `translate3d(${positions[image.id]?.x || 0}px, ${positions[image.id]?.y || 0}px, 0) rotate(${image.rotate}deg)`,
+            //transform: 'translate(-100%, 80%)',
             transition: isEditing ? 'none' : 'transform 0.8s ease-in-out',
             touchAction: 'none',
             zIndex: isSelected ? 30 : 10,

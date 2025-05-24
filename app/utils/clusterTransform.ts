@@ -1,5 +1,23 @@
 import { ImageData } from '../types/profile';
 
+// 중앙 위주 좌표 배열 (CSS 퍼센트 단위)
+const centerPositions = [
+  { left: "50%", top: "50%" },
+  { left: "52%", top: "48%" },
+  { left: "48%", top: "52%" },
+  { left: "51%", top: "51%" },
+  { left: "49%", top: "49%" },
+  { left: "53%", top: "50%" },
+  { left: "50%", top: "53%" },
+  { left: "47%", top: "50%" },
+  { left: "50%", top: "47%" }
+];
+
+function getRandomCenterPosition() {
+  const randomIndex = Math.floor(Math.random() * centerPositions.length);
+  return centerPositions[randomIndex];
+}
+
 export const transformClusterToImageData = (
   cluster: any,
   index: number,
@@ -7,31 +25,10 @@ export const transformClusterToImageData = (
 ): ImageData => {
   // 랜덤 위치 및 회전 생성
   const randomRotate = Math.floor(Math.random() * 12) - 6; // -6 ~ 6도
-  
-  // 좌측 상단을 제외한 영역에서 위치 생성
-  let randomLeft, randomTop;
-  
-  // 화면을 3개 영역으로 나누어 배치 (우측 상단, 중앙 하단, 우측 하단)
-  const area = Math.floor(Math.random() * 3); // 0, 1, 2 중 하나 선택
-  
-  switch(area) {
-    case 0: // 우측 상단
-      randomLeft = `${Math.floor(Math.random() * 30) + 60}%`; // 60% ~ 90%
-      randomTop = `${Math.floor(Math.random() * 20) + 20}%`; // 20% ~ 40%
-      break;
-    case 1: // 중앙 하단
-      randomLeft = `${Math.floor(Math.random() * 40) + 30}%`; // 30% ~ 70%
-      randomTop = `${Math.floor(Math.random() * 20) + 60}%`; // 60% ~ 80%
-      break;
-    case 2: // 우측 하단
-      randomLeft = `${Math.floor(Math.random() * 30) + 60}%`; // 60% ~ 90%
-      randomTop = `${Math.floor(Math.random() * 20) + 60}%`; // 60% ~ 80%
-      break;
-    default: // 기본값 (우측 하단)
-      randomLeft = `${Math.floor(Math.random() * 30) + 60}%`;
-      randomTop = `${Math.floor(Math.random() * 20) + 60}%`;
-  }
-  
+
+  // 중앙 위주 랜덤 위치
+  const { left, top } = getRandomCenterPosition();
+
   // 영상 데이터 변환
   const relatedVideos = cluster.related_videos?.map((video: any) => ({
     title: video.title,
@@ -55,11 +52,11 @@ export const transformClusterToImageData = (
     mood_keyword: cluster.mood_keyword || '',
     description: cluster.description || '',
     category: cluster.category?.toLowerCase() || 'other',
-    width: 200,
-    height: 200,
+    width: 800,
+    height: 800,
     rotate: randomRotate,
-    left: randomLeft,
-    top: randomTop,
+    left,
+    top,
     keywords: keywords.slice(0, 3),
     sizeWeight,
     relatedVideos: relatedVideos.slice(0, 5),
