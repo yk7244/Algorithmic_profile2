@@ -1,22 +1,142 @@
-'use client'; // 클라이언트 사이드 인터랙션이 필요하면 사용합니다.
+"use client";
 
-import React from 'react';
+import React from "react";
 
-// 페이지 컴포넌트에 전달될 props가 있다면 여기에 타입을 정의할 수 있습니다.
-// interface PageProps {
-//   // 예: params: { slug: string };
-//   // 예: searchParams: { [key: string]: string | string[] | undefined };
-// }
-
-// 실제 페이지 이름으로 함수 이름을 변경하세요. (예: UpdatePage, SearchMapPage)
-export default function MainPage() {
-  // 페이지 로직 (상태, 효과, 핸들러 등)을 여기에 추가합니다.
-
+export default function Home() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold">메인 페이지</h1>
-      <p>이곳은 애플리케이션의 메인 페이지입니다.</p>
-      {/* 필요하다면 다른 컴포넌트나 링크를 추가할 수 있습니다. */}
-    </div>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg, #232323 0%, #181818 100%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
+      {/* 흐릿한 원형 배경 */}
+      <div
+        style={{
+          position: "absolute",
+          top: "20%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 400,
+          height: 400,
+          background: "radial-gradient(circle, #6b6b6b55 0%, #23232300 80%)",
+          filter: "blur(20px)",
+          zIndex: 1,
+        }}
+      />
+
+      {/* 눈동자 */}
+      <div
+        style={{
+          position: "absolute",
+          top: "32%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          display: "flex",
+          gap: 32,
+          zIndex: 2,
+        }}
+      >
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            background: "radial-gradient(circle, #fff 70%, #000 100%)",
+            borderRadius: "50%",
+            boxShadow: "0 0 32px 8px #fff8",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              background: "#232323",
+              borderRadius: "50%",
+            }}
+          />
+        </div>
+        <div
+          style={{
+            width: 48,
+            height: 48,
+            background: "radial-gradient(circle, #fff 70%, #000 100%)",
+            borderRadius: "50%",
+            boxShadow: "0 0 32px 8px #fff8",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 16,
+              height: 16,
+              background: "#232323",
+              borderRadius: "50%",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 메인 컨텐츠 */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 3,
+          marginTop: 180,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <h1
+          style={{
+            color: "#fff",
+            fontSize: 32,
+            fontWeight: 700,
+            marginBottom: 16,
+            textAlign: "center",
+          }}
+        >
+          유튜브 알고리즘은 나를 어떻게 보고 있을까?
+        </h1>
+        <p
+          style={{
+            color: "#b0b0b0",
+            fontSize: 18,
+            marginBottom: 40,
+            textAlign: "center",
+            fontWeight: 400,
+          }}
+        >
+          <span style={{ color: "#fff", fontWeight: 600 }}>TubeLens</span>
+          로 나의 디지털 자아를 직접 확인하고, 알고리즘 경험을 재구성해보세요.
+        </p>
+        <button
+          style={{
+            background: "#fff",
+            color: "#181818",
+            fontWeight: 700,
+            fontSize: 20,
+            border: "none",
+            borderRadius: 32,
+            padding: "16px 40px",
+            cursor: "pointer",
+            boxShadow: "0 2px 16px 0 #0002",
+            transition: "background 0.2s",
+          }}
+        >
+          나의 튜브 렌즈 생성하기
+        </button>
+      </div>
+    </main>
   );
-}
+} 

@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState, useRef, DragEvent, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,8 @@ import { ko } from "date-fns/locale";
 import { OpenAILogger } from '../utils/init-logger';
 import { parseJSONWatchHistory } from '../utils/jsonParser';
 
-import { searchClusterImage_pinterest, PinterestImageData } from '@/lib/imageSearch';
+import { searchClusterImage_pinterest, PinterestImageData } from './GoogleImageSearch';
+import { buildImageSearchKeyword, processClusterData } from './ImageSearchKeyword';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -43,26 +43,16 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 //localstorage->watchHistory 에 배열로 들어감
-// type WatchHistoryItem = {
-//   title: string;
-//   videoId: string;
-//   keywords: string[];
-//   tags?: string[];
-//   timestamp?: string;
-//   url?: string;
-//   date?: any;  // any 타입으로 변경
-//   channelName?: string;  // 옵셔널로 변경
-// };
-
-interface WatchHistoryItem {
-  videoId: string;
+type WatchHistoryItem = {
   title: string;
-  channel?: string;
-  date: Date; // 실제 시청 시간
-  keywords?: string[];
+  videoId: string;
+  keywords: string[];
   tags?: string[];
-}
-
+  timestamp?: string;
+  url?: string;
+  date?: any;  // any 타입으로 변경
+  channelName?: string;  // 옵셔널로 변경
+};
 
 // 클러스터 타입 수정
 type Category = 
@@ -220,86 +210,6 @@ export default function Home() {
       migrateLocalStorageData();
     }
   }, []);
-
-const ensureProfileExists = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('ProfileData')
-    .select('id')
-    .eq('id', userId)
-    .single();
-
-  if (error && error.code === 'PGRST116') {
-    // 406: not found
-    const { error: insertError } = await supabase.from('ProfileData').insert({
-      id: userId,
-      nickname: '새 사용자',
-      description: '자동 생성된 프로필입니다'
-    });
-
-    if (insertError) {
-      throw new Error(`Profile 생성 실패: ${insertError.message}`);
-    }
-  } else if (error) {
-    throw new Error(`Profile 존재 확인 중 오류: ${error.message}`);
-  }
-};
-
-
- //워치 히스토리 저장 supabase 
-const uploadWatchHistoryToSupabase = async (watchHistory: {
-  videoId: string;
-  title: string;
-  description?: string;
-  channel: string;
-  tags: string[];
-  keywords: string[];
-  date: Date;
-  url?: string;
-}[]): Promise<void> => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData?.session;
-  if (!session) return;
-
-  const userId = session.user.id;
-
-  // ✅ ProfileData row가 없을 경우 자동 생성
-  await ensureProfileExists(userId);
-
-  // 중복 제거 (userId + videoId 기준)
-  const deduped = Array.from(
-    new Map(watchHistory.map(item => [`${userId}-${item.videoId}`, item])).values()
-  );
-
-  const uploadData = deduped.map((item) => ({
-    user_id: userId,
-    embed_id: item.videoId,
-    title: item.title,
-    description: item.description || null,
-    url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
-    channel_name: item.channel || 'Unknown Channel',
-    timestamp: item.date.getTime(),
-    keywords: item.keywords,
-    tags: item.tags,
-    is_watched: true,
-    watched_at: item.date.toISOString()
-  }));
-
-  const { error } = await supabase
-    .from("WatchHistoryItem")
-    .upsert(uploadData, {
-      onConflict: ['user_id', 'embed_id']
-    });
-
-  if (error) {
-    console.error('❌ Supabase 업로드 실패:', error);
-    alert('Supabase 업로드에 실패했습니다. 콘솔을 확인해주세요.');
-  } else {
-    console.log(`✅ Supabase에 ${uploadData.length}개 시청기록 업로드 성공!`);
-  }
-};
-
-
-
 
  
 
@@ -564,12 +474,6 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
         const clusters = await analyzeKeywordsWithOpenAI(savedHistory);
         localStorage.setItem('watchClusters', JSON.stringify(clusters));
 
-        await uploadWatchHistoryToSupabase(selectedVideos); // 또는 watchHistory
-
-// 성공 알림
-        alert(`${successCount}개의 시청기록이 처리되었고 Supabase에 업로드되었습니다.`);
-
-
         console.log('분석 완료:', {
           totalVideos: savedHistory.length,
           totalClusters: clusters.length,
@@ -598,7 +502,8 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
 
       const prompt = `
 당신은 YouTube 시청 기록을 분석해 사용자의 (1) 라이프스타일 (2) YouTube 시청과 관련된 취향과 관심사 (3) YouTube 시청의 목적과 그 가치추구 성향에 대해 깊이 있게 이해할 수 있는 전문가입니다.
-제공되는 YouTube 시청 기록 데이터를 분석하여 사용자의 관심사와 취향을 가장 잘 나타내는 의미 있는 그룹으로 분류하되 인스타그램의 hashtag처럼 함축적이고 직관적이게 만들어 주세요. 단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
+제공되는 YouTube 시청 기록 데이터를 분석하여 사용자의 관심사와 취향을 가장 잘 나타내는 의미 있는 그룹으로 분류하되 인스타그램의 hashtag처럼 함축적이고 직관적이게 만들어 주세요. 
+단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
 다음 영상의 정보를 분석하여 가장 적절한 키워드를 추출해주세요.
 
 [입력 정보]
@@ -923,11 +828,9 @@ CLUSTER_END`;
         parseJSONWatchHistory(file, dateRange, maxVideosPerDay, (current, total) => {
           setSuccessCount(current);
         })
-          .then(async (processedHistory) => {
+          .then(processedHistory => {
             setWatchHistory(processedHistory);
             localStorage.setItem('watchHistory', JSON.stringify(processedHistory));
-            
-            await uploadWatchHistoryToSupabase(processedHistory);
           })
           .catch(error => {
             setError(error.message);
@@ -985,7 +888,9 @@ CLUSTER_END`;
       console.log('클러스터 정보:', {
         main_keyword: cluster.main_keyword,
         category: cluster.category,
-        mood_keyword: cluster.mood_keyword
+        mood_keyword: cluster.mood_keyword,
+        description: cluster.description,
+        keyword_list: cluster.keyword_list
       });
 
       const imageAttemptKey = `imageAttempt_${cluster.main_keyword}`;
@@ -1254,7 +1159,6 @@ CLUSTER_END`;
     alert(`총 ${clusters.length}개의 클러스터 데이터가 다운로드되었습니다.`);
   };
 
-
   return (
     <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 py-40 relative overflow-hidden">
       {/* Animated background blobs */}
@@ -1330,7 +1234,7 @@ CLUSTER_END`;
                     '파일을 드래그하거나 클릭하여 업로드'
                   )}
                 </p>
-              </div>
+    </div>
             </div>
           </div>
 
@@ -1643,7 +1547,7 @@ CLUSTER_END`;
                                 onClick={async () => {
                                   try {
                                     const keyword = cluster.main_keyword;
-                                    console.log('Pinterest 이미지 검색 시작:', keyword);
+                                    console.log('Pinterest 이미지 검색 시작:', cluster);
                                     
                                     // 캐시 초기화
                                     const imageAttemptKey = `imageAttempt_pinterest_${keyword}`;
@@ -1659,8 +1563,9 @@ CLUSTER_END`;
                                       return newImages;
                                     });
 
+
                                     // Pinterest 이미지 검색 호출
-                                    const pinterestResults = await searchClusterImage_pinterest(keyword, 1); 
+                                    const pinterestResults = await searchClusterImage_pinterest(cluster, 1); 
                                     console.log('검색된 Pinterest 이미지:', pinterestResults);
 
                                     if (pinterestResults && pinterestResults.length > 0 && pinterestResults[0].thumbnailLink) {
@@ -1674,9 +1579,9 @@ CLUSTER_END`;
                                         return newImages;
                                       });
                                        // localStorage에도 url만 저장
-                                       const updatedSavedImages = { ...currentSavedImages, [keyword]: newImage };
-                                       localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
-                                       localStorage.setItem(imageAttemptKey, 'success'); // 성공 기록
+                                      const updatedSavedImages = { ...currentSavedImages, [keyword]: newImage };
+                                      localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
+                                      localStorage.setItem(imageAttemptKey, 'success'); // 성공 기록
                                     } else {
                                       console.log('Pinterest 이미지를 찾지 못했거나 썸네일 링크가 없습니다.');
                                       // 이미지를 찾지 못한 경우, 올바른 경로의 default_image URL 사용
