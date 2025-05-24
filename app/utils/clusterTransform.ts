@@ -69,3 +69,44 @@ export const transformClusterToImageData = (
     desired_self_profile: null
   };
 }; 
+
+//localstorage->watchClusters 에 배열로 들어감
+type Cluster = {
+  id?: number;
+  user_id?: string;
+
+  main_keyword: string;
+  sub_keyword: string;
+  mood_keyword: string;
+  description: string;
+  category: Category;  // 카테고리 필드 추가
+  
+  rotation?: string;
+  keyword_list: string;
+  strength: number;
+  video_links: string;
+  created_at: string;
+  desired_self: boolean;
+
+  main_image_url?: string;
+  metadata: any;
+};
+
+// 클러스터 타입 수정
+type Category = 
+  | "영화/애니메이션"
+  | "자동차"
+  | "음악"
+  | "동물"
+  | "스포츠"
+  | "여행/이벤트"
+  | "게임"
+  | "사람/블로그"
+  | "코미디"
+  | "엔터테인먼트"
+  | "뉴스/정치"
+  | "노하우/스타일"
+  | "교육"
+  | "과학/기술"
+  | "비영리 활동";
+

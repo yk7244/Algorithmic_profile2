@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { OpenAILogger } from './init-logger';
+import { OpenAILogger } from '../../utils/init-logger';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -7,7 +7,7 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
-// 키워드 추출 함수
+// STEP1-2.키워드 추출 함수
 const extractVideoKeywords = async (videoInfo: any) => {
   try {
     console.log('Starting keyword extraction for video:', {
@@ -102,13 +102,13 @@ const extractVideoKeywords = async (videoInfo: any) => {
   }
 };
 
-// 비디오 정보 가져오기 함수
+// STEP1.비디오 정보 가져오기 함수 -> STEP1-2키워드 추출 함수호출 
 export async function fetchVideoInfo(videoId: string): Promise<boolean> {
   try {
     console.log('Fetching video info for:', videoId);
     
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${process.env.NEXT_PUBLIC_YOUTUBE_API_KEY}`
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
     );
     
     if (!response.ok) {
@@ -188,16 +188,3 @@ export async function fetchVideoInfo(videoId: string): Promise<boolean> {
     throw error;
   }
 }
-
-function extractKeywords(text: string): string[] {
-  // Remove special characters and convert to lowercase
-  const cleanText = text.replace(/[^\w\s]/g, '').toLowerCase();
-  
-  // Split into words and remove common words
-  const words = cleanText.split(/\s+/);
-  const commonWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by']);
-  
-  return words
-    .filter(word => word.length > 2 && !commonWords.has(word))
-    .map(word => word.trim());
-} 
