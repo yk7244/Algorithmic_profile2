@@ -79,14 +79,6 @@ type HistoryData = {
   images: ImageData[];
 };
 
-type UnsplashImage = {
-  id: string;
-  urls: {
-    regular: string;
-  };
-  alt_description: string;
-};
-
 type DraggableImageProps = {
   image: ImageData;
   position?: Position;
