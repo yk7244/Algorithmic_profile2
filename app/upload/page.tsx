@@ -654,29 +654,19 @@ export default function Home() {
 
             <div className="mt-6">
               <h3 className="text-lg font-medium mb-4">최근 분석된 영상</h3>
-              <div className="space-y-3">
-                {watchHistory
-                  .sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()) // 최신순 정렬
-                  .slice(0, 5)
-                  .map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4">
-                      <a 
-                        href={item.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="font-medium hover:text-blue-600"
-                      >
-                        {item.title}
-                      </a>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {item.keywords?.map((keyword: string, kidx: number) => (
-                          <span key={kidx} className="px-2 py-1 bg-blue-100 rounded-full text-sm">
-                            {keyword}
-                          </span>
-                        ))}
-                      </div>
+              <div className="max-h-[500px] overflow-y-auto border p-4 rounded">
+                {watchHistory.map((item, idx) => (
+                  <div key={idx} className="mb-4">
+                    <div className="font-bold">{item.title}</div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {item.keywords?.map((kw: any, kidx: number) => (
+                        <span key={kidx} className="px-2 py-1 bg-blue-100 rounded-full text-sm">
+                          {kw}
+                        </span>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
             <div className="flex justify-center gap-4 mt-8">

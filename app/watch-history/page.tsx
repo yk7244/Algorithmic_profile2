@@ -64,7 +64,7 @@ export default function WatchHistoryPage() {
             background: "linear-gradient(90deg, #cfd4f7 0%, #6d7cf7 100%)"
           }}
         >
-          <Link href="/update">
+          <Link href="/upload"> 
             <button
               className="bg-white text-black font-semibold rounded-full px-6 py-2 shadow-lg text-sm hover:bg-gray-100 transition"
               style={{ minWidth: 120 }}
