@@ -153,6 +153,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     }}
                     onError={(e) => {
                         const target = e.target as HTMLImageElement;
+                        if (target.src.includes('placeholder')) return;
                         console.error('이미지 로드 실패:', target.src);
                         target.src = '/images/placeholder.jpg';
                     }}
