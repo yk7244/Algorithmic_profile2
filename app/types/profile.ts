@@ -1,18 +1,20 @@
 export interface ImageData {
   id: string;
+  user_id?: string; // 유저 아이디
   src: string;
   main_keyword: string;
-  sub_keyword: string;
   mood_keyword: string;
+  keywords: string[];
   description: string;
   category: string;
+
   width: number;
   height: number;
   rotate: number;
   left: string;
   top: string;
-  keywords: string[];
   sizeWeight: number;
+  
   relatedVideos: {
     title: string;
     embedId: string;

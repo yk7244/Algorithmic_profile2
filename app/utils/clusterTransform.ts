@@ -48,7 +48,6 @@ export const transformClusterToImageData = (
     id: String(index + 1),
     src: imageUrl,
     main_keyword: cluster.main_keyword,
-    sub_keyword: cluster.sub_keyword || '',
     mood_keyword: cluster.mood_keyword || '',
     description: cluster.description || '',
     category: cluster.category?.toLowerCase() || 'other',
@@ -57,7 +56,7 @@ export const transformClusterToImageData = (
     rotate: randomRotate,
     left,
     top,
-    keywords: keywords.slice(0, 3),
+    keywords: keywords.slice(0, 5),
     sizeWeight,
     relatedVideos: relatedVideos.slice(0, 5),
     created_at: cluster.created_at || new Date().toISOString(),
@@ -73,7 +72,6 @@ type Cluster = {
   user_id?: string;
 
   main_keyword: string;
-  sub_keyword: string;
   mood_keyword: string;
   description: string;
   category: Category;  // 카테고리 필드 추가
