@@ -16,13 +16,14 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import ko from "date-fns/locale/ko";
 import { OpenAILogger } from '../utils/init-logger';
 import { parseJSONWatchHistory } from '../utils/jsonParser';
 import { prepareWatchHistoryItems } from '../utils/prepareWatchHistoryItems';
 
 import { searchClusterImage_pinterest, PinterestImageData } from '@/lib/imageSearch';
-import {fetchClusterHistoryFromSupabase, saveClustersToSupabase} from '@/lib/supabase/cluster'
+import {fetchClusterHistoryFromSupabase, saveClustersToSupabase, fetchSingleClusterSetWithVideos} from '@/lib/supabase/cluster'
+import { LocalCluster } from '@/lib/supabase/cluster';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -134,6 +135,12 @@ type VisionLabel = {
 const NAVER_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_CLIENT_ID;
 const NAVER_CLIENT_SECRET = process.env.NEXT_PUBLIC_NAVER_CLIENT_SECRET;
 
+// Postgres array literal 변환 함수 추가
+function toPgArray(arr: string[]): string {
+  if (!Array.isArray(arr)) return '{}';
+  return `{${arr.map(s => '"' + s.replace(/"/g, '\"') + '"').join(',')}}`;
+}
+
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,11 +153,11 @@ export default function Home() {
   // clusterImages state 타입 수정
   const [clusterImages, setClusterImages] = useState<Record<number, ClusterImage | null>>({});
   const [successCount, setSuccessCount] = useState(0);
-  const [analysisHistory, setAnalysisHistory] = useState<{
-    id: string;
-    date: string;
-    clusters: any[];
-  }[]>([]);
+  // 타입 선언 수정
+  // 기존: const [analysisHistory, setAnalysisHistory] = useState<{ id: string; date: string; clusters: any[]; }[]>([]);
+  // 변경:
+  type AnalysisHistoryItem = LocalCluster | { id: string; date: string; clusters: any[] };
+  const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistoryItem[]>([]);
   const [showVisionResults, setShowVisionResults] = useState(false);
   // visionSearchResults state 타입 수정 및 초기화
   const [visionSearchResults, setVisionSearchResults] = useState<{
@@ -168,6 +175,8 @@ export default function Home() {
     from: undefined,
     to: undefined,
   });
+  // 클러스터링 상태 추가
+  const [isClustering, setIsClustering] = useState(false);
 
   // useEffect 추가
   useEffect(() => {
@@ -283,8 +292,8 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
     channel_name: item.channel || 'Unknown Channel',
     channel_id: item.channelId || null,
     timestamp: item.date.getTime(),
-    keywords: item.keywords,
-    tags: item.tags,
+    keywords: toPgArray(item.keywords || []),
+    tags: toPgArray(item.tags || []),
     is_watched: true,
     watched_at: item.date.toISOString()
   }));
@@ -292,9 +301,7 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
   // ✅ 4. WatchHistoryItem 테이블에 업로드
   const { error: historyError } = await supabase
     .from("WatchHistoryItem")
-    .upsert(uploadData, {
-      onConflict: ['user_id', 'embed_id']
-    });
+    .upsert(uploadData);
 
   if (historyError) {
     console.error('❌ WatchHistoryItem 업로드 실패:', historyError);
@@ -302,7 +309,7 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
     return;
   }
 
-  // ✅ 5. videos 테이블에 업로드 데이터 준비
+  // ✅ 5. videos 테이블에 업로드 데이터 준비 (WatchHistoryItem과 동일한 데이터 사용)
   const videoData = deduped.map((item) => ({
     id: item.videoId,
     title: item.title,
@@ -310,22 +317,19 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
     url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
     channel_id: item.channelId || null,
     channel_name: item.channel || 'Unknown Channel',
-    tags: Array.isArray(item.tags) ? item.tags : [],
-    keywords: Array.isArray(item.keywords) ? item.keywords : [],
-    thumbnail_url: item.thumbnailUrl || null, // optional if available
-    view_count: item.viewCount ?? 0,
-    like_count: item.likeCount ?? 0,
-    comment_count: item.commentCount ?? 0,
-    last_fetched_at: new Date().toISOString() // ✅ 꼭 포함
+    tags: toPgArray(item.tags || []),
+    keywords: toPgArray(item.keywords || []),
+    thumbnail_url: (item as any).thumbnailUrl || null,
+    view_count: (item as any).viewCount ?? 0,
+    like_count: (item as any).likeCount ?? 0,
+    comment_count: (item as any).commentCount ?? 0,
+    last_fetched_at: new Date().toISOString()
   }));
-
 
   // ✅ 6. videos 테이블에 업로드 (id 기준 중복 방지)
   const { error: videosError } = await supabase
     .from("videos")
-    .upsert(videoData, {
-      onConflict: ['id']
-    });
+    .upsert(videoData);
 
   if (videosError) {
     console.error('❌ videos 업로드 실패:', videosError);
@@ -364,8 +368,8 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
       url: `https://www.youtube.com/watch?v=${videoId}`,
       channel_id: snippet.channelId || null,
       channel_name: snippet.channelTitle || 'Unknown Channel',
-      tags: Array.isArray(snippet.tags) ? snippet.tags : [],
-      keywords: extractedKeywords,
+      tags: toPgArray(Array.isArray(snippet.tags) ? snippet.tags : []),
+      keywords: toPgArray(extractedKeywords),
       thumbnail_url: snippet.thumbnails?.default?.url || null,
       view_count: Number(statistics.viewCount ?? 0),
       like_count: Number(statistics.likeCount ?? 0),
@@ -712,7 +716,7 @@ ${topKeywords.map(keyword =>
 ${topKeywords.map(keyword => `${keyword} (${allKeywordFrequencies[keyword]}회)`).join('\n')}
 
 요구사항:
-1. 클러스터 수는 최소 5개 이상이어야 합니다. 5개의 클러스터를 만들고 거기에 관련 영상을 포함해 주세요.
+1. 클러스터 수는 반드시 5개 이상이어야 합니다. 5개의 클러스터를 만들고 거기에 관련 영상을 포함해 주세요.
 2. 모든 영상이 최소 하나의 그룹에 포함되어야 합니다.
 3. 각 그룹은 최소 3개 이상의 연관된 영상을 포함해야 합니다.
 4. 하나의 영상이 여러 그룹에 포함될 수 있습니다.
@@ -765,8 +769,6 @@ CLUSTER_END`;
         .map(cluster => {
           const clusterText = cluster.split('CLUSTER_END')[0].trim();
           const lines = clusterText.split('\n');
-          
-          // 각 라인에서 키와 값을 정확히 추출
           const parsedData = lines.reduce((acc: any, line) => {
             const [key, value] = line.split(': ').map(s => s.trim());
             const keyMap: { [key: string]: string } = {
@@ -782,18 +784,13 @@ CLUSTER_END`;
             }
             return acc;
           }, {});
-
-          // 연관 키워드 문자열을 배열로 변환
           const relatedKeywords = parsedData.keywords ? 
             parsedData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean) : 
             [];
-
-          // 클러스터에 속한 영상 찾기
           const relatedVideos = watchHistory.filter(item => 
             item.keywords && Array.isArray(item.keywords) && 
             item.keywords.some(k => relatedKeywords.includes(k))
           );
-
           return {
             main_keyword: parsedData.main_keyword || '',
             category: parsedData.category || '기타',
@@ -806,11 +803,11 @@ CLUSTER_END`;
               keywordCount: relatedKeywords.length,
               videoCount: relatedVideos.length,
               moodKeywords: (parsedData.mood_keyword || '').split(',').map((k: string) => k.trim()).filter(Boolean)
-            }
+            },
+            video_cluster_assignments: [] // 항상 빈 배열로 추가
           };
         })
-        .filter(cluster => cluster.related_videos && cluster.related_videos.length >= 3);
-
+        // .filter(cluster => cluster.related_videos && cluster.related_videos.length >= 3); // 필터 제거
       console.log('Analysis completed:', {
         totalClusters: clusters.length,
         clusters: clusters.map(c => ({
@@ -818,7 +815,6 @@ CLUSTER_END`;
           videoCount: c.related_videos.length
         }))
       });
-
       return clusters;
     } catch (error) {
       console.error('Error in analyzeKeywordsWithOpenAI:', error);
@@ -829,97 +825,102 @@ CLUSTER_END`;
 
   // STEP2-1>> 클러스터링 버튼 핸들러
   const handleCluster = async () => {
+    setIsClustering(true);
     try {
       setIsLoading(true);
-
       // 1. 키워드 클러스터 분석
       const newClusters = await analyzeKeywordsWithOpenAI(watchHistory);
-
-      // 2. Supabase 세션 및 저장
+      // 2. 클러스터 데이터 포맷 변환 및 이미지 자동 저장
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
-      if (userId) {
-        await saveClustersToSupabase(userId, newClusters);
+      const formattedClusters = [];
+      for (const cluster of newClusters) {
+        let main_image_url = '';
+        if (userId && cluster.main_keyword) {
+          // Pinterest 이미지 검색
+          const pinterestResults = await searchClusterImage_pinterest(cluster.main_keyword, 1);
+          const pinterestImageUrl = pinterestResults?.[0]?.thumbnailLink;
+          if (pinterestImageUrl) {
+            // Supabase Storage에 업로드
+            const res = await fetch('/api/save-cluster-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageUrl: pinterestImageUrl, clusterName: cluster.main_keyword, userId }),
+            });
+            const { publicUrl } = await res.json();
+            main_image_url = publicUrl;
+          }
+        }
+        formattedClusters.push({
+          main_keyword: cluster.main_keyword,
+          sub_keyword: cluster.main_keyword,
+          mood_keyword: cluster.mood_keyword,
+          description: cluster.description,
+          category: cluster.category,
+          keyword_list: cluster.keyword_list,
+          strength: cluster.strength,
+          related_videos: cluster.related_videos,
+          created_at: new Date().toISOString(),
+          desired_self: false,
+          metadata: cluster.metadata,
+          main_image_url,
+        });
       }
-
-      // 3. 분석 히스토리 저장 (localStorage)
+      // 3. Supabase에 저장할 데이터 준비 (타입 변환 및 undefined 방지)
+      if (userId) {
+        const clustersToSave = formattedClusters.map((cluster: any) => ({
+          user_id: userId,
+          main_keyword: String(cluster.main_keyword ?? ''),
+          sub_keyword: String(cluster.sub_keyword ?? ''),
+          mood_keyword: String(cluster.mood_keyword ?? ''),
+          description: String(cluster.description ?? ''),
+          category: (() => { try { const v = toPgArray(Array.isArray(cluster.category) ? cluster.category : String(cluster.category ?? '').split(',')); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
+          keywords: (() => { try { const v = toPgArray(Array.isArray(cluster.keyword_list) ? cluster.keyword_list : String(cluster.keyword_list ?? '').split(',')); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
+          strength: Number(cluster.strength ?? 0),
+          video_links: (() => { try { const v = toPgArray(Array.isArray(cluster.related_videos) ? cluster.related_videos.map((v: any) => v.url) : (typeof cluster.video_links === 'string' ? cluster.video_links.split(',') : [])); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
+          created_at: cluster.created_at ?? new Date().toISOString(),
+          desired_self: !!cluster.desired_self,
+          metadata: JSON.stringify(cluster.metadata ?? {}),
+          main_image_url: cluster.main_image_url || '',
+        }));
+        const { error } = await supabase.from('clusters').insert(clustersToSave);
+        if (error) {
+          console.error('❌ clusters 저장 실패:', error);
+          alert('클러스터 저장에 실패했습니다. 콘솔을 확인해주세요.');
+        }
+      }
+      // 4. 분석 히스토리 저장 (localStorage)
       const newAnalysis = {
         id: new Date().getTime().toString(),
-        date: new Date().toLocaleString(),
-        clusters: newClusters
+        date: new Date().toISOString(),
+        clusters: formattedClusters
       };
       const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
       const updatedAnalyses = [...savedAnalyses, newAnalysis];
       localStorage.setItem('analysisHistory', JSON.stringify(updatedAnalyses));
       setAnalysisHistory(updatedAnalyses);
-
-      // 4. 클러스터 상태 반영
-      setClusters(newClusters);
-
-      // 5. 클러스터 이미지 검색 및 저장
+      // 5. 클러스터 상태 반영
+      setClusters(formattedClusters);
+      // 6. 클러스터 이미지 검색 및 저장 (이제 main_image_url 사용)
       const clusterImagesData: Record<number, any> = {};
-      for (let i = 0; i < newClusters.length; i++) {
-        const image = await searchClusterImage(newClusters[i], true);
-        clusterImagesData[i] = image;
+      for (let i = 0; i < formattedClusters.length; i++) {
+        const imageUrl = formattedClusters[i].main_image_url || placeholderImage;
+        clusterImagesData[i] = { url: imageUrl };
       }
-
-      const profileImages = newClusters.map((cluster: any, index: number) => {
+      const profileImages = formattedClusters.map((cluster: any, index: number) => {
         const imageUrl = clusterImagesData[index]?.url || placeholderImage;
         return transformClusterToImageData(cluster, index, imageUrl);
       });
-
       localStorage.setItem('profileImages', JSON.stringify(profileImages));
-
       setShowAnalysis(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error('클러스터링 실패:', error);
       setError('클러스터링 중 오류가 발생했습니다.');
     } finally {
+      setIsClustering(false);
       setIsLoading(false);
     }
   };
-const loadPreviousClusters = async () => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const userId = sessionData?.session?.user?.id;
-
-  if (!userId) {
-    console.warn('유저 세션 없음');
-    return;
-  }
-
-  try {
-    const history = await fetchClusterHistoryFromSupabase(userId);
-
-    if (history.length > 0) {
-      const latest = history[0]; // 가장 최근 분석
-
-      // 클러스터 포맷 통일 (Supabase → local format)
-      const convertedClusters = latest.video_cluster_assignments.map((assign: any) => ({
-        videoId: assign.video_id,
-        label: assign.label,
-        distance: assign.distance,
-      }));
-
-      const clusterObj = {
-        id: latest.id,
-        main_keyword: latest.main_keyword,
-        category: latest.category,
-        mood_keyword: latest.mood_keyword,
-        description: latest.description,
-        keywords: latest.keyword_list?.split(',') || [],
-        related_videos: convertedClusters
-      };
-
-      setClusters([clusterObj]);
-      setShowAnalysis(true);
-      console.log('✅ Supabase 클러스터 로드 완료');
-    } else {
-      console.log('❕ 불러올 클러스터 기록 없음');
-    }
-  } catch (e) {
-    console.error('❌ 클러스터 불러오기 실패:', e);
-  }
-};
 
   // 파일 업로드 핸들러
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -930,21 +931,27 @@ const loadPreviousClusters = async () => {
       setSuccessCount(0); // Reset success count
       
       if (file.name.endsWith('.json')) {
-        parseJSONWatchHistory(file, dateRange, maxVideosPerDay, (current, total) => {
+        parseJSONWatchHistory(file, dateRange, maxVideosPerDay, (current: number, total: number) => {
           setSuccessCount(current);
         })
-          .then(async (processedHistory) => {
+          .then(async (processedHistory: any[]) => {
             setWatchHistory(processedHistory);
             localStorage.setItem('watchHistory', JSON.stringify(processedHistory));
             
             await uploadWatchHistoryToSupabase(processedHistory);
+            // 자동으로 클러스터링 실행
+            await handleCluster();
           })
-          .catch(error => {
+          .catch((error: any) => {
             setError(error.message);
           })
           .finally(() => setIsLoading(false));
       } else if (file.name.endsWith('.html')) {
         parseWatchHistory(file)
+          .then(async () => {
+            // HTML 파싱 후 자동으로 클러스터링 실행
+            await handleCluster();
+          })
           .finally(() => setIsLoading(false));
       } else {
         setError('지원하지 않는 파일 형식입니다. .json 또는 .html 파일을 업로드해주세요.');
@@ -1278,6 +1285,13 @@ const loadPreviousClusters = async () => {
     alert(`총 ${clusters.length}개의 클러스터 데이터가 다운로드되었습니다.`);
   };
 
+  // 유틸리티: 안전하게 날짜 포맷팅
+  function safeFormatDate(dateString: string | undefined): string {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? '-' : date.toLocaleDateString();
+  }
+
   return (
     <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 py-40 relative overflow-hidden">
       {/* Animated background blobs */}
@@ -1565,8 +1579,18 @@ const loadPreviousClusters = async () => {
                       onClick={async () => {
                         setIsLoading(true);
                         try {
-                          const clustersFromDB = await fetchSingleClusterSetWithVideos(clusterSet); // 아래 참고
-                          setClusters(clustersFromDB);
+                          let clustersToSet: any[] = [];
+                          if ('clusters' in clusterSet) {
+                            // localStorage에서 온 분석 기록
+                            clustersToSet = clusterSet.clusters;
+                          } else {
+                            // Supabase에서 온 분석 기록
+                            clustersToSet = await fetchSingleClusterSetWithVideos({
+                              ...clusterSet,
+                              video_cluster_assignments: (clusterSet as any).video_cluster_assignments || []
+                            });
+                          }
+                          setClusters(clustersToSet);
                           setShowAnalysis(true);
                         } catch (e) {
                           console.error('클러스터 불러오기 실패:', e);
@@ -1577,7 +1601,7 @@ const loadPreviousClusters = async () => {
                       variant="outline"
                       className="hover:bg-blue-50"
                     >
-                      분석 {index + 1} ({new Date(clusterSet.created_at).toLocaleDateString()})
+                      분석 {index + 1} ({safeFormatDate('created_at' in clusterSet ? clusterSet.created_at : clusterSet.date)})
                     </Button>
                   ))}
                 </div>

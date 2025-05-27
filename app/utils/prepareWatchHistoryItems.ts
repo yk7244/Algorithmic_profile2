@@ -30,12 +30,16 @@ export const prepareWatchHistoryItems = async (
     const needFetch = !cachedSet.has(item.videoId);
     const enriched = needFetch ? await fetchVideoMetadata(item.videoId) : undefined;
 
+    if (needFetch && !enriched) {
+      console.warn('❌ YouTube API에서 메타데이터를 받아오지 못함:', item.videoId, item.title);
+    }
+
     return {
         videoId: item.videoId,
         title: enriched?.title || item.title,
         description: enriched?.description || '',
         channel: enriched?.channel || 'Unknown Channel',
-        channelId: enriched?.channelId || undefined,
+        channelId: enriched && typeof (enriched as any).channelId === 'string' ? (enriched as any).channelId : undefined,
         tags: enriched?.tags || [],
         keywords: enriched?.keywords || [],
         url: enriched?.url || `https://www.youtube.com/watch?v=${item.videoId}`,

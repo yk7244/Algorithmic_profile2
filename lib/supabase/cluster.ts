@@ -1,6 +1,23 @@
 import supabase from '@/lib/supabase';
 
-export const saveClustersToSupabase = async (userId: string, clusters: any[]) => {
+export interface LocalCluster {
+  id?: number;
+  main_keyword: string;
+  sub_keyword: string;
+  mood_keyword: string;
+  description: string;
+  category: string;
+  rotation?: string;
+  keyword_list: string;
+  strength: number;
+  video_links: string;
+  created_at: string;
+  desired_self: boolean;
+  main_image_url?: string;
+  metadata: any;
+}
+
+export const saveClustersToSupabase = async (userId: string, clusters: LocalCluster[]) => {
   try {
     for (const cluster of clusters) {
       const { data: clusterData, error: clusterError } = await supabase
@@ -8,10 +25,16 @@ export const saveClustersToSupabase = async (userId: string, clusters: any[]) =>
         .insert({
           user_id: userId,
           main_keyword: cluster.main_keyword,
+          sub_keyword: cluster.sub_keyword,
           category: cluster.category,
           description: cluster.description,
           mood_keyword: cluster.mood_keyword,
-          keyword_list: cluster.keywords?.join(',') || '',
+          keywords: cluster.keyword_list,
+          strength: cluster.strength,
+          video_links: cluster.video_links,
+          desired_self: cluster.desired_self,
+          main_image_url: cluster.main_image_url,
+          metadata: cluster.metadata
         })
         .select()
         .single();
@@ -21,11 +44,13 @@ export const saveClustersToSupabase = async (userId: string, clusters: any[]) =>
         continue;
       }
 
-      const assignments = cluster.related_videos.map((video: any) => ({
+      // 비디오 링크를 파싱하여 video_cluster_assignments 테이블에 저장
+      const videoIds = cluster.video_links.split(',').map(link => link.trim());
+      const assignments = videoIds.map(videoId => ({
         cluster_id: clusterData.id,
-        video_id: video.videoId,
-        label: video.label ?? null,
-        distance: video.distance ?? null,
+        video_id: videoId,
+        label: cluster.main_keyword,
+        distance: cluster.strength
       }));
 
       const { error: assignmentError } = await supabase
@@ -43,18 +68,24 @@ export const saveClustersToSupabase = async (userId: string, clusters: any[]) =>
   }
 };
 
-export const fetchClusterHistoryFromSupabase = async (userId: string) => {
+export const fetchClusterHistoryFromSupabase = async (userId: string): Promise<LocalCluster[]> => {
   const { data, error } = await supabase
     .from('clusters')
     .select(`
       id,
       user_id,
       main_keyword,
+      sub_keyword,
       category,
       description,
       mood_keyword,
-      keyword_list,
+      keywords,
+      strength,
+      video_links,
       created_at,
+      desired_self,
+      main_image_url,
+      metadata,
       video_cluster_assignments (
         video_id,
         label,
@@ -69,7 +100,21 @@ export const fetchClusterHistoryFromSupabase = async (userId: string) => {
     return [];
   }
 
-  return data;
+  return data.map(cluster => ({
+    id: cluster.id,
+    main_keyword: cluster.main_keyword,
+    sub_keyword: cluster.sub_keyword,
+    category: cluster.category,
+    description: cluster.description,
+    mood_keyword: cluster.mood_keyword,
+    keyword_list: cluster.keywords,
+    strength: cluster.strength,
+    video_links: cluster.video_links,
+    created_at: cluster.created_at,
+    desired_self: cluster.desired_self,
+    main_image_url: cluster.main_image_url,
+    metadata: cluster.metadata
+  }));
 };
 
 export const fetchSingleClusterSetWithVideos = async (clusterRecord: any) => {

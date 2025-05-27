@@ -1093,25 +1093,7 @@ export default function MyProfilePage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3E이미지를 찾을 수 없습니다%3C/text%3E%3C/svg%3E";
 
-  const [images, setImages] = useState<ImageData[]>(() => {
-    // localStorage에서 profileImages 불러오기
-    if (typeof window !== 'undefined') {
-      const savedProfileImages = localStorage.getItem('profileImages');
-      if (savedProfileImages) {
-        console.log('로드된 프로필 이미지:', savedProfileImages); // 디버깅용 로그
-        const parsedImages = JSON.parse(savedProfileImages) as ImportedImageData[];
-        return parsedImages.map(img => ({
-          ...img,
-          src: img.src || placeholderImage,
-          color: img.color || 'gray',
-          desired_self_profile: img.desired_self_profile || null
-        }));
-      }
-    }
-    // 저장된 데이터가 없을 경우 빈 배열 반환
-    console.log('프로필 이미지를 찾을 수 없습니다.'); // 디버깅용 로그
-    return [];
-  });
+  const [images, setImages] = useState<ImageData[]>([]);
   const [visibleImageIds, setVisibleImageIds] = useState<Set<string>>(new Set());
 
   const [profile, setProfile] = useState({
@@ -1618,6 +1600,44 @@ ${imageData.map((image: any, index: number) => `
     // 페이지 로드 시 자동으로 별명 생성
     generateUserProfile();
   }, []); // 빈 의존성 배열로 컴포넌트 마운트 시 한 번만 실행
+
+  useEffect(() => {
+    const fetchClusters = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) return;
+      const { data, error } = await supabase
+        .from('clusters')
+        .select('id, main_keyword, sub_keyword, mood_keyword, description, category, keyword_list, strength, related_videos, created_at, desired_self, metadata, main_image_url')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (data) {
+        setImages(data.map((cluster: any, idx: number) => ({
+          id: String(cluster.id ?? idx + 1),
+          src: cluster.main_image_url || placeholderImage,
+          main_keyword: cluster.main_keyword,
+          sub_keyword: cluster.sub_keyword,
+          mood_keyword: cluster.mood_keyword,
+          description: cluster.description,
+          category: cluster.category,
+          width: 200,
+          height: 200,
+          rotate: 0,
+          left: '50%',
+          top: '50%',
+          keywords: (cluster.keyword_list || '').split(',').map((k: string) => k.trim()),
+          sizeWeight: 0.15,
+          relatedVideos: Array.isArray(cluster.related_videos) ? cluster.related_videos : [],
+          created_at: cluster.created_at,
+          desired_self: cluster.desired_self,
+          metadata: cluster.metadata || {},
+          desired_self_profile: null,
+          color: 'gray',
+        })));
+      }
+    };
+    fetchClusters();
+  }, []);
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>

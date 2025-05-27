@@ -23,11 +23,23 @@ const supabase = createClient(
 const extractVideoIdFromUrl = (url?: string): string | null => {
   if (!url) return null;
   try {
+    // 1. v= 파라미터
     const parsed = new URL(url);
-    const videoId = parsed.searchParams.get('v');
-    if (videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId)) {
-      return videoId;
-    }
+    const v = parsed.searchParams.get('v');
+    if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+
+    // 2. youtu.be/xxxx
+    const matchShort = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+    if (matchShort) return matchShort[1];
+
+    // 3. /shorts/xxxx
+    const matchShorts = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
+    if (matchShorts) return matchShorts[1];
+
+    // 4. /embed/xxxx
+    const matchEmbed = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
+    if (matchEmbed) return matchEmbed[1];
+
     return null;
   } catch {
     return null;
@@ -74,9 +86,11 @@ export const parseJSONWatchHistory = async (
           return null;
         }
 
-        if (!item.title || !item.timestamp) return null;
+        // time → timestamp 보정
+        const timestamp = item.timestamp || item.time;
+        if (!item.title || !timestamp) return null;
 
-        const date = new Date(item.timestamp);
+        const date = new Date(timestamp);
         if (isNaN(date.getTime())) return null;
 
         return {
@@ -85,7 +99,7 @@ export const parseJSONWatchHistory = async (
           tags: item.tags || [],
           keywords: item.keywords || [],
           date,
-          timestamp: item.timestamp,
+          timestamp,
         };
       })
       .filter((item): item is ProcessedWatchHistoryItem => item !== null);
