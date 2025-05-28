@@ -95,7 +95,7 @@ export const parseJSONWatchHistory = async (
 
         return {
           videoId,
-          title: item.title,
+          title: item.title.replace(/^Watched\s+/, '').replace(/\s+을\(를\) 시청했습니다\.$/, '').trim(),
           tags: item.tags || [],
           keywords: item.keywords || [],
           date,

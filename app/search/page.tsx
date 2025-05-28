@@ -4,14 +4,19 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
-import { dummyProfiles, ProfileData } from '../data/dummyProfiles';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchResults, setSearchResults] = useState<ProfileData[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   useEffect(() => {
     // URL에서 키워드 파라미터 가져오기
@@ -27,40 +32,33 @@ export default function SearchPage() {
     }
   }, [searchParams]);
 
-  // 검색 로직 수정 - 필터링 없이 모든 프로필 표시
   const performSearch = async (searchKeywords: string[]) => {
     setIsLoading(true);
     try {
-      // 필터링 로직 주석 처리하고 모든 더미 프로필 표시
-      setTimeout(() => {
-        // 모든 더미 프로필을 결과로 설정
-        setSearchResults(dummyProfiles);
-        setIsLoading(false);
-      }, 1500); // 로딩 효과를 위해 지연 시간 유지
-      
-      /* 원래 필터링 로직 (주석 처리)
-      setTimeout(() => {
-        // 키워드와 일치하는 프로필 찾기
-        const results = dummyProfiles.filter(profile => {
-          // 프로필의 모든 이미지에서 키워드 추출
-          const profileKeywords = profile.images.flatMap(img => 
-            [img.main_keyword, ...img.keywords]
-          );
-          
-          // 검색 키워드 중 하나라도 프로필 키워드에 포함되면 결과에 추가
-          return searchKeywords.some(keyword => 
-            profileKeywords.some(profileKeyword => 
-              profileKeyword.toLowerCase().includes(keyword.toLowerCase())
-            )
-          );
-        });
-        
-        setSearchResults(results);
-        setIsLoading(false);
-      }, 1500);
-      */
+      // 1. 모든 moodboard_profiles 불러오기
+      const { data: profiles, error } = await supabase
+        .from('moodboard_profiles')
+        .select('user_id, nickname, description, images');
+
+      if (error) throw error;
+
+      // 2. 키워드 필터링
+      const results = (profiles || []).filter(profile => {
+        const images = profile.images || [];
+        const profileKeywords = images.flatMap((img: any) =>
+          [img.main_keyword, ...(img.keywords || [])]
+        );
+        return searchKeywords.some(keyword =>
+          profileKeywords.some(profileKeyword =>
+            profileKeyword?.toLowerCase().includes(keyword.toLowerCase())
+          )
+        );
+      });
+
+      setSearchResults(results);
     } catch (error) {
       console.error('검색 오류:', error);
+    } finally {
       setIsLoading(false);
     }
   };

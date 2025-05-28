@@ -156,22 +156,7 @@ export const fetchVideoMetadata = async (videoId: string): Promise<{
     // 3️⃣ OpenAI 키워드 추출
     const keywords = await extractVideoKeywords({ title, description, tags });
 
-    // 4️⃣ 채널 Supabase 저장 (없으면)
-    const { data: existingChannel } = await supabase
-      .from('channels')
-      .select('id')
-      .eq('id', channelId)
-      .maybeSingle();
-
-    if (!existingChannel) {
-      await supabase.from('channels').insert({
-        id: channelId,
-        name: channelTitle,
-        last_fetched_at: new Date().toISOString()
-      });
-    }
-
-    // 5️⃣ 비디오 Supabase 저장
+    // 4️⃣ 비디오 Supabase 저장
     await supabase.from('videos').insert({
       id: videoId,
       title,

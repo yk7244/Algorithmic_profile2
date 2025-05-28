@@ -17,22 +17,6 @@ export default function LoginPage() {
 
       const uid = session.user.id;
 
-      // 프로필 생성 여부 확인
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('ProfileData')
-        .select('*')
-        .eq('id', uid)
-        .single();
-
-      if (!existingProfile && !fetchError) {
-        await supabase.from('ProfileData').insert({
-          id: uid,
-          nickname: session.user.user_metadata?.full_name || '익명',
-          description: '',
-          avatar_url: session.user.user_metadata?.avatar_url || '',
-        });
-      }
-
       // 시청 기록 존재 여부 확인
       const { data: watchHistory, error: historyError } = await supabase
         .from('WatchHistoryItem')
@@ -78,11 +62,10 @@ export default function LoginPage() {
           </Button>
           <Button variant="outline" size="lg" className="w-full" onClick={() => handleOAuthLogin('google')}>
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
-              {/* Google 아이콘 생략 */}
-              <path fill="#4285F4" d="..." />
-              <path fill="#34A853" d="..." />
-              <path fill="#FBBC05" d="..." />
-              <path fill="#EA4335" d="..." />
+              <path fill="#4285F4" d="M21.35 11.1h-9.18v2.92h5.27c-.23 1.23-1.4 3.6-5.27 3.6-3.17 0-5.76-2.62-5.76-5.82s2.59-5.82 5.76-5.82c1.81 0 3.03.77 3.73 1.43l2.55-2.48C16.13 3.54 14.3 2.7 12.17 2.7 6.98 2.7 2.7 6.98 2.7 12.17s4.28 9.47 9.47 9.47c5.47 0 9.09-3.85 9.09-9.27 0-.62-.07-1.09-.16-1.57z"/>
+              <path fill="#34A853" d="M3.88 7.41l2.4 1.76c.65-1.23 1.97-2.7 5.02-2.7 1.45 0 2.77.56 3.8 1.65l2.85-2.77C15.97 3.54 14.3 2.7 12.17 2.7c-3.17 0-5.76 2.62-5.76 5.82 0 1.01.27 1.97.77 2.79z"/>
+              <path fill="#FBBC05" d="M12.17 21.64c2.13 0 3.96-.7 5.28-1.91l-2.43-1.99c-.67.47-1.56.8-2.85.8-2.19 0-4.05-1.48-4.72-3.47l-2.41 1.86c1.36 2.7 4.18 4.71 7.13 4.71z"/>
+              <path fill="#EA4335" d="M21.35 11.1h-9.18v2.92h5.27c-.23 1.23-1.4 3.6-5.27 3.6-3.17 0-5.76-2.62-5.76-5.82s2.59-5.82 5.76-5.82c1.81 0 3.03.77 3.73 1.43l2.55-2.48C16.13 3.54 14.3 2.7 12.17 2.7 6.98 2.7 2.7 6.98 2.7 12.17s4.28 9.47 9.47 9.47c5.47 0 9.09-3.85 9.09-9.27 0-.62-.07-1.09-.16-1.57z"/>
             </svg>
             Google로 계속하기
           </Button>

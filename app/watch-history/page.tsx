@@ -51,12 +51,6 @@ export default function WatchHistoryPage() {
           }));
 
           setWatchHistory(formatted);
-        } else {
-          // fallback: 로컬 스토리지
-          const localData = localStorage.getItem('watchHistory');
-          if (localData) {
-            setWatchHistory(JSON.parse(localData));
-          }
         }
       } catch (err: any) {
         setError(err.message || '시청기록을 불러오는 중 오류가 발생했습니다.');

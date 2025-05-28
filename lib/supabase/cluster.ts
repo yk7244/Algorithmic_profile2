@@ -43,23 +43,6 @@ export const saveClustersToSupabase = async (userId: string, clusters: LocalClus
         console.error('❌ 클러스터 저장 실패:', clusterError);
         continue;
       }
-
-      // 비디오 링크를 파싱하여 video_cluster_assignments 테이블에 저장
-      const videoIds = cluster.video_links.split(',').map(link => link.trim());
-      const assignments = videoIds.map(videoId => ({
-        cluster_id: clusterData.id,
-        video_id: videoId,
-        label: cluster.main_keyword,
-        distance: cluster.strength
-      }));
-
-      const { error: assignmentError } = await supabase
-        .from('video_cluster_assignments')
-        .insert(assignments);
-
-      if (assignmentError) {
-        console.error('❌ 비디오 클러스터 매핑 저장 실패:', assignmentError);
-      }
     }
 
     console.log('✅ 클러스터 및 비디오 매핑 저장 완료');
@@ -85,12 +68,7 @@ export const fetchClusterHistoryFromSupabase = async (userId: string): Promise<L
       created_at,
       desired_self,
       main_image_url,
-      metadata,
-      video_cluster_assignments (
-        video_id,
-        label,
-        distance
-      )
+      metadata
     `)
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -130,10 +108,5 @@ export const fetchSingleClusterSetWithVideos = async (clusterRecord: any) => {
     keywords: cluster.keyword_list
       ? cluster.keyword_list.split(',').filter((k: string) => k.trim() !== '')
       : [],
-    related_videos: cluster.video_cluster_assignments.map((v: any) => ({
-      videoId: v.video_id,
-      label: v.label,
-      distance: v.distance,
-    })),
   }));
 };

@@ -62,7 +62,6 @@ export const transformClusterToImageData = (
     top: randomTop,
     keywords: keywords.slice(0, 3),
     sizeWeight,
-    relatedVideos: relatedVideos.slice(0, 5),
     created_at: cluster.created_at || new Date().toISOString(),
     desired_self: false,
     metadata: cluster.metadata || {},

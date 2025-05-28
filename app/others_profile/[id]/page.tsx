@@ -19,41 +19,78 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function OthersProfilePage() {
   const params = useParams();
   const router = useRouter();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<ImageData | null>(null);
+  const [selectedImage, setSelectedImage] = useState<any | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [watchedVideos, setWatchedVideos] = useState<string[]>([]);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   useEffect(() => {
-    // URL에서 프로필 ID 가져오기
-    const profileId = params.id;
-    if (profileId) {
-      // 더미 데이터에서 해당 ID의 프로필 찾기
-      const foundProfile = dummyProfiles.find(p => p.id.toString() === profileId);
-      if (foundProfile) {
-        setProfile(foundProfile);
+    const fetchProfileData = async () => {
+      setIsLoading(true);
+      const userId = params.id;
+      if (!userId) {
+        setProfile(null);
+        setIsLoading(false);
+        return;
+      }
+      // 1. 프로필 정보
+      const { data: profileData } = await supabase
+        .from('moodboard_profiles')
+        .select('nickname, images, positions, frame_styles')
+        .eq('user_id', userId)
+        .single();
+      // 2. 클러스터(무드보드) 정보
+      const { data: clusters } = await supabase
+        .from('clusters')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (profileData && clusters) {
+        setProfile({
+          nickname: profileData.nickname,
+          description: '', // moodboard_profiles에 description이 있으면 사용
+          images: clusters.map((cluster: any, idx: number) => ({
+            id: String(cluster.id ?? idx + 1),
+            src: cluster.main_image_url,
+            main_keyword: cluster.main_keyword,
+            sub_keyword: cluster.sub_keyword,
+            mood_keyword: cluster.mood_keyword,
+            description: cluster.description,
+            category: cluster.category,
+            width: 200,
+            height: 200,
+            rotate: 0,
+            left: '50%',
+            top: '50%',
+            keywords: (cluster.keyword_list || '').split(',').map((k: string) => k.trim()),
+            sizeWeight: 0.15,
+            relatedVideos: [], // related_videos 제거
+            created_at: cluster.created_at,
+            desired_self: cluster.desired_self,
+            metadata: cluster.metadata || {},
+            desired_self_profile: null,
+            color: 'gray',
+          }))
+        });
+      } else {
+        setProfile(null);
       }
       setIsLoading(false);
-    }
-  }, [params]);
-
-  useEffect(() => {
-    // 컴포넌트 마운트 시 히스토리 데이터 초기화
-    const initializeHistories = () => {
-      const histories = JSON.parse(localStorage.getItem('moodboardHistories') || '[]');
-      if (!Array.isArray(histories)) {
-        localStorage.setItem('moodboardHistories', JSON.stringify([]));
-      }
     };
-    
-    initializeHistories();
-  }, []);
+    fetchProfileData();
+  }, [params]);
 
   // 이미지 클릭 핸들러
   const handleImageClick = (image: ImageData) => {
@@ -233,58 +270,57 @@ export default function OthersProfilePage() {
                 {/* 이미지 가져오기 버튼 추가 */}
                 <Button
                   className="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90 text-white font-semibold py-3 rounded-lg shadow-lg transition-all duration-300 hover:scale-[1.02]"
-                  onClick={() => {
+                  onClick={async () => {
                     try {
-                      // 로컬 스토리지에서 현재 히스토리 데이터 가져오기
-                      const histories = JSON.parse(localStorage.getItem('moodboardHistories') || '[]');
-                      
-                      // 유효성 검사
-                      if (!Array.isArray(histories)) {
-                        throw new Error('Invalid history data');
-                      }
-                      
-                      // 가장 최근 히스토리 가져오기
-                      const latestHistory = histories.length > 0 ? histories[histories.length - 1] : {
-                        timestamp: Date.now(),
-                        positions: {},
-                        frameStyles: {},
-                        images: []
+                      // 1. 내 user_id 가져오기
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const myUserId = sessionData?.session?.user?.id;
+                      if (!myUserId) throw new Error('로그인 필요');
+
+                      // 2. clusters 테이블에 복사 insert
+                      const newCluster = {
+                        user_id: myUserId,
+                        main_keyword: selectedImage.main_keyword,
+                        sub_keyword: selectedImage.sub_keyword,
+                        mood_keyword: selectedImage.mood_keyword,
+                        description: selectedImage.description,
+                        category: selectedImage.category,
+                        keyword_list: (selectedImage.keywords || []).join(','),
+                        strength: 1,
+                        video_links: '',
+                        created_at: new Date().toISOString(),
+                        desired_self: true,
+                        main_image_url: selectedImage.src,
+                        metadata: selectedImage.metadata || {},
                       };
-                      
-                      // 새 이미지 객체 생성 전 selectedImage 확인
-                      if (!selectedImage) {
-                        throw new Error('No image selected');
-                      }
-                      
-                      const newId = `imported-${Date.now()}`;
+                      const { data: inserted, error: insertError } = await supabase.from('clusters').insert([newCluster]).select().single();
+                      if (insertError) throw insertError;
+
+                      // 3. moodboard_profiles.images에 append/upsert
+                      const { data: profileData, error: profileError } = await supabase
+                        .from('moodboard_profiles')
+                        .select('images')
+                        .eq('user_id', myUserId)
+                        .single();
+                      if (profileError) throw profileError;
+                      const images = Array.isArray(profileData?.images) ? profileData.images : [];
                       const newImage = {
                         ...selectedImage,
-                        id: newId,
-                        left: "30%",
-                        top: "30%",
-                        rotate: 0,
-                        sizeWeight: 0.3,
+                        id: inserted.id,
+                        src: selectedImage.src,
                         desired_self: true,
-                        desired_self_profile: profile.id
+                        desired_self_profile: profile.id,
                       };
-                      
-                      const newHistory = {
-                        timestamp: Date.now(),
-                        positions: latestHistory.positions || {},
-                        frameStyles: {
-                          ...(latestHistory.frameStyles || {}),
-                          [newId]: 'star'  // 새 이미지의 프레임 스타일을 star로 설정
-                        },
-                        images: [...(latestHistory.images || []), newImage]
-                      };
-                      
-                      histories.push(newHistory);
-                      localStorage.setItem('moodboardHistories', JSON.stringify(histories));
-                      
+                      const updatedImages = [...images, newImage];
+                      const { error: upsertError } = await supabase
+                        .from('moodboard_profiles')
+                        .upsert({ user_id: myUserId, images: updatedImages }, { onConflict: 'user_id' });
+                      if (upsertError) throw upsertError;
+
                       setShowSuccessDialog(true);
                     } catch (error) {
-                      console.error('히스토리 저장 중 오류:', error);
-                      alert('이미지 저장 중 오류가 발생했습니다.');
+                      console.error('Supabase로 이미지 복사 실패:', error);
+                      alert('이미지 복사 중 오류가 발생했습니다.');
                     }
                   }}
                 >
