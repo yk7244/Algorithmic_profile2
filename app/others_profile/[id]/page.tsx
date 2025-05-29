@@ -57,32 +57,60 @@ export default function OthersProfilePage() {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
+      
       if (profileData && clusters) {
+        // positions 데이터가 있으면 사용, 없으면 자동 분산 배치
+        const savedPositions = profileData.positions || {};
+        
+        // 자동 분산 배치를 위한 함수
+        const generateRandomPosition = (index: number, total: number) => {
+          const centerX = 400; // 800px의 절반
+          const centerY = 400; // 800px의 절반
+          const radius = Math.min(300, total * 30); // 클러스터 수에 따라 반지름 조정
+          
+          // 원형으로 배치하되 약간의 랜덤성 추가
+          const angle = (index / total) * 2 * Math.PI + (Math.random() - 0.5) * 0.5;
+          const distance = radius * (0.5 + Math.random() * 0.5); // 50-100% 거리
+          
+          const x = centerX + Math.cos(angle) * distance;
+          const y = centerY + Math.sin(angle) * distance;
+          
+          return {
+            left: `${Math.max(10, Math.min(90, (x / 800) * 100))}%`,
+            top: `${Math.max(10, Math.min(90, (y / 800) * 100))}%`
+          };
+        };
+
         setProfile({
           nickname: profileData.nickname,
           description: '', // moodboard_profiles에 description이 있으면 사용
-          images: clusters.map((cluster: any, idx: number) => ({
-            id: String(cluster.id ?? idx + 1),
-            src: cluster.main_image_url,
-            main_keyword: cluster.main_keyword,
-            sub_keyword: cluster.sub_keyword,
-            mood_keyword: cluster.mood_keyword,
-            description: cluster.description,
-            category: cluster.category,
-            width: 200,
-            height: 200,
-            rotate: 0,
-            left: '50%',
-            top: '50%',
-            keywords: (cluster.keyword_list || '').split(',').map((k: string) => k.trim()),
-            sizeWeight: 0.15,
-            relatedVideos: [], // related_videos 제거
-            created_at: cluster.created_at,
-            desired_self: cluster.desired_self,
-            metadata: cluster.metadata || {},
-            desired_self_profile: null,
-            color: 'gray',
-          }))
+          images: clusters.map((cluster: any, idx: number) => {
+            const savedPosition = savedPositions[String(cluster.id)];
+            const autoPosition = generateRandomPosition(idx, clusters.length);
+            
+            return {
+              id: String(cluster.id ?? idx + 1),
+              src: cluster.main_image_url,
+              main_keyword: cluster.main_keyword,
+              sub_keyword: cluster.sub_keyword,
+              mood_keyword: cluster.mood_keyword,
+              description: cluster.description,
+              category: cluster.category,
+              width: 200,
+              height: 200,
+              rotate: Math.random() * 30 - 15, // -15도에서 +15도 사이 랜덤 회전
+              left: savedPosition?.left || autoPosition.left,
+              top: savedPosition?.top || autoPosition.top,
+              keywords: (cluster.keyword_list || '').split(',').map((k: string) => k.trim()),
+              sizeWeight: 0.15,
+              relatedVideos: [], // related_videos 제거
+              created_at: cluster.created_at,
+              desired_self: cluster.desired_self,
+              metadata: cluster.metadata || {},
+              desired_self_profile: null,
+              color: 'gray',
+            };
+          })
         });
       } else {
         setProfile(null);
@@ -113,35 +141,38 @@ export default function OthersProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-900 via-gray-900 to-blue-800">
-        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600 text-xl">프로필을 불러오는 중...</p>
+        </div>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-emerald-900 via-gray-900 to-blue-800">
-        <h1 className="text-3xl font-bold text-white mb-4">Profile Not Found</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">프로필을 찾을 수 없습니다</h1>
         <Button 
           onClick={() => router.back()}
-          className="bg-white/20 hover:bg-white/30 text-white"
+          className="bg-purple-600 hover:bg-purple-700 text-white"
         >
-          Go Back
+          뒤로 가기
         </Button>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen p-4 relative bg-gradient-to-br from-emerald-900 via-gray-900 to-blue-800">
+    <main className="min-h-screen p-4 relative bg-white">
       {/* 뒤로 가기 버튼 */}
       <div className="absolute top-4 left-4 z-50">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => router.back()}
-          className="text-white hover:bg-white/10"
+          className="text-gray-700 hover:bg-gray-100"
         >
           <ArrowLeft className="h-6 w-6" />
         </Button>
@@ -152,11 +183,11 @@ export default function OthersProfilePage() {
           {/* 프로필 제목과 설명 */}
           <div className="absolute z-30 pl-8 max-w-[600px] space-y-6 mt-16">
             <div className="flex items-center justify-between">
-              <h1 className="text-5xl font-bold tracking-tight text-white">
+              <h1 className="text-5xl font-bold tracking-tight text-gray-800">
                 {profile.nickname}의 무드보드
               </h1>
             </div>
-            <p className="text-white/80 text-lg leading-relaxed mt-4">
+            <p className="text-gray-600 text-lg leading-relaxed mt-4">
               {profile.description}
             </p>
           </div>
@@ -204,25 +235,25 @@ export default function OthersProfilePage() {
           </div>
 
           {/* 키워드 섹션 */}
-          <div className="mt-8 bg-white/10 backdrop-blur-md rounded-xl p-6 max-w-[1000px] mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-4">주요 관심사</h2>
+          <div className="mt-8 bg-white/90 backdrop-blur-md rounded-xl p-6 max-w-[1000px] mx-auto border border-gray-200 shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">주요 관심사</h2>
             <div className="flex flex-wrap gap-3">
-              {Array.from(new Set(profile.images.flatMap(img => [img.main_keyword, ...img.keywords]))).map((keyword, idx) => (
+              {Array.from(new Set(profile.images.flatMap((img: any) => [img.main_keyword, ...img.keywords]))).map((keyword: unknown, idx: number) => (
                 <span 
                   key={idx}
-                  className="bg-white/20 px-4 py-2 rounded-full text-white"
+                  className="bg-purple-100 text-purple-800 px-4 py-2 rounded-full font-medium"
                 >
-                  {keyword}
+                  {String(keyword)}
                 </span>
               ))}
             </div>
           </div>
 
           {/* 관련 비디오 섹션 */}
-          <div className="mt-8 bg-white/10 backdrop-blur-md rounded-xl p-6 max-w-[1000px] mx-auto">
-            <h2 className="text-2xl font-bold text-white mb-4">관련 비디오</h2>
+          <div className="mt-8 bg-white/90 backdrop-blur-md rounded-xl p-6 max-w-[1000px] mx-auto border border-gray-200 shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">관련 비디오</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profile.images.slice(0, 2).flatMap(img => img.relatedVideos.slice(0, 1)).map((video, idx) => (
+              {profile.images.slice(0, 2).flatMap((img: any) => img.relatedVideos.slice(0, 1)).map((video: any, idx: number) => (
                 <div key={idx} className="aspect-video rounded-lg overflow-hidden">
                   <iframe
                     width="100%"

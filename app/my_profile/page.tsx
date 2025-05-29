@@ -1635,20 +1635,36 @@ export default function MyProfilePage() {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     if (!isEditing) return;
     
     const { active, delta } = event;
-    setPositions(prev => {
-      const oldPosition = prev[active.id] || { x: 0, y: 0 };
-      return {
-        ...prev,
-        [active.id]: {
-          x: oldPosition.x + delta.x,
-          y: oldPosition.y + delta.y,
-        },
-      };
-    });
+    const newPositions = {
+      ...positions,
+      [active.id]: {
+        x: (positions[active.id]?.x || 0) + delta.x,
+        y: (positions[active.id]?.y || 0) + delta.y,
+      },
+    };
+    
+    setPositions(newPositions);
+    
+    // 위치 변경 시 Supabase에 자동 저장
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (userId) {
+        await supabase.from('moodboard_profiles').upsert({
+          user_id: userId,
+          positions: newPositions,
+          frame_styles: frameStyles,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+        console.log('🔄 위치 정보 자동 저장됨');
+      }
+    } catch (error) {
+      console.error('위치 저장 오류:', error);
+    }
   };
 
   const onImageChange = (id: string, newSrc: string, newKeyword: string) => {

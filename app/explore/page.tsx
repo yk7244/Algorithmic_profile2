@@ -67,7 +67,24 @@ export default function ExplorePage() {
 
       console.log('clusters 결과:', clusterData?.length || 0, '개');
 
-      // 3. 두 데이터 소스 결합하여 프로필 생성
+      // 3. 사용자 프로필 정보 가져오기 (실제 닉네임을 위해)
+      const { data: authProfiles, error: authProfileError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url');
+
+      if (authProfileError) {
+        console.log('profiles 조회 오류:', authProfileError);
+      }
+
+      // 프로필 정보를 매핑으로 변환
+      const profileMap = new Map();
+      if (authProfiles) {
+        authProfiles.forEach(profile => {
+          profileMap.set(profile.id, profile);
+        });
+      }
+
+      // 4. 두 데이터 소스 결합하여 프로필 생성
       let finalProfiles: UserProfile[] = [];
 
       // moodboard_profiles 데이터가 있으면 우선 사용
@@ -75,7 +92,16 @@ export default function ExplorePage() {
         const profilesWithImages = moodboardProfiles.filter(profile => 
           profile.images && profile.images.length > 0
         );
-        finalProfiles = profilesWithImages;
+        
+        // 실제 닉네임 정보 추가
+        finalProfiles = profilesWithImages.map(profile => {
+          const authProfile = profileMap.get(profile.user_id);
+          return {
+            ...profile,
+            nickname: authProfile?.full_name || profile.nickname || `사용자 ${profile.user_id.substring(0, 8)}`
+          };
+        });
+        
         console.log('✅ moodboard_profiles에서', profilesWithImages.length, '개 프로필 로드');
       }
 
@@ -96,10 +122,11 @@ export default function ExplorePage() {
         finalProfiles = Object.entries(userClusters).map(([userId, clusters]: [string, any]) => {
           const userClusters = clusters as any[];
           const latestCluster = userClusters[0];
+          const authProfile = profileMap.get(userId);
           
           return {
             user_id: userId,
-            nickname: `사용자 ${userId.substring(0, 8)}`, // 임시 닉네임
+            nickname: authProfile?.full_name || `사용자 ${userId.substring(0, 8)}`,
             description: `${userClusters.length}개의 관심사를 가진 사용자`,
             images: userClusters.map((cluster: any) => ({
               id: cluster.id,
