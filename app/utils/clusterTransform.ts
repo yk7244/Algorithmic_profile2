@@ -1,16 +1,16 @@
 import { ImageData } from '../types/profile';
 
-// 중앙 위주 좌표 배열 (CSS 퍼센트 단위)
+// 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
-  { left: "50%", top: "50%" },
-  { left: "52%", top: "48%" },
-  { left: "48%", top: "52%" },
-  { left: "51%", top: "51%" },
-  { left: "49%", top: "49%" },
-  { left: "53%", top: "50%" },
-  { left: "50%", top: "53%" },
-  { left: "47%", top: "50%" },
-  { left: "50%", top: "47%" }
+  { left: '400px', top: '400px' },
+  { left: '420px', top: '380px' },
+  { left: '380px', top: '420px' },
+  { left: '410px', top: '410px' },
+  { left: '390px', top: '390px' },
+  { left: '430px', top: '400px' },
+  { left: '400px', top: '430px' },
+  { left: '370px', top: '400px' },
+  { left: '400px', top: '370px' }
 ];
 
 function getRandomCenterPosition() {
@@ -21,28 +21,33 @@ function getRandomCenterPosition() {
 export const transformClusterToImageData = (
   cluster: any,
   index: number,
-  imageUrl: string
+  imageUrl: string,
+  minStrength: number,
+  maxStrength: number
 ): ImageData => {
-  // 랜덤 위치 및 회전 생성
-  const randomRotate = Math.floor(Math.random() * 12) - 6; // -6 ~ 6도
 
+  // Step1. 랜덤 위치 및 회전 생성
+  const randomRotate = Math.floor(Math.random() * 12) - 6; // -6 ~ 6도
   // 중앙 위주 랜덤 위치
   const { left, top } = getRandomCenterPosition();
 
-  // 영상 데이터 변환
+  // Step2. 영상 데이터 변환
   const relatedVideos = cluster.related_videos?.map((video: any) => ({
     title: video.title,
     embedId: video.videoId || video.url?.split('v=')[1] || ''
   })) || [];
 
-  // 키워드 리스트 변환
+  // Step4. 키워드 리스트 변환
   const keywords = cluster.keyword_list?.split(',').map((k: string) => k.trim()) || [];
 
-  // strength 기반으로 sizeWeight 계산
-  // strength가 높을수록 크기가 커지도록 설정 (0.05 ~ 0.3 범위)
+  // Step5. strength 기반으로 sizeWeight 계산 (동적 min/max)
   const strength = cluster.strength || cluster.metadata?.videoCount || 1;
-  const maxStrength = 10; // 예상되는 최대 strength 값
-  const sizeWeight = Math.min(0.05 + (strength / maxStrength) * 0.15, 0.3);
+  let sizeWeight = 0.05; // 기본값
+  if (maxStrength > minStrength) {
+    // 0.005 ~ 0.05 사이로 정규화
+    const ratio = (strength - minStrength) / (maxStrength - minStrength);
+    sizeWeight = 0.005 + ratio * (0.05 - 0.005);
+  }
 
   return {
     id: String(index + 1),
@@ -53,7 +58,7 @@ export const transformClusterToImageData = (
     category: cluster.category?.toLowerCase() || 'other',
     width: 800,
     height: 800,
-    rotate: randomRotate,
+    rotate: 0,
     left,
     top,
     keywords: keywords.slice(0, 5),
@@ -64,7 +69,25 @@ export const transformClusterToImageData = (
     metadata: cluster.metadata || {},
     desired_self_profile: null
   };
-}; 
+};
+
+// 여러 클러스터를 한 번에 변환하며, min/max strength를 내부에서 계산
+const placeholderImage = '/images/default_image.png';
+
+export function transformClustersToImageData(
+  clusters: any[],
+  clusterImages: Record<number, any>
+): ImageData[] {
+  const strengths = clusters.map(c => c.strength || c.metadata?.videoCount || 1);
+  const minStrength = Math.min(...strengths);
+  const maxStrength = Math.max(...strengths);
+
+  return clusters.map((cluster, index) => {
+    // Step6. 이미지 데이터 변환
+    const imageUrl = clusterImages[index]?.url || placeholderImage;
+    return transformClusterToImageData(cluster, index, imageUrl, minStrength, maxStrength);
+  });
+}
 
 //localstorage->watchClusters 에 배열로 들어감
 type Cluster = {

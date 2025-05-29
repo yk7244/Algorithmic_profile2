@@ -13,13 +13,13 @@ export function useDraggableImage(
 
     const style = transform
         ? {
-            transform: `translate3d(${transform.x}px, ${transform.y}px, 0) rotate(${rotate || 0}deg)`,
+            transform: `translate3d(${(position?.x || 0) + transform.x}px, ${(position?.y || 0) + transform.y}px, 0) rotate(${rotate || 0}deg)`,
             transition: isEditing ? 'none' : 'transform 0.1s ease-in-out',
         }
         : {
             transform: `translate3d(${position?.x || 0}px, ${position?.y || 0}px, 0) rotate(${rotate || 0}deg)`,
             transition: isEditing ? 'none' : 'transform 0.8s ease-in-out',
         };
-
+    
     return { attributes, listeners, setNodeRef, style };
 } 
