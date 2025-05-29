@@ -121,14 +121,6 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     <SheetTrigger asChild>
                         <div 
                         className={`relative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'rounded-full overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
-                        onClick={(e) => {
-                            if (isEditing || isSearchMode) {
-                            e.preventDefault();
-                            } else {
-                            setShowDetails(true);
-                            }
-                            console.log('클릭');
-                        }}
                         >
                         <div
                             style={{
