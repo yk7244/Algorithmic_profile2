@@ -21,28 +21,33 @@ function getRandomCenterPosition() {
 export const transformClusterToImageData = (
   cluster: any,
   index: number,
-  imageUrl: string
+  imageUrl: string,
+  minStrength: number,
+  maxStrength: number
 ): ImageData => {
-  // 랜덤 위치 및 회전 생성
-  const randomRotate = Math.floor(Math.random() * 12) - 6; // -6 ~ 6도
 
+  // Step1. 랜덤 위치 및 회전 생성
+  const randomRotate = Math.floor(Math.random() * 12) - 6; // -6 ~ 6도
   // 중앙 위주 랜덤 위치
   const { left, top } = getRandomCenterPosition();
 
-  // 영상 데이터 변환
+  // Step2. 영상 데이터 변환
   const relatedVideos = cluster.related_videos?.map((video: any) => ({
     title: video.title,
     embedId: video.videoId || video.url?.split('v=')[1] || ''
   })) || [];
 
-  // 키워드 리스트 변환
+  // Step4. 키워드 리스트 변환
   const keywords = cluster.keyword_list?.split(',').map((k: string) => k.trim()) || [];
 
-  // strength 기반으로 sizeWeight 계산
-  // strength가 높을수록 크기가 커지도록 설정 (0.05 ~ 0.3 범위)
+  // Step5. strength 기반으로 sizeWeight 계산 (동적 min/max)
   const strength = cluster.strength || cluster.metadata?.videoCount || 1;
-  const maxStrength = 10; // 예상되는 최대 strength 값
-  const sizeWeight = Math.min(0.05 + (strength / maxStrength) * 0.15, 0.3);
+  let sizeWeight = 0.05; // 기본값
+  if (maxStrength > minStrength) {
+    // 0.05 ~ 0.3 사이로 정규화
+    const ratio = (strength - minStrength) / (maxStrength - minStrength);
+    sizeWeight = 0.05 + ratio * (0.3 - 0.05);
+  }
 
   return {
     id: String(index + 1),
@@ -64,7 +69,25 @@ export const transformClusterToImageData = (
     metadata: cluster.metadata || {},
     desired_self_profile: null
   };
-}; 
+};
+
+// 여러 클러스터를 한 번에 변환하며, min/max strength를 내부에서 계산
+const placeholderImage = '/images/default_image.png';
+
+export function transformClustersToImageData(
+  clusters: any[],
+  clusterImages: Record<number, any>
+): ImageData[] {
+  const strengths = clusters.map(c => c.strength || c.metadata?.videoCount || 1);
+  const minStrength = Math.min(...strengths);
+  const maxStrength = Math.max(...strengths);
+
+  return clusters.map((cluster, index) => {
+    // Step6. 이미지 데이터 변환
+    const imageUrl = clusterImages[index]?.url || placeholderImage;
+    return transformClusterToImageData(cluster, index, imageUrl, minStrength, maxStrength);
+  });
+}
 
 //localstorage->watchClusters 에 배열로 들어감
 type Cluster = {

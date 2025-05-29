@@ -11,12 +11,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { transformClusterToImageData } from '../utils/clusterTransform';
+import { transformClusterToImageData, transformClustersToImageData } from '../utils/clusterTransform';
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { OpenAILogger } from '../utils/init-logger';
 import { parseJSONWatchHistory } from './VideoParsing/jsonParser';
 import { parseWatchHistory } from './VideoParsing/htmlParser';
@@ -672,20 +672,14 @@ export default function Home() {
             <div className="flex justify-center gap-4 mt-8">
               <Button 
                 onClick={() => {
-                  // 가장 최신 분석 결과 가져오기
-                  const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
-                  if (savedAnalyses.length > 0) {
-                    const latestAnalysis = savedAnalyses[savedAnalyses.length - 1];
-                    // 최신 분석 결과를 profileImages로 변환
-                    const profileImages = latestAnalysis.clusters.map((cluster: any, index: number) => {
-                      // clusterImages가 없거나 해당 인덱스의 이미지가 없을 경우 placeholderImage 사용
-                      const imageUrl = clusterImages[index]?.url || placeholderImage;
-                      return transformClusterToImageData(cluster, index, imageUrl);
-                    });
-                    // profileImages 저장
+                  if (clusters.length > 0) {
+                    // 현재 선택된 분석 결과의 클러스터로 변환
+                    const profileImages = transformClustersToImageData(clusters, clusterImages);
                     localStorage.setItem('profileImages', JSON.stringify(profileImages));
                     console.log('✨ 프로필 데이터 저장 성공!');
                     alert('프로필 데이터가 성공적으로 저장되었습니다!');
+                  } else {
+                    alert('분석 결과가 선택되어 있지 않습니다!');
                   }
                 }}
                 asChild 
