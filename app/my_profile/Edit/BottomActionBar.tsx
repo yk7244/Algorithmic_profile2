@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Pen, Save, RefreshCw } from "lucide-react";
+import Link from "next/link";
 
 interface BottomActionBarProps {
     isEditing: boolean;
@@ -21,14 +22,16 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
         <Button
             variant="outline"
             size="lg"
-            className="h-12 px-8 bg-white text-black border border-gray-200 hover:bg-gray-50 flex items-center gap-2 rounded-full shadow-md"
+            className={`h-12 px-8 border border-gray-200 flex items-center gap-2 rounded-full shadow-md
+                ${isEditing ? 'bg-black text-white hover:text-gray-200 hover:bg-gray-600' : 'bg-white text-black hover:bg-black hover:text-white'}
+            `}
             onClick={isEditing ? onSaveClick : onEditClick}
         >
             {isEditing ? (
-                <div className="bg-black text-white">
+                <>
                     <Save className="h-4 w-4" />
                     저장하기
-                </div>
+                </>
             ) : (
                 <>
                     <Pen className="h-4 w-4" />
@@ -36,16 +39,17 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 </>
             )}
         </Button>
-
-        {/* 업데이트 버튼 */}
-        <Button
-            variant="outline"
-            size="lg"
-            className="h-12 px-8 bg-white text-black border border-gray-200 hover:bg-gray-50 flex items-center gap-2 rounded-full shadow-md"
-        >
-            <RefreshCw className="h-4 w-4" />
-            업데이트
-        </Button>
+        {/* 업로드 버튼 */}
+        <Link href="/upload">
+            <Button
+                variant="outline"
+                size="lg"
+                className="h-12 px-8 bg-white text-black border border-gray-200 hover:bg-black hover:text-white flex items-center gap-2 rounded-full shadow-md"
+            >
+                <RefreshCw className="h-4 w-4" />
+                업로드하기
+            </Button>
+        </Link>
     </div>
 );
 
