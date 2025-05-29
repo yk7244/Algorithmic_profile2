@@ -16,6 +16,7 @@ import { useSearchMode } from './SearchMode/Hooks/useSearchMode';
 import ProfileHeader from './Nickname/ProfileHeader';
 import SearchFloatingButton from './SearchMode/SearchFloatingButton';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
+import { useImageDelete } from "./Draggable/Hooks/useImageDelete";
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -135,21 +136,16 @@ export default function MyProfilePage() {
     setIsSearchMode,
   } = useSearchMode(images);
 
-  const handleImageDelete = (id: string) => {
-    const updatedImages = images.filter(img => img.id !== id);
-    setImages(updatedImages);
-    const newHistory: HistoryData = {
-      timestamp: Date.now(),
-      positions,
-      frameStyles,
-      images: updatedImages
-    };
-    const updatedHistories = [...histories, newHistory];
-    setHistories(updatedHistories);
-    localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
-    setCurrentHistoryIndex(updatedHistories.length - 1);
-    setVisibleImageIds(new Set(updatedImages.map(img => img.id)));
-  };
+  const handleImageDelete = useImageDelete({
+    images,
+    setImages,
+    positions,
+    frameStyles,
+    histories,
+    setHistories,
+    setCurrentHistoryIndex,
+    setVisibleImageIds,
+  });
 
   // --- 데이터 마이그레이션 및 초기화 이펙트 ---
   useEffect(() => {
