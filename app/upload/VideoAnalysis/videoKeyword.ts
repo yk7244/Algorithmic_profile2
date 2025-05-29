@@ -8,12 +8,20 @@ const openai = new OpenAI({
 });
 
 type VideoInfo = {
-  videoId: string;
+  videoId: string; //id
   title: string;
   description?: string;
+
+  //channel_id
+  //published_at  
+  //thumbnail_url
+  //comment_count
+  //channel_name
+  //url
+
   tags: string[];
   keywords: any[];
-  timestamp: string;
+  timestamp: string; //없음
 };
 
 // STEP1-2.키워드 추출 함수
