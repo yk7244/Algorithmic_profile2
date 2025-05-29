@@ -15,6 +15,7 @@ import SearchModeUI from './SearchMode/SearchModeUI';
 import { useSearchMode } from './SearchMode/Hooks/useSearchMode';
 import ProfileHeader from './Nickname/ProfileHeader';
 import SearchFloatingButton from './SearchMode/SearchFloatingButton';
+import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Draggable/Hooks/useImageDelete";
 
@@ -330,11 +331,6 @@ export default function MyProfilePage() {
           {!isSearchMode && (
             <ProfileHeader
               profile={profile}
-              isEditing={isEditing}
-              isGeneratingProfile={isGeneratingProfile}
-              onEditClick={() => setIsEditing(true)}
-              onSaveClick={handleSave}
-              onGenerateProfile={generateUserProfile}
             />
           )}
 
@@ -395,6 +391,15 @@ export default function MyProfilePage() {
           onChange={handleBgColorChange}
         />
       )}
+
+      {/* 하단 액션 버튼들 */}
+      <BottomActionBar
+        isEditing={isEditing}
+        isGeneratingProfile={isGeneratingProfile}
+        onEditClick={() => setIsEditing(true)}
+        onSaveClick={handleSave}
+        onGenerateProfile={generateUserProfile}
+      />
 
     </main>
   );
