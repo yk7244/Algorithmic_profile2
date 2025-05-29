@@ -49,7 +49,9 @@ export async function searchClusterImage_pinterest(
         searchType: 'image',
         siteSearch: 'www.pinterest.com/*',
         num: Math.min(num, 10).toString(),
-        safe: 'high'
+        safe: 'high',
+        imgSize: 'large', // 큰 이미지 요청
+        imgType: 'photo' // 사진 타입만
     });
 
     // 로그 추가: 요청 URL 및 파라미터 확인
@@ -76,15 +78,52 @@ export async function searchClusterImage_pinterest(
         }
 
         // API 응답에서 필요한 정보 추출
-        const images: PinterestImageData[] = data.items.map((item: any) => {
-          // Log the Pinterest page URL (contextLink)
-          console.log("Pinterest 컨텍스트 링크 (페이지 URL?):", item.image?.contextLink);
-          return {
-            link: item.link, // Keep original link for now, or potentially change to contextLink if needed
-            thumbnailLink: item.image?.thumbnailLink,
-            title: item.title,
-          };
-        });
+        const images: PinterestImageData[] = data.items
+          .map((item: any) => {
+            // Log the Pinterest page URL (contextLink)
+            console.log("Pinterest 컨텍스트 링크 (페이지 URL?):", item.image?.contextLink);
+            
+            // 더 큰 이미지 URL 선택 (link가 더 클 수 있음)
+            const imageUrl = item.link || item.image?.thumbnailLink;
+            
+            return {
+              link: item.link,
+              thumbnailLink: imageUrl, // 더 큰 이미지 URL 사용
+              title: item.title,
+            };
+          })
+          .filter((image: PinterestImageData) => {
+            // 문제가 있는 도메인들 필터링
+            const problematicDomains = [
+              'inven.co.kr',
+              'ruliweb.com', 
+              'cdn.clien.net',
+              'images.chosun.com',
+              'pbs.twimg.com'
+            ];
+            
+            try {
+              const url = new URL(image.thumbnailLink);
+              const isProblematic = problematicDomains.some(domain => url.hostname.includes(domain));
+              
+              if (isProblematic) {
+                console.log(`⚠️ 문제가 있는 도메인 필터링: ${url.hostname}`);
+                return false;
+              }
+              
+              // 이미지 확장자 체크
+              const hasImageExtension = /\.(jpg|jpeg|png|gif|webp)(\?|$)/i.test(image.thumbnailLink);
+              if (!hasImageExtension) {
+                console.log(`⚠️ 이미지 확장자가 없는 URL 필터링: ${image.thumbnailLink}`);
+                return false;
+              }
+              
+              return true;
+            } catch (error) {
+              console.log(`🚫 잘못된 URL 형식: ${image.thumbnailLink}`);
+              return false;
+            }
+          });
 
         return images;
 

@@ -287,7 +287,6 @@ export default function OthersProfilePage() {
                         category: selectedImage.category,
                         keyword_list: (selectedImage.keywords || []).join(','),
                         strength: 1,
-                        video_links: '',
                         created_at: new Date().toISOString(),
                         desired_self: true,
                         main_image_url: selectedImage.src,

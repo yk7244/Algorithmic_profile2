@@ -93,11 +93,15 @@ export const parseJSONWatchHistory = async (
         const date = new Date(timestamp);
         if (isNaN(date.getTime())) return null;
 
+        // === 핵심: keywords/tags가 없으면 빈 배열로 보정 ===
+        const safeKeywords = Array.isArray(item.keywords) ? item.keywords : [];
+        const safeTags = Array.isArray(item.tags) ? item.tags : [];
+
         return {
           videoId,
           title: item.title.replace(/^Watched\s+/, '').replace(/\s+을\(를\) 시청했습니다\.$/, '').trim(),
-          tags: item.tags || [],
-          keywords: item.keywords || [],
+          tags: safeTags,
+          keywords: safeKeywords,
           date,
           timestamp,
         };

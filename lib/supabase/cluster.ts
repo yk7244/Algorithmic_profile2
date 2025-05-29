@@ -10,7 +10,7 @@ export interface LocalCluster {
   rotation?: string;
   keyword_list: string;
   strength: number;
-  video_links: string;
+  related_videos: any[];
   created_at: string;
   desired_self: boolean;
   main_image_url?: string;
@@ -31,7 +31,7 @@ export const saveClustersToSupabase = async (userId: string, clusters: LocalClus
           mood_keyword: cluster.mood_keyword,
           keywords: cluster.keyword_list,
           strength: cluster.strength,
-          video_links: cluster.video_links,
+          related_videos: cluster.related_videos,
           desired_self: cluster.desired_self,
           main_image_url: cluster.main_image_url,
           metadata: cluster.metadata
@@ -64,7 +64,7 @@ export const fetchClusterHistoryFromSupabase = async (userId: string): Promise<L
       mood_keyword,
       keywords,
       strength,
-      video_links,
+      related_videos,
       created_at,
       desired_self,
       main_image_url,
@@ -87,7 +87,7 @@ export const fetchClusterHistoryFromSupabase = async (userId: string): Promise<L
     mood_keyword: cluster.mood_keyword,
     keyword_list: cluster.keywords,
     strength: cluster.strength,
-    video_links: cluster.video_links,
+    related_videos: cluster.related_videos || [],
     created_at: cluster.created_at,
     desired_self: cluster.desired_self,
     main_image_url: cluster.main_image_url,

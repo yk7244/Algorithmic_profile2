@@ -16,14 +16,14 @@ import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale/ko";
+import { ko } from "date-fns/locale";
 import { OpenAILogger } from '../utils/init-logger';
 import { parseJSONWatchHistory } from '../utils/jsonParser';
 import { prepareWatchHistoryItems } from '../utils/prepareWatchHistoryItems';
-
 import { searchClusterImage_pinterest, PinterestImageData } from '@/lib/imageSearch';
-import {fetchClusterHistoryFromSupabase, saveClustersToSupabase, fetchSingleClusterSetWithVideos} from '@/lib/supabase/cluster'
+import {fetchClusterHistoryFromSupabase, saveClustersToSupabase, fetchSingleClusterSetWithVideos} from '@/lib/supabase/cluster';
 import { LocalCluster } from '@/lib/supabase/cluster';
+import { uploadPinterestImageToStorage } from '@/lib/supabase/storage';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -60,9 +60,13 @@ interface WatchHistoryItem {
   videoId: string;
   title: string;
   channel?: string;
-  date: Date; // 실제 시청 시간
+  date: Date;
   keywords?: string[];
   tags?: string[];
+  url?: string;
+  timestamp?: string;
+  description?: string;
+  channelId?: string;
 }
 
 
@@ -96,14 +100,14 @@ type Cluster = {
   category: Category;  // 카테고리 필드 추가
   
   rotation?: string;
-  keyword_list: string;
+  keywords: string; // keyword_list에서 keywords로 변경
   strength: number;
-  video_links: string;
   created_at: string;
   desired_self: boolean;
 
   main_image_url?: string;
   metadata: any;
+  related_videos?: WatchHistoryItem[];
 };
 
 // 타입 정의 추가
@@ -138,8 +142,44 @@ const NAVER_CLIENT_SECRET = process.env.NEXT_PUBLIC_NAVER_CLIENT_SECRET;
 // PostgreSQL 배열 문자열로 변환하는 함수
 const toPgArray = (arr: string[]): string => {
   if (!Array.isArray(arr)) return '{}';
-  return `{${arr.map(item => `"${item.replace(/"/g, '\\"')}"`).join(',')}}`;
+  return '{' + arr
+    .filter(item => typeof item === 'string' && item.trim() !== '')
+    .map(item => {
+      // 쌍따옴표 두 번, 백슬래시 두 번
+      let s = item.replace(/\\/g, '\\\\').replace(/"/g, '""');
+      // 반드시 모든 요소를 쌍따옴표로 감싼다
+      return `"${s}"`;
+    })
+    .join(',') + '}';
 };
+
+// 병렬 처리 유틸리티 (동시성 제한)
+async function asyncPool<T, R>(poolLimit: number, array: T[], iteratorFn: (item: T, idx: number) => Promise<R>): Promise<R[]> {
+  const ret: Promise<R>[] = [];
+  const executing: Promise<any>[] = [];
+  for (const [i, item] of array.entries()) {
+    const p = Promise.resolve().then(() => iteratorFn(item, i));
+    ret.push(p);
+    if (poolLimit <= array.length) {
+      const e: Promise<any> = p.then(() => executing.splice(executing.indexOf(e), 1));
+      executing.push(e);
+      if (executing.length >= poolLimit) {
+        await Promise.race(executing);
+      }
+    }
+  }
+  return Promise.all(ret);
+}
+
+// 사용자별 localStorage 데이터 초기화 함수
+function clearUserLocalStorage() {
+  localStorage.removeItem('watchHistory');
+  localStorage.removeItem('watchClusters');
+  localStorage.removeItem('analysisHistory');
+  localStorage.removeItem('profileImages');
+  localStorage.removeItem('clusterImages');
+  // 필요시 추가로 사용자별 데이터 모두 삭제
+}
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -156,7 +196,12 @@ export default function Home() {
   // 타입 선언 수정
   // 기존: const [analysisHistory, setAnalysisHistory] = useState<{ id: string; date: string; clusters: any[]; }[]>([]);
   // 변경:
-  type AnalysisHistoryItem = LocalCluster | { id: string; date: string; clusters: any[] };
+  type AnalysisHistoryItem = {
+    id: string;
+    date: string;
+    created_at: string;
+    clusters: Cluster[];
+  };
   const [analysisHistory, setAnalysisHistory] = useState<AnalysisHistoryItem[]>([]);
   const [showVisionResults, setShowVisionResults] = useState(false);
   // visionSearchResults state 타입 수정 및 초기화
@@ -177,6 +222,12 @@ export default function Home() {
   });
   // 클러스터링 상태 추가
   const [isClustering, setIsClustering] = useState(false);
+  const [isReadyToCluster, setIsReadyToCluster] = useState(false);
+  // Pinterest 검색 결과 상태 추가
+  const [pinterestSearchResults, setPinterestSearchResults] = useState<PinterestImageData[]>([]);
+  const [showPinterestResults, setShowPinterestResults] = useState(false);
+  const [currentSearchingCluster, setCurrentSearchingCluster] = useState<{cluster: any, index: number} | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // useEffect 추가
   useEffect(() => {
@@ -231,119 +282,155 @@ export default function Home() {
     }
   }, []);
 
+// ensureProfileExists 함수 수정
 const ensureProfileExists = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('ProfileData')
-    .select('id')
-    .eq('id', userId)
-    .single();
+  try {
+    // 1. 프로필 존재 여부 확인
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('ProfileData')
+      .select('id')
+      .eq('id', userId)
+      .single();
 
-  if (error && error.code === 'PGRST116') {
-    // 406: not found
-    const { error: insertError } = await supabase.from('ProfileData').insert({
-      id: userId,
-      nickname: '새 사용자',
-      description: '자동 생성된 프로필입니다'
-    });
+    if (fetchError && fetchError.code === 'PGRST116') {
+      // 2. 프로필이 없으면 생성
+      const { error: insertError } = await supabase
+        .from('ProfileData')
+        .insert({
+          id: userId,
+          nickname: '새 사용자',
+          description: '자동 생성된 프로필입니다',
+          created_at: new Date().toISOString()
+        });
 
-    if (insertError) {
-      throw new Error(`Profile 생성 실패: ${insertError.message}`);
+      if (insertError) {
+        console.error('프로필 생성 실패:', insertError);
+        throw new Error(`프로필 생성 실패: ${insertError.message}`);
+      }
+      console.log('✅ 새 프로필 생성 완료');
+    } else if (fetchError) {
+      console.error('프로필 확인 중 오류:', fetchError);
+      throw new Error(`프로필 확인 중 오류: ${fetchError.message}`);
     }
-  } else if (error) {
-    throw new Error(`Profile 존재 확인 중 오류: ${error.message}`);
+  } catch (error) {
+    console.error('프로필 처리 중 오류:', error);
+    throw error;
   }
 };
 
+// uploadWatchHistoryToSupabase 함수 수정
+const uploadWatchHistoryToSupabase = async (watchHistory: WatchHistoryItem[]): Promise<void> => {
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+    if (!session) {
+      console.error('❌ 세션 없음');
+      return;
+    }
 
+    const userId = session.user.id;
+    console.log('👤 사용자 ID:', userId);
 
- //워치 히스토리 저장 supabase 
-const uploadWatchHistoryToSupabase = async (watchHistory: {
-  videoId: string;
-  title: string;
-  description?: string;
-  channel: string;
-  channelId?: string;
-  tags: string[];
-  keywords: string[];
-  date: Date;
-  url?: string;
-}[]): Promise<void> => {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const session = sessionData?.session;
-  if (!session) return;
+    // 1. 프로필 확인/생성
+    const { error: profileError } = await supabase
+      .from('ProfileData')
+      .upsert({
+        id: userId,
+        nickname: '새 사용자',
+        description: '자동 생성된 프로필입니다',
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
+      });
 
-  const userId = session.user.id;
+    if (profileError) {
+      console.error('❌ 프로필 생성/업데이트 실패:', profileError);
+      throw new Error(`프로필 처리 실패: ${profileError.message}`);
+    }
+    console.log('✅ 프로필 처리 완료');
 
-  // ✅ 1. ProfileData 없으면 생성
-  await ensureProfileExists(userId);
+    // 2. 중복 제거
+    const deduped = Array.from(
+      new Map(watchHistory.map(item => [`${userId}-${item.videoId}`, item])).values()
+    );
+    console.log(`📊 중복 제거 후 ${deduped.length}개 항목`);
 
-  // ✅ 2. 중복 제거 (user_id + videoId 기준)
-  const deduped = Array.from(
-    new Map(watchHistory.map(item => [`${userId}-${item.videoId}`, item])).values()
-  );
+    // 3. WatchHistoryItem 업로드
+    const historyData = deduped.map(item => ({
+      user_id: userId,
+      embed_id: item.videoId,
+      title: item.title,
+      description: item.description || null,
+      url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
+      channel_name: item.channel || 'Unknown Channel',
+      channel_id: item.channelId || null,
+      timestamp: item.date.getTime(),
+      keywords: Array.isArray(item.keywords) ? item.keywords : [],
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      is_watched: true,
+      watched_at: item.date.toISOString()
+    }));
 
-  // ✅ 3. WatchHistoryItem 업로드 데이터 준비
-  const uploadData = deduped.map((item) => ({
-    user_id: userId,
-    embed_id: item.videoId,
-    title: item.title,
-    description: item.description || null,
-    url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
-    channel_name: item.channel || 'Unknown Channel',
-    channel_id: item.channelId || null,
-    timestamp: item.date.getTime(),
-    keywords: toPgArray(item.keywords || []),
-    tags: toPgArray(item.tags || []),
-    is_watched: true,
-    watched_at: item.date.toISOString()
-  }));
+    // 업로드 직전 샘플 로그
+    console.log('업로드 직전 keywords 샘플:', historyData[0]?.keywords, historyData[0]?.tags);
 
-  // ✅ 4. WatchHistoryItem 테이블에 업로드
-  const { error: historyError } = await supabase
-    .from("WatchHistoryItem")
-    .upsert(uploadData);
+    const { error: historyError } = await supabase
+      .from('WatchHistoryItem')
+      .upsert(historyData, {
+        onConflict: 'user_id,embed_id',
+        ignoreDuplicates: false
+      });
 
-  if (historyError) {
-    console.error('❌ WatchHistoryItem 업로드 실패:', historyError);
-    alert('시청기록 업로드에 실패했습니다. 콘솔을 확인해주세요.');
-    return;
+    if (historyError) {
+      console.error('❌ WatchHistoryItem 업로드 실패:', historyError);
+      throw new Error(`시청기록 업로드 실패: ${historyError.message}`);
+    }
+    console.log('✅ WatchHistoryItem 업로드 완료');
+
+    // 4. videos 테이블 업로드
+    const videoData = deduped.map(item => ({
+      id: item.videoId,
+      title: item.title,
+      description: item.description || null,
+      url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
+      channel_id: item.channelId || null,
+      channel_name: item.channel || 'Unknown Channel',
+      tags: Array.isArray(item.tags) ? item.tags : [],
+      keywords: Array.isArray(item.keywords) ? item.keywords : [],
+      thumbnail_url: (item as any).thumbnailUrl || null,
+      view_count: (item as any).viewCount ?? 0,
+      like_count: (item as any).likeCount ?? 0,
+      comment_count: (item as any).commentCount ?? 0,
+      last_fetched_at: new Date().toISOString()
+    }));
+
+    // 업로드 직전 샘플 로그
+    console.log('업로드 직전 videoData keywords 샘플:', videoData[0]?.keywords, videoData[0]?.tags);
+
+    // 배치 처리로 변경
+    const batchSize = 100;
+    for (let i = 0; i < videoData.length; i += batchSize) {
+      const batch = videoData.slice(i, i + batchSize);
+      const { error: videoError } = await supabase
+        .from('videos')
+        .upsert(batch, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
+
+      if (videoError) {
+        console.error(`❌ videos 배치 ${i/batchSize + 1} 업로드 실패:`, videoError);
+        throw new Error(`영상 정보 업로드 실패: ${videoError.message}`);
+      }
+      console.log(`✅ videos 배치 ${i/batchSize + 1} 업로드 완료`);
+    }
+
+    console.log('✅ 모든 업로드 완료');
+  } catch (error) {
+    console.error('❌ 업로드 중 오류:', error);
+    throw error;
   }
-
-  // ✅ 5. videos 테이블에 업로드 데이터 준비
-  const videoData = deduped.map((item) => ({
-    id: item.videoId,
-    user_id: userId,
-    title: item.title,
-    description: item.description || null,
-    url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
-    channel_id: item.channelId || null,
-    channel_name: item.channel || 'Unknown Channel',
-    tags: toPgArray(item.tags || []),
-    keywords: toPgArray(item.keywords || []),
-    thumbnail_url: (item as any).thumbnailUrl || null,
-    view_count: (item as any).viewCount ?? 0,
-    like_count: (item as any).likeCount ?? 0,
-    comment_count: (item as any).commentCount ?? 0,
-    last_fetched_at: new Date().toISOString()
-  }));
-
-  // ✅ 6. videos 테이블에 업로드
-  const { error: videoError } = await supabase
-    .from("videos")
-    .upsert(videoData);
-
-  if (videoError) {
-    console.error('❌ videos 업로드 실패:', videoError);
-    alert('영상 정보 업로드에 실패했습니다. 콘솔을 확인해주세요.');
-    return;
-  }
-
-  console.log('✅ 시청기록 및 영상 정보 업로드 완료');
 };
-
-
-
-
 
  
 
@@ -373,13 +460,13 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
       view_count: Number(statistics.viewCount ?? 0),
       like_count: Number(statistics.likeCount ?? 0),
       comment_count: Number(statistics.commentCount ?? 0),
-      last_fetched_at: new Date().toISOString(), // ✅ 절대 null/undefined가 되지 않도록 보장
+      last_fetched_at: new Date().toISOString(),
     };
 
     const { error } = await supabase
       .from('videos')
-      .upsert(payload, {
-        onConflict: ['id'],
+      .upsert([payload], {
+        onConflict: 'id',
       });
 
     if (error) {
@@ -658,114 +745,79 @@ const uploadWatchHistoryToSupabase = async (watchHistory: {
   // STEP2>> 통합된 키워드 분석 및 클러스터링 함수
   const analyzeKeywordsWithOpenAI = async (watchHistory: WatchHistoryItem[]) => {
     try {
-      // Log the input data
       console.log('Starting OpenAI analysis with watch history:', {
         totalVideos: watchHistory.length,
         sampleVideos: watchHistory.slice(0, 3)
       });
 
-      // 데이터를 더 작은 청크로 나눕니다 (예: 20개씩)
-      const chunkSize = 20;
-      const chunks = [];
-      for (let i = 0; i < watchHistory.length; i += chunkSize) {
-        chunks.push(watchHistory.slice(i, i + chunkSize));
-      }
+      // 1. 키워드 데이터 준비
+      const keywordFrequencies: Record<string, number> = {};
+      const keywordToVideos: Record<string, WatchHistoryItem[]> = {};
+      
+      watchHistory.forEach(item => {
+        if (item.keywords && Array.isArray(item.keywords)) {
+          item.keywords.forEach(keyword => {
+            keywordFrequencies[keyword] = (keywordFrequencies[keyword] || 0) + 1;
+            if (!keywordToVideos[keyword]) {
+              keywordToVideos[keyword] = [];
+            }
+            keywordToVideos[keyword].push(item);
+          });
+        }
+      });
 
-      let allKeywordFrequencies: { [key: string]: number } = {};
-      let allKeywordToVideos: { [key: string]: string[] } = {};
-
-      // 각 청크별로 키워드 빈도수와 비디오 매핑을 계산
-      for (const chunk of chunks) {
-        chunk.forEach(item => {
-          if (item && Array.isArray(item.keywords)) {
-            item.keywords.forEach(keyword => {
-              allKeywordFrequencies[keyword] = (allKeywordFrequencies[keyword] || 0) + 1;
-              if (!allKeywordToVideos[keyword]) {
-                allKeywordToVideos[keyword] = [];
-              }
-              if (item.title) {
-                allKeywordToVideos[keyword].push(item.title);
-              }
-            });
-          }
-        });
-      }
-
-      // 상위 출현 키워드 추출 (10개)
-      const topKeywords = Object.entries(allKeywordFrequencies)
+      // 2. 상위 키워드 추출
+      const topKeywords = Object.entries(keywordFrequencies)
         .sort(([, a], [, b]) => b - a)
-        .slice(0, 10)
+        .slice(0, 20)
         .map(([keyword]) => keyword);
 
-      // Log the prepared data
       console.log('Prepared data for OpenAI:', {
         topKeywords,
-        keywordFrequencies: allKeywordFrequencies,
-        keywordToVideos: allKeywordToVideos
+        keywordFrequencies,
+        keywordToVideos
       });
 
-      const prompt = `
-당신은 YouTube 시청 기록을 분석해 사용자의 (1) 라이프스타일 (2) YouTube 시청과 관련된 취향과 관심사 (3) YouTube 시청의 목적과 그 가치추구 성향에 대해 깊이 있게 이해할 수 있는 전문가입니다.
-제공되는 YouTube 시청 기록 데이터를 분석하여 사용자의 관심사와 취향을 가장 잘 나타내는 의미 있는 그룹으로 분류하되 인스타그램의 hashtag처럼 함축적이고 직관적이게 만들어 주세요. 단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
+      if (topKeywords.length === 0) {
+        throw new Error('분석할 키워드가 없습니다.');
+      }
 
-시청 기록 데이터 (상위 10개 키워드 관련):
-${topKeywords.map(keyword => 
-  `${keyword}:
-   - ${allKeywordToVideos[keyword].slice(0, 5).join('\n   - ')}${allKeywordToVideos[keyword].length > 5 ? '\n   - ...' : ''}`
-).join('\n\n')}
-
-가장 자주 등장하는 키워드 (상위 10개):
-${topKeywords.map(keyword => `${keyword} (${allKeywordFrequencies[keyword]}회)`).join('\n')}
-
-분석 요구사항:
-1. 모든 영상이 최소 하나의 그룹에 포함되어야 합니다.
-2. 각 그룹은 최소 3개 이상의 연관된 영상을 포함해야 합니다.하나의 영상이 여러 그룹에 포함될 수 있습니다.
-3. 굵은 텍스트 절대 금지
-4. 각 그룹은 사용자의 뚜렷한 관심사나 취향을 나타내야 합니다.
-5. 클러스터 수는 최소 5개 이상이어야 합니다.
-응답 형식:
-CLUSTER_START
-1. [그룹의 핵심 키워드 또는 인물명]
-2.[콘텐츠 카테고리]
-3. [(1) 나의 현재 라이프스타일 (2) YouTube 시청과 관련된 취향과 관심사 (3) YouTube 시청의 목적과 그 가치추구 성향을 반영해 3문장으로 설명]
-4. [관련 키워드들을 빈도순으로 나열]
-5. [감성과 태도 키워드 3-4개]
-6. [해당 그룹에 속할 것으로 예상되는 영상 url]
-CLUSTER_END`;
-
-      // Log request
-      await OpenAILogger.logRequest({
-        model: "gpt-4o-mini",
+      // 3. OpenAI API 호출
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini-2024-07-18",
+        messages: [
+          {
+            role: "system",
+            content: `당신은 YouTube 시청 기록을 분석하는 AI입니다. 
+            주어진 키워드들을 기반으로 시청자의 관심사를 클러스터링해주세요.
+            각 클러스터는 다음 형식을 따라야 합니다:
+            
+            CLUSTER_START
+            대표키워드: [주요 키워드]
+            카테고리: [카테고리]
+            관심영역: [상세 설명]
+            연관키워드: [쉼표로 구분된 관련 키워드들]
+            감성태도: [감정/톤]
+            예상영상수: [관련 영상 수]
+            CLUSTER_END`
+          },
+          {
+            role: "user",
+            content: `다음은 사용자의 YouTube 시청 기록에서 추출한 상위 키워드들입니다:
+            ${topKeywords.join(', ')}
+            
+            이 키워드들을 기반으로 관심사 클러스터를 생성해주세요.
+            각 클러스터는 서로 다른 관심사를 나타내야 하며, 
+            키워드들 간의 연관성을 고려해주세요.`
+          }
+        ],
         temperature: 0.7,
-        max_tokens: 2000,
-        prompt: prompt
+        max_tokens: 1000
       });
 
-      console.log('Sending request to OpenAI...');
-      const completion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "gpt-4o-mini",
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
-
-      console.log('Received response from OpenAI:', {
-        model: completion.model,
-        usage: completion.usage,
-        contentLength: completion.choices[0].message.content?.length
-      });
-
-      // Log response
-      await OpenAILogger.logResponse({
-        model: completion.model,
-        content: completion.choices[0].message.content || '',
-        usage: completion.usage
-      });
-
-      const response = completion.choices[0].message.content || '';
-      console.log('Processing OpenAI response...');
-
-      const clusters = response.split('CLUSTER_START')
+      // 4. 응답 파싱 및 클러스터 생성
+      const clusters = response.choices[0].message.content
+        ?.split('CLUSTER_START')
         .slice(1)
         .map(cluster => {
           const clusterText = cluster.split('CLUSTER_END')[0].trim();
@@ -785,22 +837,25 @@ CLUSTER_END`;
             }
             return acc;
           }, {});
+
           const relatedKeywords = parsedData.keywords ? 
             parsedData.keywords.split(',').map((k: string) => k.trim()).filter(Boolean) : 
             [];
+
           const relatedVideos = watchHistory.filter(item => 
-            item.keywords && Array.isArray(item.keywords) && 
+            item.keywords && 
+            Array.isArray(item.keywords) && 
             item.keywords.some(k => relatedKeywords.includes(k))
           );
+
           return {
             main_keyword: parsedData.main_keyword || '',
             sub_keyword: '',
             category: parsedData.category || '기타',
             description: parsedData.description || '',
-            keyword_list: relatedKeywords.join(', '),
+            keywords: relatedKeywords.join(', '), // keyword_list에서 keywords로 변경
             mood_keyword: parsedData.mood_keyword || '',
             strength: relatedVideos.length,
-            video_links: relatedVideos.map(v => v.videoId).join(','),
             related_videos: relatedVideos,
             created_at: new Date().toISOString(),
             desired_self: false,
@@ -811,8 +866,9 @@ CLUSTER_END`;
             },
             main_image_url: ''
           } as Cluster;
-        });
+        }) || [];
 
+      console.log('Generated clusters:', clusters);
       return clusters;
     } catch (error) {
       console.error('Error in analyzeKeywordsWithOpenAI:', error);
@@ -826,46 +882,53 @@ CLUSTER_END`;
     setIsClustering(true);
     try {
       setIsLoading(true);
-      // 1. 키워드 클러스터 분석
-      const newClusters = await analyzeKeywordsWithOpenAI(watchHistory);
-      // 2. 클러스터 데이터 포맷 변환 및 이미지 자동 저장
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData?.session?.user?.id;
-      const formattedClusters = [];
-      for (const cluster of newClusters) {
-        let main_image_url = '';
-        if (userId && cluster.main_keyword) {
-          // Pinterest 이미지 검색
-          const pinterestResults = await searchClusterImage_pinterest(cluster.main_keyword, 1);
-          const pinterestImageUrl = pinterestResults?.[0]?.thumbnailLink;
-          if (pinterestImageUrl) {
-            // Supabase Storage에 업로드
-            const res = await fetch('/api/save-cluster-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ imageUrl: pinterestImageUrl, clusterName: cluster.main_keyword, userId }),
-            });
-            const { publicUrl } = await res.json();
-            main_image_url = publicUrl;
-          }
-        }
-        formattedClusters.push({
-          main_keyword: cluster.main_keyword,
-          sub_keyword: cluster.main_keyword,
-          mood_keyword: cluster.mood_keyword,
-          description: cluster.description,
-          category: cluster.category,
-          keyword_list: cluster.keyword_list,
-          strength: cluster.strength,
-          related_videos: cluster.related_videos,
-          created_at: new Date().toISOString(),
-          desired_self: false,
-          metadata: cluster.metadata,
-          main_image_url,
-        });
+      // 진단 로그 추가
+      console.log('watchHistory 전체 개수:', watchHistory.length);
+      console.log('watchHistory 키워드 있는 개수:', watchHistory.filter(item => item.keywords && item.keywords.length > 0).length);
+      console.log('watchHistory 키워드 없는 샘플:', watchHistory.filter(item => !item.keywords || item.keywords.length === 0).slice(0, 3));
+      // 1. 유효한 데이터 필터링
+      const validWatchHistory = watchHistory.filter(item => 
+        item.keywords && 
+        Array.isArray(item.keywords) && 
+        item.keywords.length > 0
+      );
+
+      if (validWatchHistory.length === 0) {
+        throw new Error('분석할 수 있는 시청 기록이 없습니다. 키워드가 있는 영상이 필요합니다.');
       }
 
-      // 3. Supabase에 저장할 데이터 준비 (타입 변환 및 undefined 방지)
+      console.log('📊 클러스터링 시작:', {
+        totalVideos: watchHistory.length,
+        validVideos: validWatchHistory.length,
+        sampleKeywords: validWatchHistory.slice(0, 3).map(v => v.keywords)
+      });
+
+      // 2. 키워드 클러스터 분석
+      const newClusters = await analyzeKeywordsWithOpenAI(validWatchHistory);
+      
+      if (!newClusters || newClusters.length === 0) {
+        throw new Error('클러스터 분석 결과가 없습니다.');
+      }
+
+      // 3. 클러스터 데이터 포맷 변환 및 이미지 자동 저장
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      const formattedClusters = newClusters.map(cluster => ({
+        ...cluster,
+        main_keyword: cluster.main_keyword,
+        sub_keyword: cluster.sub_keyword,
+        mood_keyword: cluster.mood_keyword,
+        description: cluster.description,
+        category: cluster.category,
+        keywords: cluster.keywords, // keyword_list 대신 keywords 사용
+        strength: cluster.strength,
+        created_at: new Date().toISOString(),
+        desired_self: false,
+        metadata: cluster.metadata,
+        main_image_url: cluster.main_image_url || '',
+      }));
+
+      // 4. Supabase에 저장할 데이터 준비 (타입 변환 및 undefined 방지)
       if (userId) {
         const clustersToSave = formattedClusters.map((cluster: any) => ({
           user_id: userId,
@@ -874,9 +937,9 @@ CLUSTER_END`;
           mood_keyword: String(cluster.mood_keyword ?? ''),
           description: String(cluster.description ?? ''),
           category: (() => { try { const v = toPgArray(Array.isArray(cluster.category) ? cluster.category : String(cluster.category ?? '').split(',')); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
-          keywords: (() => { try { const v = toPgArray(Array.isArray(cluster.keyword_list) ? cluster.keyword_list : String(cluster.keyword_list ?? '').split(',')); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
+          keywords: (() => { try { const v = toPgArray(Array.isArray(cluster.keywords) ? cluster.keywords : String(cluster.keywords ?? '').split(',')); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
           strength: Number(cluster.strength ?? 0),
-          video_links: (() => { try { const v = toPgArray(Array.isArray(cluster.related_videos) ? cluster.related_videos.map((v: any) => v.url) : (typeof cluster.video_links === 'string' ? cluster.video_links.split(',') : [])); return typeof v === 'string' ? v : ''; } catch { return ''; } })(),
+          related_videos: cluster.related_videos || [], // JSONB 컬럼에 관련 영상 배열 저장
           created_at: cluster.created_at ?? new Date().toISOString(),
           desired_self: !!cluster.desired_self,
           metadata: JSON.stringify(cluster.metadata ?? {}),
@@ -889,10 +952,10 @@ CLUSTER_END`;
         }
       }
 
-      // 4. 클러스터 상태 반영
+      // 5. 클러스터 상태 반영
       setClusters(formattedClusters);
       
-      // 5. 클러스터 이미지 검색 및 저장
+      // 6. 클러스터 이미지 검색 및 저장
       const clusterImagesData: Record<number, any> = {};
       for (let i = 0; i < formattedClusters.length; i++) {
         const imageUrl = formattedClusters[i].main_image_url || placeholderImage;
@@ -913,7 +976,53 @@ CLUSTER_END`;
     }
   };
 
-  // 파일 업로드 핸들러
+  // 키워드 없는 영상에 대해 자동 키워드 생성 (videos 테이블 캐싱 활용, 병렬 처리)
+  const fillMissingKeywords = async (history: WatchHistoryItem[]) => {
+    const updated: WatchHistoryItem[] = await asyncPool(5, history, async (item) => {
+      // keywords가 없거나 배열이 아니거나 빈 배열이면 보완
+      if (!item.keywords || !Array.isArray(item.keywords) || item.keywords.length === 0) {
+        // 1. videos 테이블에서 키워드 조회
+        const { data: videoRow, error } = await supabase
+          .from('videos')
+          .select('keywords')
+          .eq('id', item.videoId)
+          .single();
+        if (videoRow && Array.isArray(videoRow.keywords) && videoRow.keywords.length > 0) {
+          return { ...item, keywords: videoRow.keywords };
+        }
+        // 2. 없으면 OpenAI로 키워드 추출
+        const keywords = await extractVideoKeywords(item);
+        // 3. videos 테이블에도 키워드 update
+        await supabase.from('videos').upsert({
+          id: item.videoId,
+          title: item.title,
+          description: item.description || null,
+          url: item.url || `https://www.youtube.com/watch?v=${item.videoId}`,
+          channel_id: item.channelId || null,
+          channel_name: item.channel || 'Unknown Channel',
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          keywords: keywords.map(k => k.keyword),
+          thumbnail_url: (item as any).thumbnailUrl || null,
+          view_count: (item as any).viewCount ?? 0,
+          like_count: (item as any).likeCount ?? 0,
+          comment_count: (item as any).commentCount ?? 0,
+          last_fetched_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        return { ...item, keywords: keywords.map(k => k.keyword) };
+      } else if (typeof item.keywords[0] !== 'string') {
+        // 객체 배열이면 문자열 배열로 변환
+        return { ...item, keywords: item.keywords.map((k: any) => k.keyword) };
+      } else {
+        return item;
+      }
+    });
+    // 업로드 직전 샘플 로그 추가
+    console.log('실제 watchHistory 샘플', updated.slice(0, 3));
+    console.log('실제 keywords 타입', typeof updated[0]?.keywords?.[0], updated[0]?.keywords);
+    return updated;
+  };
+
+  // 파일 업로드 핸들러에서 업로드 후 추가
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -926,9 +1035,12 @@ CLUSTER_END`;
           setSuccessCount(current);
         })
           .then(async (processedHistory: any[]) => {
-            setWatchHistory(processedHistory);
-            await uploadWatchHistoryToSupabase(processedHistory);
-            await handleCluster();
+            // 키워드 없는 영상 자동 보완
+            const filledHistory = await fillMissingKeywords(processedHistory);
+            setWatchHistory(filledHistory);
+            localStorage.setItem('watchHistory', JSON.stringify(filledHistory));
+            await uploadWatchHistoryToSupabase(filledHistory);
+            setIsReadyToCluster(true); // 클러스터링 준비 완료
           })
           .catch((error: any) => {
             setError(error.message);
@@ -937,7 +1049,7 @@ CLUSTER_END`;
       } else if (file.name.endsWith('.html')) {
         parseWatchHistory(file)
           .then(async () => {
-            await handleCluster();
+            setIsReadyToCluster(true);
           })
           .finally(() => setIsLoading(false));
       } else {
@@ -1172,8 +1284,10 @@ CLUSTER_END`;
       groupMap.get(key).push(cluster);
     });
     const grouped = Array.from(groupMap.entries()).map(([created_at, clusters]) => ({
+      id: created_at,
+      date: created_at,
       created_at,
-      clusters
+      clusters: clusters as Cluster[]
     }));
     setAnalysisHistory(grouped);
   };
@@ -1296,6 +1410,54 @@ CLUSTER_END`;
     setShowAnalysis(false);
   };
 
+  // 로그인 성공 시 localStorage 초기화
+  useEffect(() => {
+    clearUserLocalStorage();
+  }, []);
+
+  // watchHistory가 변경될 때만 클러스터링 실행
+  useEffect(() => {
+    if (isReadyToCluster && watchHistory.length > 0) {
+      handleCluster();
+      setIsReadyToCluster(false); // 한 번만 실행
+    }
+  }, [watchHistory, isReadyToCluster]);
+
+  // Pinterest 모달 키보드 단축키
+  useEffect(() => {
+    if (!showPinterestResults) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentImageIndex(prev => 
+          prev > 0 ? prev - 1 : pinterestSearchResults.length - 1
+        );
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setCurrentImageIndex(prev => 
+          prev < pinterestSearchResults.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        // "이 이미지 선택" 버튼 클릭과 동일한 로직
+        const selectButton = document.querySelector('[data-select-image]') as HTMLButtonElement;
+        if (selectButton && !selectButton.disabled) {
+          selectButton.click();
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowPinterestResults(false);
+        setPinterestSearchResults([]);
+        setCurrentSearchingCluster(null);
+        setCurrentImageIndex(0);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showPinterestResults, pinterestSearchResults.length, currentImageIndex]);
+
   return (
     <main className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center p-4 py-40 relative overflow-hidden">
       {/* Animated background blobs */}
@@ -1394,7 +1556,11 @@ CLUSTER_END`;
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateRange.from ? (
-                          format(dateRange.from, "PPP", { locale: ko })
+                          dateRange.from.toLocaleDateString('ko-KR', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })
                         ) : (
                           <span>시작일 선택</span>
                         )}
@@ -1411,7 +1577,6 @@ CLUSTER_END`;
                           }));
                         }}
                         initialFocus
-                        locale={ko}
                       />
                     </PopoverContent>
                   </Popover>
@@ -1426,7 +1591,11 @@ CLUSTER_END`;
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {dateRange.to ? (
-                          format(dateRange.to, "PPP", { locale: ko })
+                          dateRange.to.toLocaleDateString('ko-KR', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })
                         ) : (
                           <span>종료일 선택</span>
                         )}
@@ -1443,7 +1612,6 @@ CLUSTER_END`;
                           }));
                         }}
                         initialFocus
-                        locale={ko}
                       />
                     </PopoverContent>
                   </Popover>
@@ -1598,26 +1766,32 @@ CLUSTER_END`;
                 <h3 className="text-lg font-medium mb-2">기본 정보</h3>
                 <p>총 영상 수: {watchHistory.length}</p>
                 <p>총 키워드 수: {
-                  new Set(watchHistory.flatMap(item => item.keywords)).size
+                  new Set(watchHistory.flatMap(item => item.keywords || [])).size
                 }</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-lg font-medium mb-2">최다 출현 키워드</h3>
                 <div className="flex flex-wrap gap-2">
-                  {Object.entries(
-                    watchHistory.flatMap(item => item.keywords)
-                      .reduce((acc: {[key: string]: number}, keyword) => {
-                        acc[keyword] = (acc[keyword] || 0) + 1;
-                        return acc;
-                      }, {})
-                  )
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 5)
-                    .map(([keyword, count]) => (
-                      <span key={keyword} className="px-2 py-1 bg-blue-100 rounded-full text-sm">
-                        {keyword} ({count})
-                      </span>
-                    ))}
+                  {(() => {
+                    const keywordCounts: {[key: string]: number} = {};
+                    watchHistory.forEach(item => {
+                      if (item.keywords) {
+                        item.keywords.forEach(keyword => {
+                          if (keyword) {
+                            keywordCounts[keyword] = (keywordCounts[keyword] || 0) + 1;
+                          }
+                        });
+                      }
+                    });
+                    return Object.entries(keywordCounts)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 5)
+                      .map(([keyword, count]) => (
+                        <span key={keyword} className="px-2 py-1 bg-blue-100 rounded-full text-sm">
+                          {keyword} ({count})
+                        </span>
+                      ));
+                  })()}
                 </div>
               </div>
             </div>
@@ -1685,73 +1859,35 @@ CLUSTER_END`;
                                     const keyword = cluster.main_keyword;
                                     console.log('Pinterest 이미지 검색 시작:', keyword);
                                     
-                                    // 캐시 초기화
-                                    const imageAttemptKey = `imageAttempt_pinterest_${keyword}`;
-                                    localStorage.removeItem(imageAttemptKey);
+                                    // 로딩 상태 표시
+                                    setIsLoading(true);
                                     
-                                    // 기존 저장된 이미지 삭제 (clusterImages 상태 및 localStorage)
-                                    const currentSavedImages = JSON.parse(localStorage.getItem('clusterImages') || '{}');
-                                    delete currentSavedImages[keyword]; // 키워드 기준으로 삭제
-                                    localStorage.setItem('clusterImages', JSON.stringify(currentSavedImages));
-                                    setClusterImages(prev => {
-                                      const newImages = { ...prev };
-                                      newImages[index] = null; // 상태에서도 즉시 제거 또는 로딩 상태 표시
-                                      return newImages;
-                                    });
-
-                                    // Pinterest 이미지 검색 호출
-                                    const pinterestResults = await searchClusterImage_pinterest(keyword, 1); 
+                                    // Pinterest 이미지 검색 호출 (여러 이미지 검색)
+                                    const pinterestResults = await searchClusterImage_pinterest(keyword, 20);
                                     console.log('검색된 Pinterest 이미지:', pinterestResults);
 
-                                    if (pinterestResults && pinterestResults.length > 0 && pinterestResults[0].thumbnailLink) {
-                                      const firstImage = pinterestResults[0];
-                                      // 첫 번째 결과의 썸네일 링크를 url에 저장 (credit 없음)
-                                      const newImage: ClusterImage = { url: firstImage.thumbnailLink };
-                                      
-                                      setClusterImages(prev => {
-                                        const newImages = { ...prev };
-                                        newImages[index] = newImage;
-                                        return newImages;
-                                      });
-                                       // localStorage에도 url만 저장
-                                       const updatedSavedImages = { ...currentSavedImages, [keyword]: newImage };
-                                       localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
-                                       localStorage.setItem(imageAttemptKey, 'success'); // 성공 기록
+                                    if (pinterestResults && pinterestResults.length > 0) {
+                                      // 검색 결과를 상태에 저장하고 모달 표시
+                                      setPinterestSearchResults(pinterestResults);
+                                      setCurrentSearchingCluster({ cluster, index });
+                                      setCurrentImageIndex(0); // 첫 번째 이미지부터 시작
+                                      setShowPinterestResults(true);
                                     } else {
-                                      console.log('Pinterest 이미지를 찾지 못했거나 썸네일 링크가 없습니다.');
-                                      // 이미지를 찾지 못한 경우, 올바른 경로의 default_image URL 사용
-                                      const defaultImageUrl = '/images/default_image.png'; // 올바른 경로로 수정
-                                      const defaultImage: ClusterImage = { url: defaultImageUrl }; 
-                                       setClusterImages(prev => {
-                                         const newImages = { ...prev };
-                                         newImages[index] = defaultImage; // 기본 이미지로 설정
-                                         return newImages;
-                                       });
-                                       // localStorage에서도 default_image URL로 업데이트
-                                       const updatedSavedImages = { ...currentSavedImages, [keyword]: defaultImage }; // 기본 이미지로 저장
-                                       localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
-                                       localStorage.setItem(imageAttemptKey, 'failed'); // 실패 기록
+                                      console.log('Pinterest 이미지를 찾지 못했습니다.');
+                                      alert('Pinterest에서 이미지를 찾지 못했습니다.');
                                     }
                                   } catch (error) {
-                                    console.error('Pinterest 이미지 검색/업데이트 실패:', error);
-                                    // 사용자에게 오류 알림 (toast 등 사용)
-                                    // 오류 발생 시에도 기본 이미지 설정 (선택 사항)
-                                    const defaultImageUrlOnError = '/images/default_image.png'; // 올바른 경로로 수정
-                                    const defaultImageOnError: ClusterImage = { url: defaultImageUrlOnError };
-                                    setClusterImages(prev => {
-                                      const newImages = { ...prev };
-                                      // 에러 발생 시에도 기본 이미지로 설정할 수 있음
-                                      if (!newImages[index]) { // 이미지가 아직 설정되지 않은 경우에만
-                                         newImages[index] = defaultImageOnError;
-                                      }
-                                      return newImages;
-                                    });
+                                    console.error('Pinterest 이미지 검색 실패:', error);
+                                    alert('Pinterest 이미지 검색 중 오류가 발생했습니다.');
+                                  } finally {
+                                    setIsLoading(false);
                                   }
                                 }}
                                 variant="outline"
                                 className="hover:bg-red-50 text-red-600"
+                                disabled={isLoading}
                               >
-                                Pinterest에서 검색
+                                {isLoading ? '검색 중...' : 'Pinterest에서 검색'}
                               </Button>
                             </div>
                             {clusterImages[index]?.url && (
@@ -1982,6 +2118,197 @@ CLUSTER_END`;
                   </span>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pinterest 검색 결과 모달 */}
+      {showPinterestResults && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                Pinterest 검색 결과 - "{currentSearchingCluster?.cluster.main_keyword}"
+              </h3>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setShowPinterestResults(false);
+                  setPinterestSearchResults([]);
+                  setCurrentSearchingCluster(null);
+                  setCurrentImageIndex(0);
+                }}
+                className="hover:bg-gray-100"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </Button>
+            </div>
+            
+            <div className="mb-4 text-sm text-gray-600 text-center">
+              화살표로 이미지를 넘겨보세요. 마음에 드는 이미지를 선택하면 Storage에 저장됩니다.
+            </div>
+            
+            {/* 이미지 Carousel */}
+            {pinterestSearchResults.length > 0 && (
+              <div className="relative">
+                {/* 현재 이미지 */}
+                <div className="aspect-square overflow-hidden rounded-lg mb-4 bg-gray-100">
+                  <img
+                    src={pinterestSearchResults[currentImageIndex]?.thumbnailLink}
+                    alt={pinterestSearchResults[currentImageIndex]?.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = placeholderImage;
+                    }}
+                  />
+                </div>
+                
+                {/* 이전/다음 버튼 */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCurrentImageIndex(prev => 
+                      prev > 0 ? prev - 1 : pinterestSearchResults.length - 1
+                    );
+                  }}
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCurrentImageIndex(prev => 
+                      prev < pinterestSearchResults.length - 1 ? prev + 1 : 0
+                    );
+                  }}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
+                
+                {/* 이미지 카운터 */}
+                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-2 py-1 rounded text-sm">
+                  {currentImageIndex + 1} / {pinterestSearchResults.length}
+                </div>
+              </div>
+            )}
+            
+            {/* 이미지 제목 */}
+            {pinterestSearchResults[currentImageIndex] && (
+              <div className="mb-4 text-sm text-gray-600 text-center">
+                {pinterestSearchResults[currentImageIndex].title}
+              </div>
+            )}
+            
+            {/* 선택 버튼 */}
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={async () => {
+                  if (!currentSearchingCluster || !pinterestSearchResults[currentImageIndex]) return;
+                  
+                  try {
+                    setIsLoading(true);
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const userId = sessionData?.session?.user?.id;
+                    
+                    if (!userId) {
+                      alert('로그인이 필요합니다.');
+                      return;
+                    }
+                    
+                    const selectedImage = pinterestSearchResults[currentImageIndex];
+                    
+                    // Storage에 이미지 업로드
+                    const storageUrl = await uploadPinterestImageToStorage(
+                      selectedImage.thumbnailLink,
+                      userId,
+                      currentSearchingCluster.index.toString(),
+                      currentSearchingCluster.cluster.main_keyword
+                    );
+                    
+                    console.log('✅ Storage 업로드 성공:', storageUrl);
+                    
+                    // Supabase 클러스터 테이블의 main_image_url 업데이트
+                    try {
+                      const { error: updateError } = await supabase
+                        .from('clusters')
+                        .update({ main_image_url: storageUrl })
+                        .eq('user_id', userId)
+                        .eq('main_keyword', currentSearchingCluster.cluster.main_keyword);
+                      
+                      if (updateError) {
+                        console.error('❌ 클러스터 이미지 URL 업데이트 실패:', updateError);
+                      } else {
+                        console.log('✅ 클러스터 이미지 URL 업데이트 성공:', currentSearchingCluster.cluster.main_keyword);
+                      }
+                    } catch (dbError) {
+                      console.error('❌ 데이터베이스 업데이트 중 오류:', dbError);
+                    }
+                    
+                    // 클러스터 이미지 상태 업데이트
+                    const newImage: ClusterImage = { url: storageUrl };
+                    setClusterImages(prev => ({
+                      ...prev,
+                      [currentSearchingCluster.index]: newImage
+                    }));
+                    
+                    // localStorage 업데이트
+                    const currentSavedImages = JSON.parse(localStorage.getItem('clusterImages') || '{}');
+                    const updatedSavedImages = { 
+                      ...currentSavedImages, 
+                      [currentSearchingCluster.cluster.main_keyword]: newImage 
+                    };
+                    localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
+                    
+                    // 모달 닫기
+                    setShowPinterestResults(false);
+                    setPinterestSearchResults([]);
+                    setCurrentSearchingCluster(null);
+                    setCurrentImageIndex(0);
+                    
+                    alert('이미지가 Storage에 저장되고 클러스터 이미지로 설정되었습니다!');
+                  } catch (error) {
+                    console.error('Storage 업로드 실패:', error);
+                    alert('Storage 업로드 중 오류가 발생했습니다.');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
+                disabled={isLoading}
+                data-select-image="true"
+              >
+                {isLoading ? '저장 중...' : '이 이미지 선택'}
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowPinterestResults(false);
+                  setPinterestSearchResults([]);
+                  setCurrentSearchingCluster(null);
+                  setCurrentImageIndex(0);
+                }}
+              >
+                취소
+              </Button>
+            </div>
+            
+            {/* 키보드 단축키 안내 */}
+            <div className="mt-4 text-xs text-gray-500 text-center">
+              키보드 단축키: ← → 화살표로 이미지 넘기기, Enter로 선택, Esc로 취소
             </div>
           </div>
         </div>
