@@ -11,12 +11,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { transformClusterToImageData, transformClustersToImageData } from '../utils/clusterTransform';
+import { transformClusterToImageData } from '../utils/clusterTransform';
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 import { OpenAILogger } from '../utils/init-logger';
 import { parseJSONWatchHistory } from './VideoParsing/jsonParser';
 import { parseWatchHistory } from './VideoParsing/htmlParser';
