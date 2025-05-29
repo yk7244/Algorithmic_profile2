@@ -1,16 +1,16 @@
 import { ImageData } from '../types/profile';
 
-// 중앙 위주 좌표 배열 (CSS 퍼센트 단위)
+// 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
-  { left: "50%", top: "50%" },
-  { left: "52%", top: "48%" },
-  { left: "48%", top: "52%" },
-  { left: "51%", top: "51%" },
-  { left: "49%", top: "49%" },
-  { left: "53%", top: "50%" },
-  { left: "50%", top: "53%" },
-  { left: "47%", top: "50%" },
-  { left: "50%", top: "47%" }
+  { left: '400px', top: '400px' },
+  { left: '420px', top: '380px' },
+  { left: '380px', top: '420px' },
+  { left: '410px', top: '410px' },
+  { left: '390px', top: '390px' },
+  { left: '430px', top: '400px' },
+  { left: '400px', top: '430px' },
+  { left: '370px', top: '400px' },
+  { left: '400px', top: '370px' }
 ];
 
 function getRandomCenterPosition() {
@@ -44,9 +44,9 @@ export const transformClusterToImageData = (
   const strength = cluster.strength || cluster.metadata?.videoCount || 1;
   let sizeWeight = 0.05; // 기본값
   if (maxStrength > minStrength) {
-    // 0.05 ~ 0.3 사이로 정규화
+    // 0.005 ~ 0.05 사이로 정규화
     const ratio = (strength - minStrength) / (maxStrength - minStrength);
-    sizeWeight = 0.05 + ratio * (0.3 - 0.05);
+    sizeWeight = 0.005 + ratio * (0.05 - 0.005);
   }
 
   return {
@@ -58,7 +58,7 @@ export const transformClusterToImageData = (
     category: cluster.category?.toLowerCase() || 'other',
     width: 800,
     height: 800,
-    rotate: randomRotate,
+    rotate: 0,
     left,
     top,
     keywords: keywords.slice(0, 5),

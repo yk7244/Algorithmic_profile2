@@ -258,6 +258,32 @@ export default function MyProfilePage() {
     }
   }, []);
 
+  useEffect(() => {
+    setPositions(prevPositions => {
+      const newPositions = { ...prevPositions };
+      const imageIdSet = new Set(images.map(img => img.id));
+
+      // images 배열에 있는 각 이미지에 대해
+      images.forEach(image => {
+        // positions에 해당 이미지가 없으면 초기 위치 설정
+        if (!newPositions[image.id]) {
+          newPositions[image.id] = {
+            x: Number(image.left?.replace('px', '') || 0),
+            y: Number(image.top?.replace('px', '') || 0),
+          };
+        }
+      });
+
+      // positions에 있지만 현재 images 배열에는 없는 이미지 정보 삭제
+      for (const id in newPositions) {
+        if (!imageIdSet.has(id)) {
+          delete newPositions[id];
+        }
+      }
+      return newPositions;
+    });
+  }, [images]);
+
   //별명생성
   useEffect(() => {
     generateUserProfile();

@@ -11,7 +11,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { transformClusterToImageData } from '../utils/clusterTransform';
+import { transformClustersToImageData, transformClusterToImageData } from '../utils/clusterTransform';
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

@@ -18,11 +18,19 @@ export function useHistorySave({
   setIsEditing: (v: boolean) => void;
 }) {
   return useCallback(() => {
+    const updatedImages = images.map(image => {
+      const pos = positions[image.id];
+      return {
+        ...image,
+        left: pos ? `${pos.x}px` : image.left,
+        top: pos ? `${pos.y}px` : image.top,
+      };
+    });
     const newHistory = {
       timestamp: Date.now(),
       positions,
       frameStyles,
-      images,
+      images: updatedImages,
     };
     const updatedHistories = [...histories, newHistory];
     setHistories(updatedHistories);
