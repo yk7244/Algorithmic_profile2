@@ -23,7 +23,7 @@ export function useImageFrame(frameStyleProp: string, image: any, onFrameStyleCh
         if (image.desired_self) return '';
         switch (frameStyle) {
         case 'healing':
-            return 'rounded-lg';
+            return '';
         case 'inspiration':
             return '';
         case 'people':

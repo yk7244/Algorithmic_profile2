@@ -99,17 +99,13 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 group hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                 >
                     <div 
-                        className="absolute -top-28 left-1/2 transform -translate-x-1/2 z-20 whitespace-nowrap 5"
+                        className="absolute -top-10 z-20 whitespace-nowrap"
                         style={{
-                        fontSize: `${Math.max(80, 100 * image.sizeWeight)}px`,
+                        fontSize: '14px',
                         }}
                     >
                         <div 
-                        className="px-8 py-4 "
-                        style={{
-                            transform: `scale(${image.sizeWeight})`,
-                            transformOrigin: 'center',
-                        }}
+                        className="px-8 py-4"
                         >
                         <span className="font-bold text-gray-800">
                             #{image.main_keyword}
@@ -120,7 +116,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     {/* 이미지 */}
                     <SheetTrigger asChild>
                         <div 
-                        className={`relative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'rounded-full overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
+                        className={`relative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                         >
                         <div
                             style={{
