@@ -113,107 +113,70 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         };
 
         return (
-        
         <div 
-        //레이아웃과 위치를 지정
-            className="fixed top-0 right-0 w-[400px] h-[calc(100vh-150px)] bg-white shadow-xl overflow-hidden transition-all duration-300"
+            className="fixed top-0 right-0 w-[500px] h-[calc(100vh-100px)] bg-white shadow-xl overflow-hidden transition-all duration-300 z-10000"
             style={{ 
-            zIndex: 99999,
-            transform: 'translateX(0)',
-            transition: 'all 0.3s ease-in-out',
-            top: '0px',
-            right: '-80px'
+                zIndex:1000,
+                transform: 'translateX(0)',
+                transition: 'all 0.3s ease-in-out',
+                top: '16px',
+                right: '-80px',
+                borderRadius: '10px'
+
             }}
         >
-        {/* 클러스터 상세 정보 패널(Draggable)*/}
-            <div className="flex items-center justify-between p-4 border-b bg-white">
-                {/* 상단 제목 */}
-                <h2 className="text-base sm:text-lg font-semibold">{image.main_keyword}</h2>
-                {/* 상단 닫기 버튼 */}
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setShowDetails(false)}
+            {/* 상단 썸네일 이미지 + 제목/닫기버튼 오버레이 */}
+            <div className="relative w-full h-[150px] sm:h-[220px] flex-shrink-0">
+                <img
+                    src={image.src}
+                    alt={image.main_keyword}
+                    className="w-full h-full object-cover rounded-b-none rounded-t-2xl"
+                    onClick={handleImageClick}
+                />
+                 
+                {/* 제목 + 닫기버튼 오버레이 */}
+                <div className="absolute left-0 top-0 w-full h-full flex flex-col items-start justify-start px-4 pt-4 z-30">
+                    <div className="flex items-center w-full justify-between">
+                        <h2 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg rounded-xl px-3 py-1 truncate">#{image.main_keyword}</h2>
+                        <div className="flex items-center gap-2">
+                            
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={() => setShowDetails(false)}
+                                className="bg-black/40 hover:bg-black/60 text-white"
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                {/* 카테고리 뱃지: 이미지 좌측 하단 */}
+                <span className="absolute left-4 bottom-4 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/50 backdrop-blur-md rounded-full text-white text-[10px] font-medium z-30">
+                    {image.category}
+                </span>
+                {/* 관심도 뱃지: 이미지 우측 하단 */}
+                <span className={`absolute right-4 bottom-4 px-3 py-1 rounded-full text-xs font-bold z-30
+                    ${image.sizeWeight >= 1.2 ? 'bg-red-500 text-white' : image.sizeWeight >= 0.8 ? 'bg-yellow-400 text-gray-900' : 'bg-blue-400 text-white'}`}
                 >
-                    <X className="h-4 w-4" />
-                </Button>
-                {/* 하단 Description 섹션 */}
+                    {image.sizeWeight >= 1.2 ? '강' : image.sizeWeight >= 0.8 ? '중' : '약'}
+                </span>
+                {/* 하단 그라데이션 오버레이로 텍스트 가독성 향상 */}
+                <div className="absolute left-0 bottom-0 w-full h-1/2 bg-gradient-to-t from-black/50 to-transparent z-10 pointer-events-none" />
             </div>
-            <div className="h-[calc(100%-60px)] overflow-y-auto px-2 sm:px-4">
-                <div className="flex flex-col w-full mx-auto pb-8">
-                    {/* 썸네일 이미지 섹션 */}
-                    <div className="relative w-full h-[150px] sm:h-[300px] flex-shrink-0">
-                    <img
-                        src={image.src}
-                        alt={image.main_keyword}
-                        className="w-full h-full object-cover rounded-lg"
-                        onClick={handleImageClick}
-                    />
-                    
-                    <div className="absolute top-4 right-4">
-                        <span className="px-2 sm:px-3 py-1 sm:py-1.5 bg-black/50 backdrop-blur-md rounded-full text-white text-xs sm:text-sm font-medium">
-                        {image.category}
-                        </span>
-                    </div>
-                    </div>
-                    <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
-                    {/* 키워드 섹션 */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-                        {/* 메인 키워드 */}
-                        <div className="bg-emerald-50 rounded-xl p-2 sm:p-3 text-center">
-                        <h4 className="text-xs font-medium text-emerald-600 mb-0.5 sm:mb-1">메인 키워드</h4>
-                        <p className="text-xs sm:text-sm font-bold text-emerald-900">#{image.main_keyword}</p>
-                        </div>
-                        {/* Mood 키워드 */}
-                        <div className="bg-purple-50 rounded-xl p-2 sm:p-3 text-center">
-                        <h4 className="text-xs font-medium text-purple-600 mb-0.5 sm:mb-1">감성/분위기</h4>
-                        <p className="text-xs sm:text-sm font-bold text-purple-900">#{image.mood_keyword}</p>
-                        </div>
-                        {/* 키워드들 */}
-                        <div className="bg-blue-50 rounded-xl p-2 sm:p-3 text-center">
-                        <h4 className="text-xs font-medium text-blue-600 mb-0.5 sm:mb-1">서브 키워드</h4>
-                        <p className="text-xs sm:text-sm font-bold text-blue-900">#{image.keywords}</p>
-                        </div>
-                    </div>
-                    {/* 관심도 크기 */}
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4">
-                        <div className="flex items-center justify-between mb-3">
-                        <h4 className="text-sm font-semibold text-gray-800">관심도</h4>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                            image.sizeWeight >= 1.2 ? "bg-red-100 text-red-700" :
-                            image.sizeWeight >= 0.8 ? "bg-yellow-100 text-yellow-700" :
-                            "bg-blue-100 text-blue-700"
-                        }`}>
-                            {image.sizeWeight >= 1.2 ? "강" :
-                            image.sizeWeight >= 0.8 ? "중" : "약"}
-                        </span>
-                        </div>
-                        
-                        <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                            className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${
-                            image.sizeWeight >= 1.2 ? "bg-gradient-to-r from-red-400 to-red-500" :
-                            image.sizeWeight >= 0.8 ? "bg-gradient-to-r from-yellow-400 to-yellow-500" :
-                            "bg-gradient-to-r from-blue-400 to-blue-500"
-                            }`}
-                            style={{ width: `${Math.min(image.sizeWeight * 50, 100)}%` }}
-                        />
-                        </div>
-
-                        <p className="mt-2 text-xs text-gray-600">
-                        {image.sizeWeight >= 1.2 ? "이 주제에 대한 높은 관심도를 보입니다" :
-                        image.sizeWeight >= 0.8 ? "이 주제에 대해 보통 수준의 관심을 가지고 있습니다" :
-                        "이 주제에 대해 가볍게 관심을 두고 있습니다"}
-                        </p>
-                    </div>
+            {/* 나머지 내용 */}
+            <div className="h-[calc(100%-210px)] overflow-y-auto px-6 sm:px-10">
+                <div className="flex flex-col w-full mx-auto pb-14 pt-6">
                     {/* 클러스터 Description*/}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                        <h4 className="text-sm font-semibold mb-2">이미지 설명</h4>
-                        <p className="text-sm text-gray-700">{image.description}</p>
-                    </div>
+                    <p className="text-xs sm:text-[12px] font-bold text-purple-900">{image.mood_keyword}</p>
+                    <p className="text-[12px] pt-2 text-gray-700">{image.description}</p>
+                    
+                    {/* 썸네일 이미지 섹션 */}
+                    <div className="mt-3 sm:mt-4 space-y-3 sm:space-y-4">
+                    
                     {/* keywords list 섹션 */}
                     <div>
-                        <h4 className="text-sm font-semibold mb-2">관련 키워드</h4>
+                        
                         <div className="flex flex-wrap gap-2">
                         {image.keywords.map((keyword: string, idx: number) => (
                             <span
@@ -225,16 +188,17 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         ))}
                         </div>
                     </div>
+                    
                     {/* 영상 탭 섹션 */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 pb-1 pt-4">
                         {!image.desired_self ? (
                         //나의 클러스터 분석일때
                         <Tabs defaultValue="history" className="w-full">
-                            <div className="bg-gray-70/70 rounded-lg">
+                            <div className="bg-gray-70/70 rounded-lg ">
                                 {/* 탭 제목 */}
-                                <TabsList className="w-full grid grid-cols-2 py-0">
-                                    <TabsTrigger value="history" className="text-base py-1">Where this image from</TabsTrigger>
-                                    <TabsTrigger value="AI" className="text-base py-1">The way Algorithm see you</TabsTrigger>
+                                <TabsList className="w-full grid grid-cols-2 py-0 ">
+                                    <TabsTrigger value="history" className="text-[12px] py-1">Where this image from</TabsTrigger>
+                                    <TabsTrigger value="AI" className="text-[12px] py-1">The way Algorithm see you</TabsTrigger>
                                 </TabsList>
                                 <br/> <br/>
                                 {/* Where this image from 탭 */}

@@ -37,6 +37,20 @@ export interface DraggableImageProps {
     onImageDelete: (id: string) => void;
 }
 
+// 모양별 정보 배열
+const frameOptions = [
+  { value: 'healing', icon: '⬛️', label: '나에게 힐링이 되는 영상' },
+  { value: 'inspiration', icon: '⬡', label: '영감을 주는 영상' },
+  { value: 'people', icon: '⚪️', label: '내가 좋아하는 사람' },
+  { value: 'interest', icon: '🔶', label: '나만의 관심사' },
+  { value: 'cloud', icon: '🌥️', label: '클라우드' },
+  { value: 'heart', icon: '💖', label: '하트' },
+  { value: 'pentagon', icon: '🔺', label: '펜타곤' },
+  { value: 'star', icon: '⭐️', label: '별' },
+  { value: 'pill', icon: '💊', label: '알약' },
+  { value: 'wavy-star', icon: '🌟', label: '물결 별' },
+];
+
 const DraggableImage: React.FC<DraggableImageProps> = ({ 
     image, 
     position, 
@@ -74,6 +88,12 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
         getFrameStyle,
         handleFrameStyleChange,
     } = useImageFrame(frameStyle, image, onFrameStyleChange);
+
+    // 버튼에서 직접 string 값을 넘길 수 있도록 래핑
+    const handleFrameStyleChangeByValue = (value: string) => {
+        // select 이벤트 mock 객체 생성
+        handleFrameStyleChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>);
+    };
 
     return (
     <>
@@ -145,7 +165,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             />
                         </div>
                         
-                        {/* 키워드를 이미지 하단에 배치 */}
+                        {/* 키워드를 이미지 하단에 배치 
                         <div className="absolute bottom-0.5 left-0 right-0 flex flex-wrap gap-1 justify-center items-center p-1">
                             {image.keywords.map((keyword: string, idx: number) => (
                             <span
@@ -156,13 +176,16 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             </span>
                             ))}
                         </div>
+                        
+                        */}
+                        
                         </div>
                     </SheetTrigger>
                 </div>
                 
                 {/* 편집 모드-이미지 변경하기*/}
                 {isEditing && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
                     {image.desired_self ? (
                     <button 
                         className="flex items-center justify-center gap-1.5 py-2 px-4 min-w-[100px] bg-red-500/90 text-white backdrop-blur-sm rounded-full hover:bg-red-600 shadow-sm transition-colors pointer-events-auto"
@@ -180,7 +203,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     </button>
                     ) : (
                     <button 
-                        className="flex items-center justify-center gap-1.5 py-2 px-4 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto"
+                        className="flex items-center justify-center py-2 px-4 backdrop-blur-sm rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto"
                         onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -192,31 +215,28 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         }}
                     >
                         <RefreshCw className="h-4 w-4" />
-                        <span className="text-sm font-medium">이미지 변경</span>
                     </button>
                     )}
                 </div>
                 )}
                 {/* 편집 모드-프레임 변경하기*/}
                 {isEditing && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white rounded-full shadow-lg px-3 py-1 z-40 pointer-events-auto">
-                    <select 
-                    className="text-sm border-none bg-transparent outline-none cursor-pointer"
-                    value={updatedFrameStyle}
-                    onChange={handleFrameStyleChange}
-                    onClick={(e) => e.stopPropagation()}
-                    >
-                    {image.desired_self ? (
-                        <option value="star">⭐️ Desired_self</option>
-                    ) : (
-                        <>
-                        <option value="healing">⬛️ 나에게 힐링이 되는 영상</option>
-                        <option value="inspiration">⬡ 영감을 주는 영상</option>
-                        <option value="people">⚪️ 내가 좋아하는 사람</option>
-                        <option value="interest">🔶 나만의 관심사</option>
-                        </>
-                    )}
-                    </select>
+                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
+                    {frameOptions.map(opt => (
+                        <button
+                            key={opt.value}
+                            className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
+                            onClick={() => {
+                                handleFrameStyleChangeByValue(opt.value);
+                                onFrameStyleChange(image.id, opt.value);
+                            }}
+                            onMouseDown={e => e.stopPropagation()}
+                            title={opt.label}
+                            type="button"
+                        >
+                            <span>{opt.icon}</span>
+                        </button>
+                    ))}
                 </div>
                 )}
                 {/* 편집 모드-드래그 가능한 영역*/}
