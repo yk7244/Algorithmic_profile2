@@ -16,7 +16,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     isGeneratingProfile,
     onGenerateProfile,
     }) => (
-    <div className="absolute z-30 pl-8 max-w-[600px] space-y-6 pt-[140px]">
+    <div className="absolute z-30 pl-8 max-w-[600px] space-y-6 pt-[40px]">
         {/* 닉네임 */}
         <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">

@@ -17,15 +17,19 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
 }) => {
     if (histories.length === 0) return null;
     return (
-        <div className="w-full flex flex-col items-center justify-center mt-8">
+        <div className="w-[400px] flex flex-col items-center mx-auto mt-1 mb-40">
             {/* 슬라이더 선과 점 */}
-            <div className="relative w-[400px] h-4 flex items-center">
+            <div className="relative w-full h-4 flex items-center">
                 {/* 선 */}
-                <div className="absolute top-1/2 left-0 w-full h-[2px] bg-gray-300 -translate-y-1/2" />
+                <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gray-300 -translate-y-1/2 opacity-50 rounded-full" />
                 {/* 점들 */}
-                <div className="relative w-full flex justify-center gap-x-8 items-center z-10">
+                <div className="relative w-full flex justify-center gap-x-8 items-center z-10 ">
                     {histories.map((history, index) => (
                         <div key={index} className="relative group flex flex-col items-center">
+                            <button
+                                className="w-4 h-4 rounded-full bg-black transition-all opacity-80"
+                                onClick={() => handleHistoryClick(index)}
+                            />
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                                 {new Date(history.timestamp).toLocaleDateString('ko-KR', {
                                     month: 'long',
@@ -34,11 +38,6 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                                     minute: '2-digit'
                                 })}
                             </span>
-                            <button
-                                className="w-4 h-4 rounded-full bg-black transition-all"
-                                onClick={() => handleHistoryClick(index)}
-                            />
-                            
                         </div>
                     ))}
                 </div>

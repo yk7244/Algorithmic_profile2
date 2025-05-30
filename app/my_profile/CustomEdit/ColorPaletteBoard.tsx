@@ -16,16 +16,15 @@ const ColorPaletteBoard: React.FC<ColorPaletteBoardProps> = ({
   bgColor,
   onChange,
 }) => (
-  <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 z-50">
+  <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm rounded-full shadow-lg p-6 z-50">
     <div className="flex flex-col items-center gap-4">
-      <h3 className="text-lg font-semibold text-gray-800">배경 색상 설정</h3>
       <div className="flex items-center gap-3">
         {colorOptions.map((color) => (
           <button
             key={color.class}
             onClick={() => onChange(color.class)}
             className={`
-              w-12 h-12 rounded-xl ${color.class} transition-all duration-300
+              w-6 h-6 rounded-full ${color.class} transition-all duration-300
               hover:scale-110 shadow-md hover:shadow-lg
               ${bgColor === color.class ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
               relative group

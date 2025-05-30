@@ -325,12 +325,17 @@ export default function MyProfilePage() {
 
       {/* My_profile 페이지 레이아웃 */}
       <div className="relative z-20 w-full">
-        <div className="max-w-[1200px] mx-auto">
+        <div className="max-w-[1200px] mx-auto ">
 
           {/* 닉넴/설명/버튼 헤더 분리 -> ProfileHeader.tsx */}
           {!isSearchMode && (
             <ProfileHeader
               profile={profile}
+              isEditing={isEditing}
+              isGeneratingProfile={isGeneratingProfile}
+              onEditClick={() => setIsEditing(true)}
+              onSaveClick={handleSave}
+              onGenerateProfile={generateUserProfile}
             />
           )}
 
