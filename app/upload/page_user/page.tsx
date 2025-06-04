@@ -12,25 +12,20 @@ HoverCardContent,
 HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { transformClustersToImageData, transformClusterToImageData } from '../../utils/clusterTransform';
-import { Slider } from "@/components/ui/slider";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
-import { ko } from "date-fns/locale";
+
 import { OpenAILogger } from '../../utils/init-logger';
 import { parseJSONWatchHistory, processSelectedItems } from '../VideoParsing/jsonParser';
 import { parseWatchHistory } from '../VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from '../Handlers/fileHandlers';
-import { handleDownloadJSON, handleDownloadClusterJSON } from '../Handlers/downloadHandlers';
 import { isOneWeekPassed } from '../VideoParsing/dateUtils';
 
 //Refactoring
-import { searchClusterImage_pinterest, PinterestImageData } from '../ImageSearch/GoogleImageSearch';
 import { searchClusterImage } from '../ImageSearch/NaverImageSearch';
 import { VideoCluster, handleCluster} from '../VideoAnalysis/videoCluster';
 import { fetchVideoInfo } from '../VideoAnalysis/videoKeyword';
 import { useClusterStorage } from '../hooks/useClusterStorage';
 import { my_account } from '../../data/dummyData';
+import { useRouter } from 'next/navigation';    
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -65,23 +60,16 @@ credit?: {
 };
 
 const steps = [
-  { id: 1, title: "키워드 추출", description: "영상에서 키워드를 추출하고 있습니다..." },
-  { id: 2, title: "클러스터 분석", description: "관련된 영상들을 그룹화하고 있습니다..." },
-  { id: 3, title: "이미지 생성", description: "클러스터 대표 이미지를 생성하고 있습니다..." },
-  { id: 4, title: "분석 완료", description: "영상 분석이 완료되었습니다!" }
+    { id: 1, title: "키워드 추출", description: "당신의 관심이 드러나고 있어요..." },
+    { id: 2, title: "클러스터 분석", description: "연결고리를 찾고 있어요... 곧 의미가 드러납니다." },
+    { id: 3, title: "이미지 생성", description: "당신의 시청 경험을 한 장면으로 표현 중입니다." },
+    { id: 4, title: "분석 완료", description: "이제, 당신의 시청 자아를 만나볼 차례입니다." }
 ];
 
-// 간단한 Progress 컴포넌트
-const Progress = ({ value, className }: { value: number; className?: string }) => (
-  <div className={`relative h-4 w-full overflow-hidden rounded-full bg-gray-200 ${className}`}>
-    <div
-      className="h-full bg-blue-500 transition-all duration-300 ease-out"
-      style={{ width: `${value}%` }}
-    />
-  </div>
-);
+
 
 export default function Home() {
+const router = useRouter();
 const [isLoading, setIsLoading] = useState(false);
 const [error, setError] = useState<string | null>(null);
 const fileInputRef = useRef<HTMLInputElement>(null);
@@ -104,13 +92,13 @@ const [generatingStep, setGeneratingStep] = useState(0);
 const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 
-const [maxVideosPerDay, setMaxVideosPerDay] = useState(2);
+const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
 const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
 }>({
     from: new Date('Tue Apr 14 2025 14:00:00 GMT+0900'),
-    to: new Date('Tue Apr 15 2025 14:00:00 GMT+0900'),
+    to: new Date('Tue Apr 16 2025 14:00:00 GMT+0900'),
     ////✅나중에 이걸로 바꾸기
     //from: new Date(new Date().setDate(new Date().getDate() - 7)),
     //to: new Date()
@@ -118,26 +106,8 @@ const [dateRange, setDateRange] = useState<{
 });
 
 
-const [uploadFinished, setUploadFinished] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
 
-
-// handleClusterClick 래퍼 함수 추가
-const handleClusterClick = () => {
-    handleCluster(
-    watchHistory,
-    openai,
-    OpenAILogger,
-    searchClusterImage,
-    transformClusterToImageData,
-    placeholderImage,
-    setClusters,
-    setAnalysisHistory,
-    setShowAnalysis,
-    setIsLoading,
-    setError
-    );
-};
 
 // useClusterStorage 커스텀 훅 사용
 useClusterStorage({
@@ -159,12 +129,10 @@ useEffect(() => {
         }, 1000);
         return () => clearTimeout(timer);
     } else if (showCompletePage && countdown === 0) {
-        // 3초 후 profile 페이지로 이동하거나 다른 로직 실행
-        setShowCompletePage(false);
-        setShowGeneratingDialog(false);
-        // 여기에 페이지 이동 로직 추가 가능
+        // 카운트다운 끝나면 my_profile로 이동
+        router.push('/my_profile');
     }
-}, [showCompletePage, countdown]);
+}, [showCompletePage, countdown, router]);
 
 
     
@@ -273,7 +241,7 @@ return (
                                 // 완료 페이지 표시
                                 setShowCompletePage(true);
                                 setShowGeneratingDialog(false);
-                                setCountdown(200000000);
+                                setCountdown(10);
                                 
                             } catch (error) {
                                 console.error('분석 중 오류:', error);
@@ -314,6 +282,7 @@ return (
                                     onClick={() => {
                                         setShowCompletePage(false);
                                         setShowGeneratingDialog(false);
+                                        router.push('/my_profile');
                                     }}
                                     className="mt-5 bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-lg transition-all"
                                 >
@@ -327,7 +296,7 @@ return (
                                         setIsFileUploaded(false);
                                         setWatchHistory([]);
                                     }}
-                                    className=" mt-5 bg-transparent border-white text-white hover:bg-white hover:text-black font-semibold px-6 py-3 rounded-lg transition-all"
+                                    className="mt-5 bg-transparent border-white text-white hover:bg-white hover:text-black font-semibold px-6 py-3 rounded-lg transition-all"
                                 >
                                     다시 시작
                                 </Button>
@@ -351,14 +320,14 @@ return (
                 <>
                 {/* 분석 진행 중 페이지 */}
                 <div className="w-full max-w-[500px] mx-auto">
-                    <div className=" backdrop-blur-sm rounded-2xl p-8 text-center space-y-6">
+                    <div className=" backdrop-white-sm rounded-2xl p-8 text-center space-y-6">
                         {/* Current Step */}
                         <div className="space-y-4 mt-40">
                                 <div className="flex items-center justify-center space-x-2">
                                     {generatingStep < 4 ? (
-                                        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                        <Loader2 className="h-6 w-6 animate-spin text-white" />
                                     ) : (
-                                        <CheckCircle className="h-6 w-6 text-green-500" />
+                                        <CheckCircle className="h-6 w-6 text-white" />
                                     )}
                                     
                                 </div>
@@ -374,8 +343,8 @@ return (
                                     <div
                                         className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300 ${
                                             index + 1 <= generatingStep
-                                                ? 'bg-blue-500 text-white'
-                                                : 'bg-gray-200 text-gray-600'
+                                                ? 'bg-white text-black'
+                                                : 'bg-gray-800 text-gray-600 opacity-80'
                                         }`}
                                     >
                                         {index + 1 < generatingStep ? (
@@ -386,7 +355,7 @@ return (
                                     </div>
                                     {index < steps.length - 1 && (
                                         <ArrowRight className={`h-4 w-4 mx-2 ${
-                                            index + 1 < generatingStep ? 'text-blue-500' : 'text-gray-300'
+                                            index + 1 < generatingStep ? 'text-white-500' : 'text-white opacity-50'
                                         }`} />
                                     )}
                                 </div>
