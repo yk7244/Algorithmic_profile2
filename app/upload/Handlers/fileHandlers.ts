@@ -1,3 +1,5 @@
+import { parseJSONWatchHistory } from "../VideoParsing/jsonParser";
+
 export function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, {
     setIsLoading,
     setError,
@@ -13,6 +15,7 @@ export function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, {
     }: any) {
 
     const file = e.target.files?.[0];
+    console.log("✅file", file);
 
     if (file) {
         setIsLoading(true);
@@ -26,7 +29,7 @@ export function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, {
         })
             .then((processedHistory: any) => {
             setWatchHistory(processedHistory);
-            localStorage.setItem('watchHistory', JSON.stringify(processedHistory));
+            localStorage.setItem('selectedItems', JSON.stringify(processedHistory));
             })
             .catch((error: any) => {
             setError(error.message);
@@ -80,30 +83,46 @@ export function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, {
     fetchVideoInfo,
     openai,
     OpenAILogger,
-    parseWatchHistory
+    parseWatchHistory,
+    setWatchHistory
     }: any) {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     const files = e.dataTransfer.files;
+    console.log("✅files", files);
     if (files.length) {
         const file = files[0];
-        if (file.name.endsWith('.html') || file.name.endsWith('.json')) {
-        setIsLoading(true);
-        setError(null);
-        setSuccessCount(0);
-        parseWatchHistory(
-            file,
-            dateRange,
-            maxVideosPerDay,
-            setSuccessCount,
-            fetchVideoInfo,
-            setError,
-            openai,
-            OpenAILogger
-        ).finally(() => setIsLoading(false));
-        } else {
-        setError('HTML/JSON 파일만 업로드 가능합니다.');
-        }
+        // JSON 파일 파싱
+        if (file.name.endsWith('.json')) {
+            parseJSONWatchHistory(file, dateRange, maxVideosPerDay, (current: number) => {
+                setSuccessCount(current);
+            })
+                .then((processedHistory: any) => {
+                setWatchHistory(processedHistory);
+                localStorage.setItem('selectedItems', JSON.stringify(processedHistory));
+                })
+                .catch((error: any) => {
+                setError(error.message);
+                })
+                .finally(() => setIsLoading(false));
+            } 
+            
+            // HTML 파일 파싱
+            else if (file.name.endsWith('.html')) {
+            parseWatchHistory(
+                file,
+                dateRange,
+                maxVideosPerDay,
+                setSuccessCount,
+                fetchVideoInfo,
+                setError,
+                openai,
+                OpenAILogger
+            ).finally(() => setIsLoading(false));
+            } else {
+            setError('지원하지 않는 파일 형식입니다. .json 또는 .html 파일을 업로드해주세요.');
+            setIsLoading(false);
+            }
     }
 } 

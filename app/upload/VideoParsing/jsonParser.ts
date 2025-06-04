@@ -20,7 +20,7 @@ interface ProcessedWatchHistoryItem {
   tags: string[];
 }
 
-// Function to parse JSON watch history
+// 파싱함수(파일 업로드 시 호출)
 export const parseJSONWatchHistory = async (
   file: File,
   dateRange?: { from: Date | undefined; to: Date | undefined },
@@ -29,6 +29,8 @@ export const parseJSONWatchHistory = async (
 ): Promise<ProcessedWatchHistoryItem[]> => {
   try {
     console.log('Starting JSON watch history parsing...');
+    console.log("✅dateRange", dateRange);
+    console.log("✅maxVideosPerDay", maxVideosPerDay);
     
     const text = await file.text();
     const data = JSON.parse(text);
@@ -115,6 +117,7 @@ export const parseJSONWatchHistory = async (
   }
 };
 
+// 키워드 추출 함수([관리자용] keyword 추출 버튼 클릭 시 호출)
 // selectedItems를 받아 각 영상의 정보를 fetchVideoInfo로 가져오고, 키워드를 가공하여 반환하는 함수
 export async function processSelectedItems(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
   const processedItems: any[] = [];
@@ -154,3 +157,4 @@ export async function processSelectedItems(selectedItems: any[], fetchVideoInfo:
   }
   return processedItems;
 } 
+

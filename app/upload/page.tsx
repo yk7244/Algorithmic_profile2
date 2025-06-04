@@ -137,7 +137,6 @@ export default function Home() {
       </div>
       
       <div className="flex flex-col items-center space-y-8 text-center relative z-10 ">
-        
         {/* 타이틀 */}
         <div className="space-y-7 max-w-8xl mx-auto px-4">
           <div className="text-center space-y-4">
@@ -150,9 +149,7 @@ export default function Home() {
             </h1>
           </div>
         </div>
-
         {/* 파일 업로드 버튼 */}
-        
         <div className="w-full max-w-[700px] p-8">
           
           {(my_account.updated_at == null || isOneWeekPassed(my_account.updated_at)) ? (
@@ -799,40 +796,8 @@ export default function Home() {
             <p> 업로드 기간이 아닙니다. </p>
           }
         </div>
-
-        
-
-        {isFileUploaded ? (
-          <>
-
-          </>
-        ):(
-          <>
-          </>
-        )}
       </div>
 
-      {/* 검색 결과 모달 */}
-      {showVisionResults && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Vision 검색 결과</h3>
-              <Button
-                variant="ghost"
-                onClick={() => setShowVisionResults(false)}
-                className="hover:bg-gray-100"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      
     </main>
   );
 } 
