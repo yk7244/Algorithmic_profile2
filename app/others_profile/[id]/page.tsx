@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X } from "lucide-react";
-import { dummyProfiles, ProfileData, ImageData } from '../../data/dummyProfiles';
+import { dummyProfiles, ProfileData, ImageData } from '../../data/dummyOthersProfiles';
 import {
   Sheet,
   SheetContent,

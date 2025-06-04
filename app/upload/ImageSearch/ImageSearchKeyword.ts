@@ -35,6 +35,7 @@ export async function extractBestMoodKeyword(cluster: {
     1. Extract a single English keyword or phrase that is best representing the vibe of the cluster regarding purpose description.
     2. must be different word from main_keyword. 
     3. no explanation.
+    4. adjective only
 
     \nContext: ${cluster.description || '[No description]'}
     `;
@@ -96,18 +97,19 @@ export async function buildImageSearchKeyword(cluster: {
   //시도3-1. 감성 키워드 추출
   const Keyword2 = await extractBestMoodKeyword(cluster || '');
   console.log('[시도3. 시청목적을 고려한 형용사 추출]', Keyword2);
-   //시도3-1. 감성 키워드 추출
-  const Keyword3 = 'aesthetic';
+   //시도4. 전체 무드 키워드-> 색상과 이미지 스타일을 언급해봄
+  const Keyword3 = 'blue OR illustration';
   //console.log('[시도4. 이미지 검색 & 선택 기준 추출]', Keyword3);
 
   // 4. 조합 (대표 1개씩만)
   const combined1 = [main, 'OR',category, 'OR', mood, 'OR', subkeyword].filter(Boolean).join(' ');
   const combined2 = [main, 'OR',Keyword2].filter(Boolean).join(' ');
   const combined3 = [main, ,'OR', Keyword2,'OR',Keyword3].filter(Boolean).join(' ');
+  const combined4 = [subkeyword,'OR', Keyword2,'OR',Keyword3].filter(Boolean).join(' ');
 
   // 5. 최종 조합 결과 콘솔 출력
-  console.log('[최종 조합 키워드]', combined3);
+  console.log('[최종 조합 키워드]', combined4);
 
-  return combined3;
+  return combined4;
 } 
 

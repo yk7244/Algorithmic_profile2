@@ -18,7 +18,6 @@ interface ProcessedWatchHistoryItem {
   date: Date;
   keywords: string[];
   tags: string[];
-  timestamp: string;
 }
 
 // Function to parse JSON watch history
@@ -82,7 +81,7 @@ export const parseJSONWatchHistory = async (
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    console.log(`Processed ${watchItems.length} valid items`);
+    console.log(`1)파싱된 영상 수: ${watchItems.length}개`);
 
     // Apply date range filtering if specified
     let filteredItems = watchItems;
@@ -90,7 +89,7 @@ export const parseJSONWatchHistory = async (
       filteredItems = watchItems.filter(item => 
         item.date >= dateRange.from! && item.date <= dateRange.to!
       );
-      console.log(`Filtered to ${filteredItems.length} items within date range`);
+      console.log(`2)날짜 범위 필터링 후 영상 수: ${filteredItems.length}개`);
     }
 
     // Group by date and limit videos per day
@@ -106,56 +105,52 @@ export const parseJSONWatchHistory = async (
     }, {} as Record<string, typeof filteredItems>);
 
     const selectedItems = Object.values(groupedByDate).flat();
-    console.log(`Selected ${selectedItems.length} items after grouping and limiting`);
+    console.log(`3)그룹화 및 제한 후 영상 수: ${selectedItems.length}개`);
 
-    // Process videos in batches to fetch additional info
-    const processedItems: ProcessedWatchHistoryItem[] = [];
-    let processedCount = 0;
-    const totalItems = selectedItems.length;
-
-    // Update progress at the start
-    if (onProgress) {
-      onProgress(0, totalItems);
-    }
-
-    for (const item of selectedItems) {
-      try {
-        const videoInfo = await fetchVideoInfo(item.videoId);
-        console.log('⭐️videoInfo:', videoInfo);
-        if (videoInfo != null) {
-            processedItems.push({
-            videoId: videoInfo.videoId,
-            title: videoInfo.title,
-            channel: item.channel,
-            date: item.date,
-            keywords: videoInfo.keywords, // Will be populated by fetchVideoInfo
-            tags: videoInfo.tags, // Will be populated by fetchVideoInfo
-            timestamp: new Date().toISOString()
-          });
-        }
-        processedCount++;
-        
-        // Update progress after each item
-        if (onProgress) {
-          onProgress(processedCount, totalItems);
-        }
-      } catch (error) {
-        console.error(`Failed to process video ${item.videoId}:`, error);
-        processedCount++;
-        if (onProgress) {
-          onProgress(processedCount, totalItems);
-        }
-      }
-    }
-
-    console.log(`Successfully processed ${processedItems.length} items`);
-
-    // Save to localStorage
-    localStorage.setItem('watchHistory', JSON.stringify(processedItems));
-
-    return processedItems;
+    return selectedItems;
+    
   } catch (error) {
     console.error('Error parsing JSON watch history:', error);
     throw error;
   }
-}; 
+};
+
+// selectedItems를 받아 각 영상의 정보를 fetchVideoInfo로 가져오고, 키워드를 가공하여 반환하는 함수
+export async function processSelectedItems(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
+  const processedItems: any[] = [];
+  let processedCount = 0;
+  const totalItems = selectedItems.length;
+
+  if (onProgress) {
+    onProgress(0, totalItems);
+  }
+
+  for (const item of selectedItems) {
+    try {
+      const videoInfo = await fetchVideoInfo(item.videoId);
+      console.log('⭐️videoInfo:', videoInfo);
+      if (videoInfo != null) {
+        processedItems.push({
+          videoId: videoInfo.videoId,
+          title: videoInfo.title,
+          channel: item.channel,
+          date: item.date,
+          keywords: videoInfo.keywords,
+          tags: videoInfo.tags,
+          timestamp: new Date().toISOString()
+        });
+      }
+      processedCount++;
+      if (onProgress) {
+        onProgress(processedCount, totalItems);
+      }
+    } catch (error) {
+      console.error(`Failed to process video ${item.videoId}:`, error);
+      processedCount++;
+      if (onProgress) {
+        onProgress(processedCount, totalItems);
+      }
+    }
+  }
+  return processedItems;
+} 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
-import { dummyProfiles, ProfileData } from '../data/dummyProfiles';
+import { dummyProfiles, ProfileData } from '../data/dummyOthersProfiles';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
