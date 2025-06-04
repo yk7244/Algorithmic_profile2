@@ -1,8 +1,21 @@
 "use client";
 
 import React from "react";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  const handleButtonClick = () => {
+    if (isLoggedIn) {
+      router.push('/upload');
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <main
       style={{
@@ -121,6 +134,7 @@ export default function Home() {
           로 나의 디지털 자아를 직접 확인하고, 알고리즘 경험을 재구성해보세요.
         </p>
         <button
+          onClick={handleButtonClick}
           style={{
             background: "#fff",
             color: "#181818",

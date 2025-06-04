@@ -55,7 +55,7 @@ export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any
         }
       });
     }
-    console.log('Sending request to OpenAI...');
+    console.log('클러스터 시작...');
 
 
     // 상위 출현 키워드 추출 (10개)
@@ -250,11 +250,26 @@ export const handleCluster = async (
     console.log('[handleCluster] setClusters 호출:', newClusters);
 
     // 클러스터 이미지 가져오기
-    const clusterImagesData: Record<number, any> = {};
+    /* 네이버
     for (let i = 0; i < newClusters.length; i++) {
       const image = await searchClusterImage_naver(newClusters[i], true);
       clusterImagesData[i] = image;
+    } */
+    const clusterImagesData: Record<number, any> = {};
+    for (let i = 0; i < newClusters.length; i++) {
+      try {
+        const pinterestResults = await searchClusterImage_pinterest(newClusters[i], 1);
+        if (pinterestResults && pinterestResults.length > 0 && pinterestResults[0].thumbnailLink) {
+          clusterImagesData[i] = { url: pinterestResults[0].thumbnailLink };
+        } else {
+          clusterImagesData[i] = { url: '/images/default_image.png' };
+        }
+      } catch (error) {
+        console.error('Pinterest 이미지 검색 실패:', error);
+        clusterImagesData[i] = { url: '/images/default_image.png' };
+      }
     }
+    
     console.log('[handleCluster] 클러스터별 이미지 데이터:', clusterImagesData);
 
     // ImageData 형식으로 변환
@@ -479,3 +494,6 @@ CLUSTER_END`;
     throw error;
   }
 };
+
+// Pinterest 이미지 검색 함수 import
+import { searchClusterImage_pinterest } from '../ImageSearch/GoogleImageSearch';

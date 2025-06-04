@@ -102,9 +102,11 @@ export function Navbar() {
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
                   <Link href="/watch-history">시청기록</Link>
                 </Button>
+                {/* 언어 선택 버튼 
                 <Button variant="ghost" size="sm" onClick={handleLanguageToggle} className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium flex items-center px-6 hover: rounded-[20px]`}>
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
+                */}
                 <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
                   <Link href="/my_page" className="flex items-center gap-1.5">
                     <UserCircle2 className="w-4 h-4" />
@@ -115,9 +117,11 @@ export function Navbar() {
               </>
             ) : (
               <>
+                {/* 언어 선택 버튼 
                 <Button variant="ghost" size="sm" onClick={handleLanguageToggle} className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium flex items-center px-6 rounded-[20px]`}>
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
+                */}
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 rounded-[20px]`}>
                   <Link href="/login">로그인</Link>
                 </Button>
@@ -133,7 +137,9 @@ export function Navbar() {
                 onClick={handleLanguageToggle} 
                 className={`text-sm font-medium flex items-center px-2`}
               >
+                {/*
                 {language === "KO" ? "KO" : "EN"}
+                */}
               </Button>
             )}
             <Sheet>
