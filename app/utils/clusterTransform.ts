@@ -42,11 +42,14 @@ export const transformClusterToImageData = (
 
   // Step5. strength 기반으로 sizeWeight 계산 (동적 min/max)
   const strength = cluster.strength || cluster.metadata?.videoCount || 1;
-  let sizeWeight = 0.05; // 기본값
+  let sizeWeight = 0.02; // 기본값
   if (maxStrength > minStrength) {
     // 0.005 ~ 0.05 사이로 정규화
     const ratio = (strength - minStrength) / (maxStrength - minStrength);
     sizeWeight = 0.005 + ratio * (0.05 - 0.005);
+  } else {
+    // 모든 strength가 동일한 경우 중간값 사용
+    sizeWeight = (0.005 + 0.05) / 2; // 0.0275
   }
 
   return {
@@ -56,18 +59,27 @@ export const transformClusterToImageData = (
     mood_keyword: cluster.mood_keyword || '',
     description: cluster.description || '',
     category: cluster.category?.toLowerCase() || 'other',
+    keywords: keywords.slice(0, 5),
+    relatedVideos: relatedVideos.slice(0, 5),
+    sizeWeight,
+
+    desired_self: false,
+    desired_self_profile: null,
+
     width: 800,
     height: 800,
     rotate: 0,
     left,
     top,
-    keywords: keywords.slice(0, 5),
-    sizeWeight,
-    relatedVideos: relatedVideos.slice(0, 5),
-    created_at: cluster.created_at || new Date().toISOString(),
-    desired_self: false,
     metadata: cluster.metadata || {},
-    desired_self_profile: null
+
+    //추가 
+    position: {
+      x: Number(left.replace('px', '')),
+      y: Number(top.replace('px', ''))
+    },
+    frameStyle: 'normal',
+    created_at: cluster.created_at || new Date().toISOString()
   };
 };
 
@@ -89,26 +101,6 @@ export function transformClustersToImageData(
   });
 }
 
-//localstorage->watchClusters 에 배열로 들어감
-type Cluster = {
-  id?: number;
-  user_id?: string;
-
-  main_keyword: string;
-  mood_keyword: string;
-  description: string;
-  category: Category;  // 카테고리 필드 추가
-  
-  rotation?: string;
-  keyword_list: string;
-  strength: number;
-  video_links: string;
-  created_at: string;
-  desired_self: boolean;
-
-  main_image_url?: string;
-  metadata: any;
-};
 
 // 클러스터 타입 수정
 type Category = 

@@ -1,33 +1,155 @@
-export interface ImageData { //Cluster
+
+//[0] users 테이블 
+//[1] WatchHistory 테이블  (비디오들 키워드 분석)
+//[2] ClusterHistory 테이블 (AI 클러스터 분석한거 기록)
+//[3] ClusterImages 테이블 (지금 profile에 보이는)
+//[4] ProfileData 테이블 (유저 닉네임,설명 정보)
+//[5] SliderHistory 테이블 (슬라이더 이미지 기록)
+
+//[0] users 테이블 
+export interface UserData {
+  id: string;
+  email: string;
+  created_at: string;
+  updated_at: string;
+}
+
+//[1] WatchHistory 테이블 -> upload/VideoAnalysis/videoKeyword.ts 에서 저장함
+export interface WatchHistory{
+  id: string;
+  user_id: string;
+  
+  videoId: string;
+  title: string;
+  description: string;
+  tags: string[];
+  keywords: string[];
+  timestamp: string;
+}
+
+//[2] ClusterHistory 테이블 -> upload/VideoAnalysis/videoCluster.ts 에서 저장함
+export interface ClusterHistory{
   id: string;
   user_id?: string; // 유저 아이디
 
   main_keyword: string;
   keywords: string[]; //sub_keyword
   mood_keyword: string;
-
   description: string;
   category: string;
   sizeWeight: number; //strength
-
+  src: string; //main_image_url
   relatedVideos: {
     title: string;
     embedId: string;
   }[];
-  created_at: string;
   desired_self: boolean;
-  src: string; //main_image_url
+  desired_self_profile: any;
   metadata: any;
 
+  rotate: number;
+  width: number;
+  height: number;
+  left: string;
+  top: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  frameStyle: string; //normal로 고정 
+  created_at: string;
+}
+
+//[3]ClusterImages 테이블->배열 X(지금 profile에 보이는)
+export interface ImageData { //ProfileImages(저장명) - ClusterImages(변수명)
+  id: string;
+  user_id?: string; 
+
+  main_keyword: string;
+  keywords: string[]; 
+  mood_keyword: string;
+  description: string;
+  category: string;
+  sizeWeight: number; 
+  src: string; //update되는 값
+  relatedVideos: {
+    title: string;
+    embedId: string;
+  }[];
+  desired_self: boolean;
+  desired_self_profile: any;
+  metadata: any;
+  rotate: number;
+  width: number;
+  height: number;
+  left: string;
+  top: string;
+  position: { //update되는 값
+    x: number;
+    y: number;
+  };
+  frameStyle: string; //update되는 값
+  created_at: string;
+} 
+
+// [4] ProfileData 타입 정의 -> Nickname/useProfileStorage.ts 에서 저장함
+export interface ProfileData {
+  id: string;
+  nickname: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// [5] SliderHistory 테이블 
+export interface SliderHistory{
+  id: string;
+  user_id: string;
+  created_at: string;
+}
+
+// 무드보드 관련 타입들
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export interface VideoData {
+  title: string;
+  embedId: string;
+}
+
+export interface ImportedImageData {
+  id: string;
+  src: string;
+  main_keyword: string;
   width: number;
   height: number;
   rotate: number;
   left: string;
   top: string;
-  desired_self_profile: any;
-} 
+  keywords: string[];
+  sizeWeight: number;
+  relatedVideos: VideoData[];
+  category: string;
+  mood_keyword: string;
+  sub_keyword: string;
+  description: string;
+  desired_self: boolean;
+  desired_self_profile: string | null;
+  color?: string;
+  }
 
-/*
+export type MoodboardImageData = Required<ImportedImageData>;
+
+export interface HistoryData {
+  timestamp: number;
+  positions: Record<string, Position>;
+  frameStyles: Record<string, string>;
+  images: MoodboardImageData[];
+}
+
+/* 유상님이 만드신 테이블
 Table videos { //캐싱 위한거
   id text [pk]
   title text

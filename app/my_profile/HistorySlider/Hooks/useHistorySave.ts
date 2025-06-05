@@ -1,4 +1,9 @@
 import { useCallback } from "react";
+import { 
+  Position, 
+  MoodboardImageData, 
+  HistoryData 
+} from '../../../types/profile';
 
 export function useHistorySave({
   positions,
@@ -9,11 +14,11 @@ export function useHistorySave({
   setCurrentHistoryIndex,
   setIsEditing,
 }: {
-  positions: any;
-  frameStyles: any;
-  images: any[];
-  histories: any[];
-  setHistories: (h: any[]) => void;
+  positions: Record<string, Position>;
+  frameStyles: Record<string, string>;
+  images: MoodboardImageData[];
+  histories: HistoryData[];
+  setHistories: (h: HistoryData[]) => void;
   setCurrentHistoryIndex: (idx: number) => void;
   setIsEditing: (v: boolean) => void;
 }) {

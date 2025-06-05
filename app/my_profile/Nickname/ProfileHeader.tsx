@@ -13,7 +13,10 @@ interface ProfileHeaderProps {
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     profile,
+    isEditing,
     isGeneratingProfile,
+    onEditClick,
+    onSaveClick,
     onGenerateProfile,
     }) => (
     <div className="absolute z-30 pl-8 max-w-[600px] space-y-6 pt-[40px]">
@@ -34,13 +37,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             variant="ghost"
             size="sm"
             className="text-gray-500 flex gap-2 bg-transparent hover:bg-transparent pl-0"
-            onClick={onGenerateProfile}
+            onClick={() => {
+                //console.log('🔥 ProfileHeader에서 버튼이 클릭되었습니다!');
+                onGenerateProfile();
+            }}
             disabled={isGeneratingProfile}
         >
             {isGeneratingProfile ? (
             <>
                 <div className="animate-spin mr-2"></div>
-                생성 중...
+                당신만의 별명을 생성 중입니다...
             </>
             ) : (
             <>

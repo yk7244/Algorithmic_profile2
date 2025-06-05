@@ -5,6 +5,7 @@ interface SearchModeUIProps {
     selectedImage: any;
     selectedImages: any[];
     handleSearch: () => void;
+    toggleSearchMode: () => void;
 }
 
 const SearchModeUI: React.FC<SearchModeUIProps> = ({
@@ -12,6 +13,7 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
     selectedImage,
     selectedImages,
     handleSearch,
+    toggleSearchMode,
     }) => {
     if (!isSearchMode) return null;
 
@@ -23,6 +25,22 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
             <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0 bg-[url('/images/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]"></div>
             </div>
+            
+            {/* 뒤로가기 버튼 */}
+            <button 
+                onClick={toggleSearchMode}
+                className="absolute top-8 left-8 z-30 p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 group"
+                aria-label="검색 모드 종료"
+            >
+                <svg 
+                    className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
         </div>
 
         {/* 선택된 이미지의 main_keyword 표시 (중앙) - 짧은 애니메이션 후 사라짐 */}
