@@ -10,7 +10,7 @@ export default function Home() {
 
   const handleButtonClick = () => {
     if (isLoggedIn) {
-      router.push('/upload');
+      router.push('/upload/page_user');
     } else {
       router.push('/login');
     }

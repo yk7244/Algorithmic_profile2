@@ -1,6 +1,6 @@
 "use client";
 import OpenAI from "openai";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {DndContext} from '@dnd-kit/core';
 
 //Refactoring
@@ -18,6 +18,15 @@ import SearchFloatingButton from './SearchMode/SearchFloatingButton';
 import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Draggable/Hooks/useImageDelete";
+import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
+import { 
+  ProfileData, 
+  Position, 
+  VideoData, 
+  ImportedImageData, 
+  MoodboardImageData, 
+  HistoryData 
+} from '../types/profile';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -25,61 +34,23 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
-type Position = {
-  x: number;
-  y: number;
-};
-
-type VideoData = {
-  title: string;
-  embedId: string;
-};
-
-interface ImportedImageData {
-  id: string;
-  src: string;
-  main_keyword: string;
-  width: number;
-  height: number;
-  rotate: number;
-  left: string;
-  top: string;
-  keywords: string[];
-  sizeWeight: number;
-  relatedVideos: VideoData[];
-  category: string;
-  mood_keyword: string;
-  sub_keyword: string;
-  description: string;
-  desired_self: boolean;
-  desired_self_profile: string | null;
-  color?: string;
-}
-
-type ImageData = Required<ImportedImageData>;
-
-type HistoryData = {
-  timestamp: number;
-  positions: Record<string, Position>;
-  frameStyles: Record<string, string>;
-  images: ImageData[];
-};
-
 export default function MyProfilePage() {
   // --- 상태 선언 ---
   const [visibleImageIds, setVisibleImageIds] = useState<Set<string>>(new Set());
   const [profile, setProfile] = useState({ nickname: '', description: '' });
-  const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
   const { bgColor, handleBgColorChange } = useBgColor();
-  const [images, setImages] = useState<ImageData[]>([]);
+  const [images, setImages] = useState<MoodboardImageData[]>([]);
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState(false);
   const [histories, setHistories] = useState<HistoryData[]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3E이미지를 찾을 수 없습니다%3C/text%3E%3C/svg%3E";
+  
+  // 초기 프로필 로드 완료 여부 추적
+  const initialLoadCompleted = useRef(false);
 
   const historySlider = useHistorySlider({
     images,
@@ -105,7 +76,7 @@ export default function MyProfilePage() {
     handleSave,
     handleDragEnd,
     handleImageChange,
-    generateUserProfile,
+    generateProfile,
   } = useMoodboardHandlers({
     setFrameStyles,
     positions,
@@ -119,7 +90,6 @@ export default function MyProfilePage() {
     setPositions,
     setImages,
     openai,
-    setIsGeneratingProfile,
     setShowGeneratingDialog,
     setGeneratingStep,
     setProfile,
@@ -147,6 +117,9 @@ export default function MyProfilePage() {
     setCurrentHistoryIndex,
     setVisibleImageIds,
   });
+
+  // localStorage 프로필 관리 훅 사용
+  const { loadProfileFromStorage, isProfileExpired } = useProfileStorage();
 
   // --- 데이터 마이그레이션 및 초기화 이펙트 ---
   useEffect(() => {
@@ -238,7 +211,7 @@ export default function MyProfilePage() {
         if (latestHistory.images && latestHistory.images.length > 0) {
           setImages(latestHistory.images);
           // 최신 히스토리의 모든 이미지 ID를 visibleImageIds에 추가
-          setVisibleImageIds(new Set(latestHistory.images.map((img: ImageData) => img.id)));
+          setVisibleImageIds(new Set(latestHistory.images.map((img: MoodboardImageData) => img.id)));
         }
       }
       // 마이그레이션된 데이터 저장
@@ -287,7 +260,27 @@ export default function MyProfilePage() {
 
   //별명생성
   useEffect(() => {
-    generateUserProfile();
+    // 이미 초기 로드가 완료된 경우 실행하지 않음
+    if (initialLoadCompleted.current) return;
+    
+    // 먼저 localStorage에서 프로필 확인 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
+    const loadInitialProfile = async () => {
+      const storedProfile = loadProfileFromStorage();
+      if (storedProfile && !isProfileExpired(storedProfile)) {
+        console.log('저장된 프로필을 불러왔습니다:', storedProfile);
+        setProfile({
+          nickname: storedProfile.nickname,
+          description: storedProfile.description
+        });
+        initialLoadCompleted.current = true;
+        return;
+      }
+      // 저장된 프로필이 없거나(새로운 업데이트일경우) 만료된 경우에만 새로 생성
+      await generateProfile();
+      initialLoadCompleted.current = true;
+    };
+    
+    loadInitialProfile();
   }, []);
 
   // 클라이언트에서만 localStorage에서 이미지 불러오기 (hydration mismatch 방지)
@@ -308,12 +301,13 @@ export default function MyProfilePage() {
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
-      {/* 생성 중 다이얼로그 -> GeneratingDialog.tsx */}
+      {/* 생성 중 다이얼로그 -> GeneratingDialog.tsx 
       <GeneratingDialog
         open={showGeneratingDialog}
         onOpenChange={setShowGeneratingDialog}
         generatingStep={generatingStep}
       />
+      */}
 
       {/* 검색 모드 UI -> SearchModeUI.tsx */}
       <SearchModeUI
@@ -321,6 +315,7 @@ export default function MyProfilePage() {
         selectedImage={selectedImage}
         selectedImages={selectedImages}
         handleSearch={handleSearch}
+        toggleSearchMode={toggleSearchMode}
       />
 
       {/* My_profile 페이지 레이아웃 */}
@@ -332,10 +327,10 @@ export default function MyProfilePage() {
             <ProfileHeader
               profile={profile}
               isEditing={isEditing}
-              isGeneratingProfile={isGeneratingProfile}
+              isGeneratingProfile={showGeneratingDialog}
               onEditClick={() => setIsEditing(true)}
               onSaveClick={handleSave}
-              onGenerateProfile={generateUserProfile}
+              onGenerateProfile={generateProfile}
             />
           )}
 
@@ -397,15 +392,17 @@ export default function MyProfilePage() {
         />
       )}
 
-      {/* 하단 액션 버튼들 */}
-      <BottomActionBar
-        isEditing={isEditing}
-        isGeneratingProfile={isGeneratingProfile}
-        onEditClick={() => setIsEditing(true)}
-        onSaveClick={handleSave}
-        onGenerateProfile={generateUserProfile}
-      />
+      {/* 하단 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}
+      {!isSearchMode && (
+        <BottomActionBar
+          isEditing={isEditing}
+          isGeneratingProfile={showGeneratingDialog}
+          onEditClick={() => setIsEditing(true)}
+          onSaveClick={handleSave}
+          onGenerateProfile={generateProfile}
+        />
+      )}
 
     </main>
   );
-} 
+}

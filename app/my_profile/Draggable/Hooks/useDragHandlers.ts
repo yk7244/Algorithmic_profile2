@@ -15,7 +15,7 @@ export function useDragEnd(isEditing: boolean, setPositions: any) {
         ...prev,
         [active.id]: newPosition,
       };
-      console.log(`Dragged image ID: ${active.id}, New X: ${newPosition.x}, New Y: ${newPosition.y}`);
+      //console.log(`Dragged image ID: ${active.id}, New X: ${newPosition.x}, New Y: ${newPosition.y}`);
       return updatedPositions;
     });
   }, [isEditing, setPositions]);

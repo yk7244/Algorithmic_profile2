@@ -95,6 +95,7 @@ export default function Home() {
 
   const [uploadFinished, setUploadFinished] = useState(false);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
+  const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   
 
   // handleClusterClick 래퍼 함수 추가
@@ -110,7 +111,7 @@ export default function Home() {
       setAnalysisHistory,
       setShowAnalysis,
       setIsLoading,
-      setError
+      setError,
     );
   };
 
@@ -531,7 +532,7 @@ export default function Home() {
                 <Button 
                   onClick={() => {
                     if (clusters.length > 0) {
-                      // 현재 선택된 분석 결과의 클러스터로 변환
+                      // 현재 선택된 분석 결과의 클러스터로 변환 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
                       const profileImages = transformClustersToImageData(clusters, clusterImages);
                       localStorage.setItem('profileImages', JSON.stringify(profileImages));
                       console.log('✨ 프로필 데이터 저장 성공!');

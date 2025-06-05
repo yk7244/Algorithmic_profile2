@@ -39,16 +39,16 @@ export interface DraggableImageProps {
 
 // 모양별 정보 배열
 const frameOptions = [
-  { value: 'healing', icon: '⬛️', label: '나에게 힐링이 되는 영상' },
-  { value: 'inspiration', icon: '⬡', label: '영감을 주는 영상' },
+  { value: 'normal', icon: '⬛️', label: '나에게 힐링이 되는 영상' },
+  //{ value: 'inspiration', icon: '⬡', label: '영감을 주는 영상' },
   { value: 'people', icon: '⚪️', label: '내가 좋아하는 사람' },
-  { value: 'interest', icon: '🔶', label: '나만의 관심사' },
-  { value: 'cloud', icon: '🌥️', label: '클라우드' },
-  { value: 'heart', icon: '💖', label: '하트' },
-  { value: 'pentagon', icon: '🔺', label: '펜타곤' },
-  { value: 'star', icon: '⭐️', label: '별' },
+    //{ value: 'interest', icon: '🔶', label: '나만의 관심사' },
+  //{ value: 'cloud', icon: '🌥️', label: '클라우드' },
+  //{ value: 'heart', icon: '💖', label: '하트' },
+  //{ value: 'pentagon', icon: '🔺', label: '펜타곤' },
+  //{ value: 'star', icon: '⭐️', label: '별' },
   { value: 'pill', icon: '💊', label: '알약' },
-  { value: 'wavy-star', icon: '🌟', label: '물결 별' },
+  { value: 'wavy-star', icon: '🍪', label: '쿠키' },
 ];
 
 const DraggableImage: React.FC<DraggableImageProps> = ({ 
@@ -221,7 +221,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 )}
                 {/* 편집 모드-프레임 변경하기*/}
                 {isEditing && (
-                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
                     {frameOptions.map(opt => (
                         <button
                             key={opt.value}

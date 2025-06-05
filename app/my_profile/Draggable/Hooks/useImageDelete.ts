@@ -1,50 +1,15 @@
 import { useCallback } from "react";
-
-// page.tsx에서 사용되는 타입을 직접 정의 (중복 방지 위해 실제 타입 정의부와 맞춰서 복사)
-
-type VideoData = {
-    title: string;
-    embedId: string;
-};
-
-interface ImportedImageData {
-    id: string;
-    src: string;
-    main_keyword: string;
-    width: number;
-    height: number;
-    rotate: number;
-    left: string;
-    top: string;
-    keywords: string[];
-    sizeWeight: number;
-    relatedVideos: VideoData[];
-    category: string;
-    mood_keyword: string;
-    sub_keyword: string;
-    description: string;
-    desired_self: boolean;
-    desired_self_profile: string | null;
-    color?: string;
-}
-
-type ImageData = Required<ImportedImageData>;
-
-type Position = {
-    x: number;
-    y: number;
-};
-
-type HistoryData = {
-    timestamp: number;
-    positions: Record<string, Position>;
-    frameStyles: Record<string, string>;
-    images: ImageData[];
-};
+import { 
+  VideoData, 
+  ImportedImageData, 
+  MoodboardImageData, 
+  Position, 
+  HistoryData 
+} from '../../../types/profile';
 
 type UseImageDeleteProps = {
-    images: ImageData[];
-    setImages: (imgs: ImageData[]) => void;
+    images: MoodboardImageData[];
+    setImages: (imgs: MoodboardImageData[]) => void;
     positions: Record<string, Position>;
     frameStyles: Record<string, string>;
     histories: HistoryData[];

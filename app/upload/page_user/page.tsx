@@ -60,10 +60,10 @@ credit?: {
 };
 
 const steps = [
-    { id: 1, title: "키워드 추출", description: "당신의 관심이 드러나고 있어요..." },
-    { id: 2, title: "클러스터 분석", description: "연결고리를 찾고 있어요... 곧 의미가 드러납니다." },
-    { id: 3, title: "이미지 생성", description: "당신의 시청 경험을 한 장면으로 표현 중입니다." },
-    { id: 4, title: "분석 완료", description: "이제, 당신의 시청 자아를 만나볼 차례입니다." }
+    { id: 1, title: "키워드 추출", description: "당신의 시청 기록을 분석하고 있습니다..." },
+    { id: 2, title: "클러스터 분석", description: "알고리즘이 당신의 취향을 이해하고 있습니다..." },
+    { id: 3, title: "이미지 생성", description: "흥미로운 패턴을 발견했습니다!" },
+    { id: 4, title: "분석 완료", description: "이제, 당신의 시청 자아를 만나볼 차례입니다."}
 ];
 
 
@@ -78,6 +78,7 @@ const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
 const [clusters, setClusters] = useState<any[]>([]);
 const [showAnalysis, setShowAnalysis] = useState(false);
 const [expandedClusters, setExpandedClusters] = useState<Set<number>>(new Set());
+
 // clusterImages state 타입 수정
 const [clusterImages, setClusterImages] = useState<Record<number, ClusterImage | null>>({});
 const [successCount, setSuccessCount] = useState(0);
@@ -104,8 +105,7 @@ const [dateRange, setDateRange] = useState<{
     //to: new Date()
 
 });
-
-
+const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
 
 
@@ -131,6 +131,7 @@ useEffect(() => {
     } else if (showCompletePage && countdown === 0) {
         // 카운트다운 끝나면 my_profile로 이동
         router.push('/my_profile');
+        //별명
     }
 }, [showCompletePage, countdown, router]);
 
@@ -227,7 +228,7 @@ return (
                                     setAnalysisHistory,
                                     setShowAnalysis,
                                     setIsLoading,
-                                    setError
+                                    setError,
                                 );
                                 
                                 // 3단계: 이미지 생성 (이미 handleCluster에서 처리됨)
@@ -510,16 +511,17 @@ return (
                             </a>
                         </div>
                         <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">2. YouTube 데이터 선택</div>
-                            <p className="text-sm text-gray-500">다른 항목 모두 해제</p>
+                            <div className="font-medium text-gray-700 mb-2">2.'포함할 데이터 선택'에서
+                            YouTube 선택</div>
+                            <p className="text-sm text-gray-500">제일 하단에 위치한 YouTube 및 YouTube Music 선택</p>
                         </div>
                         <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">3. 시청기록 선택</div>
-                            <p className="text-sm text-gray-500">모든 YouTube 데이터 포함 → 시청기록</p>
+                            <div className="font-medium text-gray-700 mb-2">3. 버튼 '모든 Youtube 데이터 포함됨'에서 시청기록 선택</div>
+                            <p className="text-sm text-gray-500">모든 선택해제 후, 시청기록만 선택</p>
                         </div>
                         <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">4. 내보내기</div>
-                            <p className="text-sm text-gray-500">HTML 형식 선택 후 내보내기</p>
+                            <div className="font-medium text-gray-700 mb-2">4. 버튼 '여러형식'에서 하단 기록에서 JSON 형식 선택</div>
+                            <p className="text-sm text-gray-500">JSON 형식 선택 후 내보내기</p>
                         </div>
                         </div>
                     </div>

@@ -1,12 +1,17 @@
 import { useCallback } from "react";
+import { 
+  Position, 
+  MoodboardImageData, 
+  HistoryData 
+} from '../../../types/profile';
 
 export function useImageChange(
-    images: any[],
-    setImages: (imgs: any[]) => void,
-    positions: any,
-    frameStyles: any,
-    histories: any[],
-    setHistories: (h: any[]) => void,
+    images: MoodboardImageData[],
+    setImages: (imgs: MoodboardImageData[]) => void,
+    positions: Record<string, Position>,
+    frameStyles: Record<string, string>,
+    histories: HistoryData[],
+    setHistories: (h: HistoryData[]) => void,
     setCurrentHistoryIndex: (idx: number) => void
     ) {
     return useCallback(

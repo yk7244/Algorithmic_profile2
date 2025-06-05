@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { MoodboardImageData } from '../../../types/profile';
 
-export function useSearchMode(images: any[]) {
+export function useSearchMode(images: MoodboardImageData[]) {
     const [isSearchMode, setIsSearchMode] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<any>(null);
-    const [selectedImages, setSelectedImages] = useState<any[]>([]);
+    const [selectedImage, setSelectedImage] = useState<MoodboardImageData | null>(null);
+    const [selectedImages, setSelectedImages] = useState<MoodboardImageData[]>([]);
     const router = useRouter();
 
-    const handleImageSelect = (image: any) => {
+    const handleImageSelect = (image: MoodboardImageData) => {
         setSelectedImage(image);
         const isAlreadySelected = selectedImages.some(img => img.id === image.id);
         if (isAlreadySelected) {

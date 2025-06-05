@@ -1,4 +1,9 @@
 import { useState, useEffect } from "react";
+import { 
+  Position, 
+  MoodboardImageData, 
+  HistoryData 
+} from '../../../types/profile';
 
 export function useHistorySlider({
     images,
@@ -8,20 +13,21 @@ export function useHistorySlider({
     setFrameStyles,
     setVisibleImageIds,
 }: {
-    images: any[];
-    positions: any;
-    frameStyles: any;
-    setPositions: (positions: any) => void;
-    setFrameStyles: (frameStyles: any) => void;
+    images: MoodboardImageData[];
+    positions: Record<string, Position>;
+    frameStyles: Record<string, string>;
+    setPositions: (positions: Record<string, Position>) => void;
+    setFrameStyles: (frameStyles: Record<string, string>) => void;
     setVisibleImageIds: (ids: Set<string>) => void;
 }) {
-    const [histories, setHistories] = useState<any[]>([]);
+    const [histories, setHistories] = useState<HistoryData[]>([]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
     const [isPlaying, setIsPlaying] = useState(false);
 
     // 히스토리 불러오기 및 마이그레이션
     useEffect(() => {
         const savedHistories = localStorage.getItem('moodboardHistories');
+        console.log('히스토리 불러오기 확인', savedHistories);
         if (savedHistories) {
         const parsedHistories = JSON.parse(savedHistories);
         const migratedHistories = parsedHistories.map((history: any) => ({

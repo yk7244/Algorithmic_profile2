@@ -3,24 +3,29 @@ import { useHistorySave } from './HistorySlider/Hooks/useHistorySave';
 import { useDragEnd } from './Draggable/Hooks/useDragHandlers';
 import { useImageChange } from './Draggable/Hooks/useImageChange';
 import { useGenerateUserProfile } from './Nickname/Hooks/useGenerateUserProfile';
+import { 
+  Position, 
+  MoodboardImageData, 
+  HistoryData 
+} from '../types/profile';
+import { Dispatch, SetStateAction } from 'react';
 
 export function useMoodboardHandlers(params: {
-  setFrameStyles: any;
-  positions: any;
-  frameStyles: any;
-  images: any[];
-  histories: any[];
-  setHistories: any;
-  setCurrentHistoryIndex: any;
-  setIsEditing: any;
+  setFrameStyles: Dispatch<SetStateAction<Record<string, string>>>;
+  positions: Record<string, Position>;
+  frameStyles: Record<string, string>;
+  images: MoodboardImageData[];
+  histories: HistoryData[];
+  setHistories: Dispatch<SetStateAction<HistoryData[]>>;
+  setCurrentHistoryIndex: Dispatch<SetStateAction<number>>;
+  setIsEditing: Dispatch<SetStateAction<boolean>>;
   isEditing: boolean;
-  setPositions: any;
-  setImages: any;
+  setPositions: Dispatch<SetStateAction<Record<string, Position>>>;
+  setImages: Dispatch<SetStateAction<MoodboardImageData[]>>;
   openai: any;
-  setIsGeneratingProfile: any;
-  setShowGeneratingDialog: any;
-  setGeneratingStep: any;
-  setProfile: any;
+  setShowGeneratingDialog: Dispatch<SetStateAction<boolean>>;
+  setGeneratingStep: Dispatch<SetStateAction<number>>;
+  setProfile: Dispatch<SetStateAction<{ nickname: string; description: string }>>;
 }) {
   const handleFrameStyleChange = useFrameStyleChange(params.setFrameStyles);
   const handleSave = useHistorySave({
@@ -42,9 +47,10 @@ export function useMoodboardHandlers(params: {
     params.setHistories,
     params.setCurrentHistoryIndex
   );
-  const generateUserProfile = useGenerateUserProfile({
+  
+  // useGenerateUserProfile 훅에서 generateProfile 함수 가져오기
+  const { generateProfile } = useGenerateUserProfile({
     openai: params.openai,
-    setIsGeneratingProfile: params.setIsGeneratingProfile,
     setShowGeneratingDialog: params.setShowGeneratingDialog,
     setGeneratingStep: params.setGeneratingStep,
     setProfile: params.setProfile,
@@ -55,6 +61,6 @@ export function useMoodboardHandlers(params: {
     handleSave,
     handleDragEnd,
     handleImageChange,
-    generateUserProfile,
+    generateProfile, // 함수 반환
   };
 } 

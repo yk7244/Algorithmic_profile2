@@ -149,6 +149,7 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
 
       const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
       watchHistory.push(videoInfo);
+      //✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
       localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
       return videoInfo;
     }
