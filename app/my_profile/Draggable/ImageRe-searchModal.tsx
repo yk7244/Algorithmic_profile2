@@ -36,131 +36,140 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
     setShowThumbnailModal,
 }) => (
     <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[80vw] w-[80vw] min-w-[80vw] max-h-[80vh] h-[80vh] min-h-[80vh]">
-        <DialogHeader>
-            <DialogTitle>이미지 변경</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-12 gap-6 h-[calc(100%-60px)]">
-            {/* 기존 이미지 (좌측) */}
-            <div className="col-span-6 flex items-center justify-center">
-            <div className="w-[80%] aspect-square relative rounded-lg overflow-hidden border-2 border-blue-500 shadow-lg">
-                <img
-                src={image.src}
-                alt={image.main_keyword}
-                className="w-full h-full object-cover"
-                />
-            </div>
-            </div>
-            {/* 새 이미지 선택 옵션 (우측) */}
-            <div className="col-span-6 space-y-4">
-            <Tabs defaultValue="search" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-                <div className="flex items-center justify-between mb-3">
-                <TabsList>
-                    <TabsTrigger value="search" className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4" />
-                    이미지 검색
-                    </TabsTrigger>
-                    <TabsTrigger value="thumbnails" className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M16 8h.01"/>
-                    </svg>
-                    관련 영상 썸네일
-                    </TabsTrigger>
-                </TabsList>
-                {activeTab === 'search' && (
-                    <button
-                    onClick={fetchAlternativeImages}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-                    >
-                    <RefreshCw className="h-4 w-4" />
-                    새로 검색
-                    </button>
-                )}
+        <DialogContent className="max-w-4xl w-full h-[80vh] p-0 gap-0 bg-gray-50 opacity-90 rounded-lg">
+            <div className="flex flex-col h-full rounded-lg">
+                <div className="flex flex-1 min-h-0 rounded-lg">
+                    
+                    {/* 왼쪽: 기존 이미지 */}
+                    <div className="w-1/2 p-6 items-center bg-gray-50 bg-gray-50  opacity-90 rounded-lg">
+                        <div className="p-6 ">
+                            <h2 className="text-2xl font-bold text-gray-900">
+                                키워드 '{image.main_keyword}' 의<br/>
+                                분위기에 어울리는<br/>
+                                사진으로 바꿔보세요
+                            </h2>
+                            
+                        </div>
+                        <div className="p-6 items-center justify-center w-90 h-80 relative rounded-lg overflow-hidden">
+                            <p className="text-lg font-bold text-gray-700 mt-2 mb-4 ">#{image.main_keyword}</p>
+                            <img
+                                src={image.src}
+                                alt={image.main_keyword}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/images/default_image.png';
+                                }}
+                            />
+                        </div>
+                    </div>
+                    
+                    {/* 오른쪽: 새 이미지 선택 */}
+                    <div className="w-1/2 p-6 flex flex-col ">
+                        {/* 탭 메뉴 */}
+                        <Tabs defaultValue="search" className="w-full flex-1 mt-10" value={activeTab} onValueChange={setActiveTab}>
+                            <TabsList className="grid w-full grid-cols-2 mb-4 p-2">
+                                <TabsTrigger value="search" className="font-medium data-[state=active]:bg-black data-[state=active]:text-white">
+                                    이미지 검색
+                                </TabsTrigger>
+                                <TabsTrigger value="thumbnails" className="font-medium data-[state=active]:bg-black data-[state=active]:text-white">
+                                    유튜브 썸네일
+                                </TabsTrigger>
+                            </TabsList>
+                            
+                            <TabsContent value="search" className="mt-0 flex-1 flex flex-col">
+                                {isLoadingImages ? (
+                                    <div className="grid grid-cols-2 gap-3 flex-1">
+                                        {[1, 2, 3, 4].map((_, index) => (
+                                            <div key={index} className="aspect-square bg-gray-200 animate-pulse rounded-lg" />
+                                        ))}
+                                    </div>
+                                ) : alternativeImages.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-3 flex-1">
+                                        {alternativeImages.slice(0, 4).map((altImage) => (
+                                            <div 
+                                                key={altImage.id}
+                                                className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group shadow-sm border hover:shadow-md transition-all"
+                                                onClick={() => handleImageSelect(altImage)}
+                                            >
+                                                <img
+                                                    src={altImage.urls.regular}
+                                                    alt={altImage.alt_description || '대체 이미지'}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.src = '/images/default_image.png';
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm">
+                                                        선택하기
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center">
+                                        <div className="text-gray-500">검색된 이미지가 없습니다.</div>
+                                    </div>
+                                )}
+                                
+                                {/* 하단 정보 및 새로고침 버튼 */}
+                                <div className="mt-4 space-y-3">
+                                    <div className="text-xs text-gray-500 text-center">
+                                        * 현재 키워드 ({image.keywords?.join(', ') || image.main_keyword})에 맞는 이미지를 보여드립니다.
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <button
+                                            onClick={fetchAlternativeImages}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-sm font-medium"
+                                        >
+                                            <RefreshCw className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </TabsContent>
+                            
+                            <TabsContent value="thumbnails" className="mt-0 flex-1 flex flex-col">
+                                <div className="grid grid-cols-2 gap-3 flex-1">
+                                    {(image.relatedVideos || []).slice(0, 4).map((video: VideoData, idx: number) => (
+                                        <div key={idx} className="relative group">
+                                            <div 
+                                                className="aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer border hover:shadow-md transition-all"
+                                                onClick={() => {
+                                                    const thumbnailUrl = getYouTubeThumbnail(video.embedId);
+                                                    onImageChange(image.id, thumbnailUrl, image.main_keyword);
+                                                    setShowThumbnailModal(false);
+                                                }}
+                                            >
+                                                <img
+                                                    src={getYouTubeThumbnail(video.embedId)}
+                                                    alt={video.title}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement;
+                                                        target.src = '/images/placeholder.jpg';
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                                                <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm">
+                                                    선택하기
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                </div>
+                                <div className="text-xs text-gray-500 text-center mt-4 mb-22">
+                                        * 시청하신 영상들의 썸네일 이미지를 보여드립니다.
+                                    </div>
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </div>
-                <TabsContent value="search" className="mt-0">
-                {isLoadingImages ? (
-                    <div className="grid grid-cols-2 gap-4 p-4">
-                    {[1, 2, 3, 4].map((_, index) => (
-                        <div key={index} className="aspect-square bg-gray-100 animate-pulse rounded-lg" />
-                    ))}
-                    </div>
-                ) : alternativeImages.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-4 p-4">
-                    {alternativeImages.map((altImage) => (
-                        <div 
-                        key={altImage.id}
-                        className="relative aspect-square rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 transition-colors cursor-pointer group shadow-md"
-                        onClick={() => handleImageSelect(altImage)}
-                        >
-                        <img
-                            src={altImage.urls.regular}
-                            alt={altImage.alt_description || '대체 이미지'}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/images/placeholder.jpg';
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <button className="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-full font-medium hover:bg-white transition-colors">
-                            선택하기
-                            </button>
-                        </div>
-                        </div>
-                    ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-8">
-                    <div className="text-gray-500">검색된 이미지가 없습니다.</div>
-                    </div>
-                )}
-                <div className="bg-blue-50 rounded-lg p-4 mt-4">
-                    <div className="text-sm text-blue-600">
-                    * 현재 키워드 ({image.keywords.join(', ')})에 맞는 이미지를 보여드립니다.
-                    </div>
-                </div>
-                </TabsContent>
-                <TabsContent value="thumbnails" className="mt-0">
-                <div className="grid grid-cols-2 gap-4 p-4">
-                    {image.relatedVideos.map((video: VideoData, idx: number) => (
-                    <div key={idx} className="relative group">
-                        <div 
-                        className="aspect-video rounded-lg overflow-hidden shadow-lg cursor-pointer"
-                        onClick={() => {
-                            const thumbnailUrl = getYouTubeThumbnail(video.embedId);
-                            onImageChange(image.id, thumbnailUrl, image.main_keyword);
-                            setShowThumbnailModal(false);
-                        }}
-                        >
-                        <img
-                            src={getYouTubeThumbnail(video.embedId)}
-                            alt={video.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/images/placeholder.jpg';
-                            }}
-                        />
-                        </div>
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <button
-                            className="bg-white text-gray-800 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
-                        >
-                            이미지로 변경하기
-                        </button>
-                        </div>
-                        <div className="mt-2 text-sm font-medium line-clamp-2">
-                        {video.title}
-                        </div>
-                    </div>
-                    ))}
-                </div>
-                </TabsContent>
-            </Tabs>
             </div>
-        </div>
         </DialogContent>
     </Dialog>
 );

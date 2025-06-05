@@ -6,6 +6,7 @@ interface HistorySliderProps {
     isPlaying: boolean;
     handlePlayHistory: () => void;
     handleHistoryClick: (index: number) => void;
+    handleProfileImagesClick?: () => void;
 }
 
 const HistorySlider: React.FC<HistorySliderProps> = ({
@@ -14,6 +15,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     isPlaying,
     handlePlayHistory,
     handleHistoryClick,
+    handleProfileImagesClick,
 }) => {
     if (histories.length === 0) return null;
     return (
@@ -24,11 +26,17 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                 <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gray-300 -translate-y-1/2 opacity-50 rounded-full" />
                 {/* 점들 */}
                 <div className="relative w-full flex justify-center gap-x-8 items-center z-10 ">
+                    
+                    
+                    {/* 기존 히스토리 점들 */}
                     {histories.map((history, index) => (
                         <div key={index} className="relative group flex flex-col items-center">
                             <button
                                 className="w-4 h-4 rounded-full bg-black transition-all opacity-80"
-                                onClick={() => handleHistoryClick(index)}
+                                onClick={() => {
+                                    handleHistoryClick(index);
+                                    console.log(history);
+                                }}
                             />
                             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                                 {new Date(history.timestamp).toLocaleDateString('ko-KR', {
@@ -40,6 +48,23 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                             </span>
                         </div>
                     ))}
+                    {/* 원본 ProfileImages 점 */}
+                    <div className="relative group flex flex-col items-center">
+                        <button
+                            className="w-4 h-4 rounded-full bg-blue-500 transition-all opacity-80 hover:opacity-100"
+                            onClick={() => {
+                                console.log('🔵 파란색 점 클릭 - ProfileImages 로드');
+                                if (handleProfileImagesClick) {
+                                    handleProfileImagesClick();
+                                }
+                                // 히스토리 상태를 원본으로 리셋
+                                handleHistoryClick(-1); // -1은 원본 상태를 의미
+                            }}
+                        />
+                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                            꾸민 Profile Images
+                        </span>
+                    </div>
                 </div>
             </div>
             {/* 재생하기 텍스트 */}

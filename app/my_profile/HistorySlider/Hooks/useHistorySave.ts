@@ -23,24 +23,20 @@ export function useHistorySave({
   setIsEditing: (v: boolean) => void;
 }) {
   return useCallback(() => {
-    const updatedImages = images.map(image => {
-      const pos = positions[image.id];
-      return {
-        ...image,
-        left: pos ? `${pos.x}px` : image.left,
-        top: pos ? `${pos.y}px` : image.top,
-      };
-    });
+    
+    
     const newHistory = {
       timestamp: Date.now(),
       positions,
       frameStyles,
-      images: updatedImages,
+      images: images,
     };
+    
     const updatedHistories = [...histories, newHistory];
     setHistories(updatedHistories);
-    localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
-    setCurrentHistoryIndex(updatedHistories.length - 1);
+    //localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
+    //setCurrentHistoryIndex(updatedHistories.length - 1);
     setIsEditing(false);
+    
   }, [positions, frameStyles, images, histories, setHistories, setCurrentHistoryIndex, setIsEditing]);
 } 

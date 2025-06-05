@@ -145,7 +145,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             className={`relative w-full h-full ${getFrameStyle()} overflow-hidden`}
                         >
                             <img
-                            src={image.src || '/images/placeholder.jpg'}
+                            src={image.src || "/images/default_image.png"}
                             alt={image.main_keyword}
                             className={`w-full h-full object-cover shadow-lg transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
                             onClick={(e) => {
@@ -158,9 +158,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             }}
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement;
-                                if (target.src.includes('placeholder')) return;
+                                // 기본 이미지이거나 이미 에러가 발생했으면 더 이상 시도하지 않음
+                                if (target.src.includes('default_image.png') || target.dataset.errorHandled) return;
                                 console.error('이미지 로드 실패:', target.src);
-                                target.src = '/images/placeholder.jpg';
+                                target.dataset.errorHandled = 'true'; // 에러 처리 완료 표시
+                                target.src = "/images/default_image.png";
                             }}
                             />
                         </div>
@@ -188,7 +190,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                     {image.desired_self ? (
                     <button 
-                        className="flex items-center justify-center gap-1.5 py-2 px-4 min-w-[100px] bg-red-500/90 text-white backdrop-blur-sm rounded-full hover:bg-red-600 shadow-sm transition-colors pointer-events-auto"
+                        className="z-[60] flex items-center justify-center gap-1.5 py-2 px-4 min-w-[100px] bg-red-500/90 text-white 
+                        backdrop-blur-sm rounded-full hover:bg-red-600 shadow-sm transition-colors pointer-events-auto"
                         onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -203,18 +206,21 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     </button>
                     ) : (
                     <button 
-                        className="flex items-center justify-center py-2 px-4 backdrop-blur-sm rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto"
-                        onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setShowImageModal(true);
-                        }}
+                        className="z-[60] group flex mb-10 items-center justify-center py-2 px-4 backdrop-blur-sm rounded-full 
+                        hover:bg-white shadow-lg transition-all hover:scale-105 pointer-events-auto"
                         onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         }}
                     >
-                        <RefreshCw className="h-4 w-4" />
+                        <RefreshCw 
+                            className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300 cursor-pointer" 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowImageModal(true);
+                            }}
+                        />
                     </button>
                     )}
                 </div>

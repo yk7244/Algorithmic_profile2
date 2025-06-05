@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import StarIcon from '@/public/images/Star.svg';
 import search_star from "@/public/images/search_star.png";
 
@@ -16,7 +16,22 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [showNotification, setShowNotification] = useState(false);
+    const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
+
+    // 클라이언트에서만 window 크기 설정
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+            
+            const handleResize = () => {
+                setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+            };
+            
+            window.addEventListener('resize', handleResize);
+            return () => window.removeEventListener('resize', handleResize);
+        }
+    }, []);
 
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -32,7 +47,7 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return;
+        if (!isDragging || typeof window === 'undefined') return;
 
         const newX = window.innerWidth - (e.clientX - dragStart.x) - 80; // 80은 버튼 크기
         const newY = window.innerHeight - (e.clientY - dragStart.y) - 80;
@@ -72,6 +87,15 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
         }
     }, [isSearchMode]);
 
+    // 툴팁 위치 계산 함수
+    const getTooltipAlignment = () => {
+        if (windowSize.width === 0) return 'left-1/2 transform -translate-x-1/2'; // 기본값
+        
+        if (position.x < windowSize.width / 3) return 'right-0';
+        if (position.x < windowSize.width * 2 / 3) return 'left-1/2 transform -translate-x-1/2';
+        return 'left-0';
+    };
+
     return (
         <>
             {/* 검색 모드 전환 알림 - 화면 상단 중앙 */}
@@ -106,12 +130,7 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
                         <div 
                             className={`absolute bottom-full mb-2 px-5 py-2 bg-white rounded-xl shadow-lg 
                             text-gray-700 text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 
-                            transition-opacity pointer-events-none ${
-                                // 화면 위치에 따른 정렬
-                                position.x < window.innerWidth / 3 ? 'right-0' : 
-                                position.x < window.innerWidth * 2 / 3 ? 'left-1/2 transform -translate-x-1/2' : 
-                                'left-0'
-                            }`}
+                            transition-opacity pointer-events-none ${getTooltipAlignment()}`}
                         >
                             {isSearchMode ? '검색모드를 종료하시고 싶으시면 한번더 클릭하세요' : '당신의 관심사로, 새로운 연결을 탐색해보세요.'}
                         </div>

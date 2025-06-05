@@ -37,7 +37,7 @@ export function useMoodboardHandlers(params: {
     setCurrentHistoryIndex: params.setCurrentHistoryIndex,
     setIsEditing: params.setIsEditing,
   });
-  const handleDragEnd = useDragEnd(params.isEditing, params.setPositions);
+  const handleDragEnd = useDragEnd(params.isEditing, params.images, params.setImages, params.setPositions);
   const handleImageChange = useImageChange(
     params.images,
     params.setImages,

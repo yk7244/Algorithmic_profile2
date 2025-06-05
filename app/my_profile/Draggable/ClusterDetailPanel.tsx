@@ -159,7 +159,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                 <span className={`absolute right-4 bottom-4 px-3 py-1 rounded-full text-xs font-bold z-30
                     ${image.sizeWeight >= 1.2 ? 'bg-red-500 text-white' : image.sizeWeight >= 0.8 ? 'bg-yellow-400 text-gray-900' : 'bg-blue-400 text-white'}`}
                 >
-                    {image.sizeWeight >= 1.2 ? '강' : image.sizeWeight >= 0.8 ? '중' : '약'}
+                    {image.sizeWeight >= 1.2 ? '관심도:강' : image.sizeWeight >= 0.8 ? '관심도:중' : '관심도:약'}
                 </span>
                 {/* 하단 그라데이션 오버레이로 텍스트 가독성 향상 */}
                 <div className="absolute left-0 bottom-0 w-full h-1/2 bg-gradient-to-t from-black/50 to-transparent z-10 pointer-events-none" />
