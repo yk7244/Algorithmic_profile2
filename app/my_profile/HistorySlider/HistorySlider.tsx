@@ -17,7 +17,15 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     handleHistoryClick,
     handleProfileImagesClick,
 }) => {
-    if (histories.length === 0) return null;
+    console.log('[HistorySlider] Received histories prop:', histories, 'Length:', histories.length);
+    if (histories.length === 0 && currentHistoryIndex === -1) {
+        // 히스토리가 없고, 현재 선택된 것도 없다면 (즉, 초기 상태이거나 아무것도 저장되지 않은 상태)
+        // 파란 점만 표시하거나, 아무것도 표시 안 할 수 있습니다.
+        // 현재 로직에서는 파란 점은 항상 표시되므로, 여기서는 histories가 비었을 때 null을 반환하지 않도록 수정합니다.
+        // 만약 정말 아무것도 표시하고 싶지 않다면, 아래 if문을 유지합니다.
+        // if (histories.length === 0) return null; -> 이 줄을 주석 처리하거나 삭제하여 파란 점은 항상 보이도록 함
+    }
+    
     return (
         <div className="w-[400px] flex flex-col items-center mx-auto mt-1 mb-40">
             {/* 슬라이더 선과 점 */}

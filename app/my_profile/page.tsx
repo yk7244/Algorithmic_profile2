@@ -272,6 +272,7 @@ export default function MyProfilePage() {
           onEditClick={() => setIsEditing(true)}
           onSaveClick={handleSave}
           onGenerateProfile={generateProfile}
+          sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
         />
       )}
 
