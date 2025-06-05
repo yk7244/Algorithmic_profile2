@@ -786,7 +786,7 @@ export default function Home() {
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 transition-all px-16 py-8 text-2xl font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] text-white"
                 >
-                  <Link href="/upload">
+                  <Link href="/my_profile">
                   (3)관리자용 버튼: DB 저장 후, my profile 이동 
                   </Link>
                 </Button>

@@ -26,7 +26,7 @@ export function useHistorySlider({
 
     // 히스토리 불러오기 및 마이그레이션
     useEffect(() => {
-        const savedHistories = localStorage.getItem('moodboardHistories');
+        const savedHistories = localStorage.getItem('SliderHistory');
         console.log('히스토리 불러오기 확인', savedHistories);
         if (savedHistories) {
         const parsedHistories = JSON.parse(savedHistories);
