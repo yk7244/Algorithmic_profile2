@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { useState, useEffect, useRef } from 'react';
 import {DndContext} from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
+import { restrictToContainer } from './Draggable/Hooks/useDragConstraints';
 
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
@@ -20,6 +21,8 @@ import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Draggable/Hooks/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
+import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
+import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
 import { 
   ProfileData, 
   Position, 
@@ -35,33 +38,6 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
-// 커스텀 modifier - 드래그 영역을 컨테이너로 제한
-const restrictToContainer = ({ transform, draggingNodeRect, overlayNodeRect }: any) => {
-  if (!draggingNodeRect || !overlayNodeRect) {
-    return transform;
-  }
-
-  // 컨테이너 크기 (1000x680)
-  const containerWidth = 1000;
-  const containerHeight = 680;
-  
-  // 이미지 크기
-  const imageWidth = draggingNodeRect.width;
-  const imageHeight = draggingNodeRect.height;
-  
-  // 제한된 위치 계산
-  const minX = 0;
-  const maxX = containerWidth - imageWidth;
-  const minY = 0;
-  const maxY = containerHeight - imageHeight;
-  
-  return {
-    ...transform,
-    x: Math.min(Math.max(transform.x, minX - draggingNodeRect.left), maxX - draggingNodeRect.left),
-    y: Math.min(Math.max(transform.y, minY - draggingNodeRect.top), maxY - draggingNodeRect.top),
-  };
-};
-
 export default function MyProfilePage() {
   // --- 상태 선언 ---
   const [visibleImageIds, setVisibleImageIds] = useState<Set<string>>(new Set());
@@ -75,10 +51,16 @@ export default function MyProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [histories, setHistories] = useState<HistoryData[]>([]);
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
-  const placeholderImage = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' font-size='18' text-anchor='middle' alignment-baseline='middle' font-family='Arial, sans-serif' fill='%23666666'%3E이미지를 찾을 수 없습니다%3C/text%3E%3C/svg%3E";
+  const placeholderImage = "../../../public/images/default_image.png"
   
-  // 초기 프로필 로드 완료 여부 추적
-  const initialLoadCompleted = useRef(false);
+  // [새로고침시] ProfileImages 로드 훅 사용
+  useProfileImagesLoad({
+    setImages,
+    setVisibleImageIds,
+    setFrameStyles,
+    setPositions,
+    placeholderImage,
+  });
 
   const historySlider = useHistorySlider({
     images,
@@ -88,6 +70,7 @@ export default function MyProfilePage() {
     setFrameStyles,
     setVisibleImageIds,
     setImages,
+    placeholderImage,
   });
   const {
     histories: sliderHistories,
@@ -150,150 +133,13 @@ export default function MyProfilePage() {
   // localStorage 프로필 관리 훅 사용
   const { loadProfileFromStorage, isProfileExpired } = useProfileStorage();
 
-  // 원본 ProfileImages 로드 핸들러
-  const handleProfileImagesClick = () => {
-    if (typeof window !== 'undefined') {
-      const savedProfileImages = localStorage.getItem('profileImages');
-      if (savedProfileImages) {
-        const parsedImages = JSON.parse(savedProfileImages);
-        
-        // 배열인지 객체인지 확인
-        let imageArray: ImportedImageData[];
-        if (Array.isArray(parsedImages)) {
-          imageArray = parsedImages;
-        } else {
-          // 객체인 경우 Object.values()로 배열로 변환
-          imageArray = Object.values(parsedImages) as ImportedImageData[];
-        }
-        
-        const processedImages = imageArray.map(img => ({
-          ...img,
-          src: img.src || placeholderImage,
-          color: img.color || 'gray',
-          desired_self_profile: img.desired_self_profile || null,
-          position: img.position || {
-            x: Number(img.left?.replace('px', '') || 0),
-            y: Number(img.top?.replace('px', '') || 0),
-          }
-        }));
-        
-        setImages(processedImages);
-        setVisibleImageIds(new Set(processedImages.map(img => img.id)));
-        console.log('원본 ProfileImages 로드됨:', processedImages);
-      }
-    }
-  };
-
-  // --- 데이터 마이그레이션 및 초기화 이펙트 ---
-  useEffect(() => {
-    // 로컬 스토리지에서 기존 데이터 마이그레이션
-    const migrateLocalStorageData = () => {
-      try {
-        // 무드보드 히스토리 마이그레이션
-        const storedHistories = localStorage.getItem('moodboardHistories');
-        if (storedHistories) {
-          const parsedHistories = JSON.parse(storedHistories);
-          
-          // 각 히스토리의 이미지 데이터 마이그레이션
-          const migratedHistories = parsedHistories.map((history: any) => {
-            // 이미지 배열 마이그레이션
-            const migratedImages = history.images?.map((img: any) => {
-              // alt 필드가 있고 main_keyword 필드가 없는 경우에만 마이그레이션
-              if (img.alt && !img.main_keyword) {
-                return {
-                  ...img,
-                  main_keyword: img.alt, // alt 값을 main_keyword로 복사
-                };
-              }
-              return img;
-            });
-            
-            return {
-              ...history,
-              images: migratedImages || history.images,
-            };
-          });
-          
-          // 마이그레이션된 데이터 저장
-          localStorage.setItem('moodboardHistories', JSON.stringify(migratedHistories));
-          console.log('무드보드 히스토리 데이터 마이그레이션 완료');
-        }
-        
-        // 클러스터 이미지 마이그레이션
-        const storedClusterImages = localStorage.getItem('clusterImages');
-        if (storedClusterImages) {
-          const parsedClusterImages = JSON.parse(storedClusterImages);
-          
-          // 각 클러스터 이미지 마이그레이션
-          const migratedClusterImages: Record<string, any> = {};
-          
-          Object.entries(parsedClusterImages).forEach(([key, value]: [string, any]) => {
-            migratedClusterImages[key] = {
-              ...value,
-              main_keyword: key, // 키를 main_keyword로 사용
-            };
-          });
-          
-          // 마이그레이션된 데이터 저장
-          localStorage.setItem('clusterImages', JSON.stringify(migratedClusterImages));
-          console.log('클러스터 이미지 데이터 마이그레이션 완료');
-        }
-        
-        // 마이그레이션 완료 표시
-        localStorage.setItem('dataMigrationCompleted', 'true');
-      } catch (error) {
-        console.error('데이터 마이그레이션 중 오류 발생:', error);
-      }
-    };
-    
-    // 마이그레이션이 이미 완료되었는지 확인
-    const migrationCompleted = localStorage.getItem('dataMigrationCompleted');
-    if (migrationCompleted !== 'true') {
-      migrateLocalStorageData();
-    }
-  }, []);
-
-  useEffect(() => {
-    // 컴포넌트 마운트 시 저장된 히스토리 불러오기 및 최근 위치 설정
-    const savedHistories = localStorage.getItem('moodboardHistories');
-    if (savedHistories) {
-      const parsedHistories = JSON.parse(savedHistories);
-      // 기존 히스토리 데이터 마이그레이션
-      const migratedHistories = parsedHistories.map((history: any) => ({
-        ...history,
-        images: history.images || images // 이미지 배열이 없으면 현재 이미지 사용
-      }));
-      
-      setHistories(migratedHistories);
-      
-      if (migratedHistories.length > 0) {
-        const latestHistory = migratedHistories[migratedHistories.length - 1];
-        setPositions(latestHistory.positions);
-        setCurrentHistoryIndex(migratedHistories.length - 1);
-        setFrameStyles(latestHistory.frameStyles || {});
-        if (latestHistory.images && latestHistory.images.length > 0) {
-          setImages(latestHistory.images);
-          // 최신 히스토리의 모든 이미지 ID를 visibleImageIds에 추가
-          setVisibleImageIds(new Set(latestHistory.images.map((img: MoodboardImageData) => img.id)));
-        }
-      }
-      // 마이그레이션된 데이터 저장
-      localStorage.setItem('moodboardHistories', JSON.stringify(migratedHistories));
-    } else {
-      // 초기 히스토리 생성
-      const initialHistory: HistoryData = {
-        timestamp: Date.now(),
-        positions: positions,
-        frameStyles: frameStyles,
-        images: images
-      };
-      setHistories([initialHistory]);
-      localStorage.setItem('moodboardHistories', JSON.stringify([initialHistory]));
-      setCurrentHistoryIndex(0);
-      // 초기 히스토리의 모든 이미지 ID를 visibleImageIds에 추가
-      setVisibleImageIds(new Set(images.map(img => img.id)));
-    }
-  }, []);
+  //새로고침시 별명 생성/로드 훅 사용
+  useInitialProfileLoad({
+    loadProfileFromStorage,
+    isProfileExpired,
+    generateProfile,
+    setProfile,
+  });
 
   useEffect(() => {
     setPositions(prevPositions => {
@@ -324,36 +170,6 @@ export default function MyProfilePage() {
       return newPositions;
     });
   }, [images]);
-
-  //별명생성
-  useEffect(() => {
-    // 이미 초기 로드가 완료된 경우 실행하지 않음
-    if (initialLoadCompleted.current) return;
-    
-    // 먼저 localStorage에서 프로필 확인 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
-    const loadInitialProfile = async () => {
-      const storedProfile = loadProfileFromStorage();
-      if (storedProfile && !isProfileExpired(storedProfile)) {
-        console.log('저장된 프로필을 불러왔습니다:', storedProfile);
-        setProfile({
-          nickname: storedProfile.nickname,
-          description: storedProfile.description
-        });
-        initialLoadCompleted.current = true;
-        return;
-      }
-      // 저장된 프로필이 없거나(새로운 업데이트일경우) 만료된 경우에만 새로 생성
-      await generateProfile();
-      initialLoadCompleted.current = true;
-    };
-    
-    loadInitialProfile();
-  }, []);
-
-  // 클라이언트에서만 localStorage에서 이미지 불러오기 (hydration mismatch 방지)
-  useEffect(() => {
-    handleProfileImagesClick();
-  }, []);
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
@@ -434,7 +250,6 @@ export default function MyProfilePage() {
               isPlaying={sliderIsPlaying}
               handlePlayHistory={handlePlayHistory}
               handleHistoryClick={handleHistoryClick}
-              handleProfileImagesClick={handleProfileImagesClick}
             />
           )}
         </div>

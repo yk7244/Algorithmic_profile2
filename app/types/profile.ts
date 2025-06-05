@@ -126,27 +126,37 @@ export interface VideoData {
 
 export interface ImportedImageData {
   id: string;
-  src: string;
+  user_id?: string; 
+
   main_keyword: string;
+  keywords: string[]; 
+  sub_keyword?: string;
+  mood_keyword: string;
+  description: string;
+  category: string;
+  sizeWeight: number; 
+  src: string; //update되는 값
+  relatedVideos: {
+    title: string;
+    embedId: string;
+  }[];
+  desired_self: boolean;
+  desired_self_profile: any;
+  metadata: any;
+  rotate: number;
   width: number;
   height: number;
-  rotate: number;
   left: string;
   top: string;
-  keywords: string[];
-  sizeWeight: number;
-  relatedVideos: VideoData[];
-  category: string;
-  mood_keyword: string;
-  sub_keyword: string;
-  description: string;
-  desired_self: boolean;
-  desired_self_profile: string | null;
-  color?: string;
-  position?: {
+  position: { //update되는 값
     x: number;
     y: number;
   };
+  frameStyle: string; //update되는 값
+  alt?: string;
+  cluster?: string;
+  color?: string;
+  created_at: string;
 }
 
 export type MoodboardImageData = Required<ImportedImageData> & {
