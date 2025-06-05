@@ -31,6 +31,8 @@ import { VideoCluster, handleCluster} from './VideoAnalysis/videoCluster';
 import { fetchVideoInfo } from './VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './hooks/useClusterStorage';
 import { my_account } from '../data/dummyData';
+import { saveClusterHistory } from '../utils/saveClusterHistory';
+import { saveSliderHistory } from '../utils/saveSliderHistory';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -153,9 +155,242 @@ export default function Home() {
         {/* 파일 업로드 버튼 */}
         <div className="w-full max-w-[700px] p-8">
           
-          {(my_account.updated_at == null || isOneWeekPassed(my_account.updated_at)) ? (
-            isFileUploaded ? (
+          
+            
               <>  
+                {/* 업데이트 가능하면 파일 업로드 버튼 */}
+                <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`w-full cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
+                      isDragging 
+                        ? 'border-2 border-blue-500 bg-blue-50/30 scale-[1.02] shadow-lg' 
+                        : 'border-2 border-gray-200/60 hover:border-blue-400/60 shadow-sm hover:shadow-md bg-white/70'
+                    }`}
+                    onDragEnter={e => handleDragEnter(e, setIsDragging)}
+                    onDragOver={handleDragOver}
+                    onDragLeave={e => handleDragLeave(e, setIsDragging)}
+                    onDrop={e => handleDrop(e, {
+                      setIsDragging,
+                      setIsLoading,
+                      setError,
+                      setSuccessCount,
+                      dateRange,
+                      maxVideosPerDay,
+                      fetchVideoInfo,
+                      openai,
+                      OpenAILogger,
+                      parseWatchHistory
+                    })}
+                  >
+                  
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".json,.html"
+                      onChange={e => {
+                        handleFileUpload(e, {
+                          setIsLoading,
+                          setError,
+                          setSuccessCount,
+                          setWatchHistory,
+                          dateRange,
+                          maxVideosPerDay,
+                          fetchVideoInfo,
+                          openai,
+                          OpenAILogger,
+                          parseJSONWatchHistory,
+                          parseWatchHistory
+                        });
+                        setIsFileUploaded(true); // 파일 업로드 성공 시 true로 변경
+                      }}
+                      className="hidden"
+                    />
+                    <div className="flex flex-col items-center gap-4">
+                      <Upload className="w-12 h-12 text-blue-500" />
+                      <div className="text-center">
+                        <p className="text-xl font-semibold text-gray-700 mb-2">
+                          {isLoading ? '처리 중...' : (
+                            isDragging 
+                              ? '여기에 파일을 놓아주세요'
+                              : 'Google Takeout에서 다운로드한\nYoutube 시청기록 파일을 업로드하세요'
+                          )}
+                        </p>
+                        <style jsx>{`
+                          p {
+                            white-space: pre-line;
+                          }
+                        `}</style>
+                        <p className="text-sm text-gray-500">
+                          {isLoading ? (
+                            <span className="w-full max-w-md mx-auto">
+                              <span className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                <span 
+                                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
+                                  style={{ 
+                                    width: `${(successCount / maxVideosPerDay) * 100}%`,
+                                    animation: 'progress-animation 1.5s ease-in-out infinite'
+                                  }}
+                                />
+                              </span>
+                              <span className="mt-2 text-sm text-gray-600">{successCount}/{maxVideosPerDay}개 분석 완료</span>
+                            </span>
+                          ) : (
+                            '파일을 드래그하거나 클릭하여 업로드'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  
+                </div>
+                {/* 분석개수Slider, 기간 달력 */}
+                <div className="mt-6 bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-sm">
+                  <div className="space-y-6">
+                    {/* 기간 선택 */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        분석 기간 선택
+                      </label>
+                      <div className="flex gap-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={`w-full justify-start text-left font-normal ${
+                                !dateRange.from && "text-muted-foreground"
+                              }`}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateRange.from ? (
+                                format(dateRange.from, "PPP", { locale: ko  })
+                              ) : (
+                                <span>시작일 선택</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={dateRange.from}
+                              onSelect={(date) => {
+                                setDateRange((prev) => ({
+                                  ...prev,
+                                  from: date,
+                                }));
+                              }}
+                              initialFocus
+                              locale={ko}
+                            />
+                          </PopoverContent>
+                        </Popover>
+
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={`w-full justify-start text-left font-normal ${
+                                !dateRange.to && "text-muted-foreground"
+                              }`}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateRange.to && dateRange.to instanceof Date ? (
+                                format(dateRange.to as Date, "PPP", { locale: ko })
+                              ) : (
+                                <span>종료일 선택</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={dateRange.to}
+                              onSelect={(date) => {
+                                setDateRange((prev) => ({
+                                  ...prev,
+                                  to: date,
+                                }));
+                              }}
+                              initialFocus
+                              locale={ko}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        분석할 기간을 선택하세요. 선택하지 않으면 전체 기간이 분석됩니다.
+                      </p>
+                    </div>
+
+                    {/* 데이터 개수 선택 Slider */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <label className="text-sm font-medium text-gray-700">
+                          일별 최대 분석 영상 수
+                        </label>
+                        <span className="text-sm text-gray-500">{maxVideosPerDay}개</span>
+                      </div>
+                      <Slider
+                        value={[maxVideosPerDay]}
+                        onValueChange={(value) => setMaxVideosPerDay(value[0])}
+                        min={5}
+                        max={50}
+                        step={5}
+                        className="w-full"
+                      />
+                      <p className="text-xs text-gray-500">
+                        하루에 분석할 최대 영상 수를 선택하세요. 숫자가 클수록 분석 시간이 길어집니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {/* 호버시 설명 란*/}
+                <div className="mt-4 flex justify-center">
+                  <HoverCard>
+                    <HoverCardTrigger>
+                      <Button
+                        variant="ghost"
+                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
+                      >
+                        <HelpCircle className="w-5 h-5" />
+                        <span>Google Takeout 가이드 보기</span>
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent className="w-[600px] p-6 rounded-xl shadow-lg" side="bottom" align="center">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
+                          <Youtube className="w-5 h-5 text-blue-500" />
+                          Google Takeout에서 Youtube 시청기록 내보내기
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                            <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
+                            <a 
+                              href="https://takeout.google.com/" 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-sm text-blue-500 hover:underline"
+                            >
+                              takeout.google.com
+                            </a>
+                          </div>
+                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                            <div className="font-medium text-gray-700 mb-2">2. YouTube 데이터 선택</div>
+                            <p className="text-sm text-gray-500">다른 항목 모두 해제</p>
+                          </div>
+                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                            <div className="font-medium text-gray-700 mb-2">3. 시청기록 선택</div>
+                            <p className="text-sm text-gray-500">모든 YouTube 데이터 포함 → 시청기록</p>
+                          </div>
+                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                            <div className="font-medium text-gray-700 mb-2">4. 내보내기</div>
+                            <p className="text-sm text-gray-500">HTML 형식 선택 후 내보내기</p>
+                          </div>
+                        </div>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+              </>
+
               {/* 업데이트 했으면 분석할 시청기록 개수와 날짜  확인 */}
               {watchHistory.length > 0 && (
                 <div className="w-full max-w-[700px] mb-6">
@@ -324,7 +559,7 @@ export default function Home() {
 
                   
                   {/* 클러스터 분석 결과 */}
-                  {showAnalysis && clusters.length > 0 && (
+                  {analysisHistory.length > 0 && (
                     <div className="mt-6">
                       {/* 클러스터 분석 결과 헤더 */}
                       <div className="flex justify-between items-center mb-6">
@@ -532,10 +767,16 @@ export default function Home() {
                 <Button 
                   onClick={() => {
                     if (clusters.length > 0) {
-                      // 현재 선택된 분석 결과의 클러스터로 변환 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
+                      // [3]현재 선택된 분석 결과의 클러스터로 변환 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
                       const profileImages = transformClustersToImageData(clusters, clusterImages);
                       localStorage.setItem('profileImages', JSON.stringify(profileImages));
-                      console.log('✨ 프로필 데이터 저장 성공!');
+                      
+                      // [2] ClusterHistory기존 배열에 새 데이터 ✅push
+                      const clusterHistoryResult = saveClusterHistory(profileImages);
+                      
+                      // [5] SliderHistory 저장
+                      const sliderResult = saveSliderHistory(profileImages);
+
                       alert('프로필 데이터가 성공적으로 저장되었습니다!');
                     } else {
                       alert('분석 결과가 선택되어 있지 않습니다!');
@@ -545,7 +786,7 @@ export default function Home() {
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 transition-all px-16 py-8 text-2xl font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] text-white"
                 >
-                  <Link href="/my_profile">
+                  <Link href="/upload">
                   (3)관리자용 버튼: DB 저장 후, my profile 이동 
                   </Link>
                 </Button>
@@ -555,247 +796,6 @@ export default function Home() {
               </div>
               </>
               )}
-              
-              </>
-            ) : (
-              <>
-              {/* 업데이트 가능하면 파일 업로드 버튼 */}
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`w-full cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
-                    isDragging 
-                      ? 'border-2 border-blue-500 bg-blue-50/30 scale-[1.02] shadow-lg' 
-                      : 'border-2 border-gray-200/60 hover:border-blue-400/60 shadow-sm hover:shadow-md bg-white/70'
-                  }`}
-                  onDragEnter={e => handleDragEnter(e, setIsDragging)}
-                  onDragOver={handleDragOver}
-                  onDragLeave={e => handleDragLeave(e, setIsDragging)}
-                  onDrop={e => handleDrop(e, {
-                    setIsDragging,
-                    setIsLoading,
-                    setError,
-                    setSuccessCount,
-                    dateRange,
-                    maxVideosPerDay,
-                    fetchVideoInfo,
-                    openai,
-                    OpenAILogger,
-                    parseWatchHistory
-                  })}
-                >
-                
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json,.html"
-                    onChange={e => {
-                      handleFileUpload(e, {
-                        setIsLoading,
-                        setError,
-                        setSuccessCount,
-                        setWatchHistory,
-                        dateRange,
-                        maxVideosPerDay,
-                        fetchVideoInfo,
-                        openai,
-                        OpenAILogger,
-                        parseJSONWatchHistory,
-                        parseWatchHistory
-                      });
-                      setIsFileUploaded(true); // 파일 업로드 성공 시 true로 변경
-                    }}
-                    className="hidden"
-                  />
-                  <div className="flex flex-col items-center gap-4">
-                    <Upload className="w-12 h-12 text-blue-500" />
-                    <div className="text-center">
-                      <p className="text-xl font-semibold text-gray-700 mb-2">
-                        {isLoading ? '처리 중...' : (
-                          isDragging 
-                            ? '여기에 파일을 놓아주세요'
-                            : 'Google Takeout에서 다운로드한\nYoutube 시청기록 파일을 업로드하세요'
-                        )}
-                      </p>
-                      <style jsx>{`
-                        p {
-                          white-space: pre-line;
-                        }
-                      `}</style>
-                      <p className="text-sm text-gray-500">
-                        {isLoading ? (
-                          <span className="w-full max-w-md mx-auto">
-                            <span className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                              <span 
-                                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
-                                style={{ 
-                                  width: `${(successCount / maxVideosPerDay) * 100}%`,
-                                  animation: 'progress-animation 1.5s ease-in-out infinite'
-                                }}
-                              />
-                            </span>
-                            <span className="mt-2 text-sm text-gray-600">{successCount}/{maxVideosPerDay}개 분석 완료</span>
-                          </span>
-                        ) : (
-                          '파일을 드래그하거나 클릭하여 업로드'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                
-                </div>
-
-                {/* 분석개수Slider, 기간 달력 */}
-                <div className="mt-6 bg-white/70 backdrop-blur-sm rounded-xl p-6 shadow-sm">
-                  <div className="space-y-6">
-                    {/* 기간 선택 */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        분석 기간 선택
-                      </label>
-                      <div className="flex gap-2">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={`w-full justify-start text-left font-normal ${
-                                !dateRange.from && "text-muted-foreground"
-                              }`}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {dateRange.from ? (
-                                format(dateRange.from, "PPP", { locale: ko  })
-                              ) : (
-                                <span>시작일 선택</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={dateRange.from}
-                              onSelect={(date) => {
-                                setDateRange((prev) => ({
-                                  ...prev,
-                                  from: date,
-                                }));
-                              }}
-                              initialFocus
-                              locale={ko}
-                            />
-                          </PopoverContent>
-                        </Popover>
-
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={`w-full justify-start text-left font-normal ${
-                                !dateRange.to && "text-muted-foreground"
-                              }`}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {dateRange.to && dateRange.to instanceof Date ? (
-                                format(dateRange.to as Date, "PPP", { locale: ko })
-                              ) : (
-                                <span>종료일 선택</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={dateRange.to}
-                              onSelect={(date) => {
-                                setDateRange((prev) => ({
-                                  ...prev,
-                                  to: date,
-                                }));
-                              }}
-                              initialFocus
-                              locale={ko}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        분석할 기간을 선택하세요. 선택하지 않으면 전체 기간이 분석됩니다.
-                      </p>
-                    </div>
-
-                    {/* 데이터 개수 선택 Slider */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-700">
-                          일별 최대 분석 영상 수
-                        </label>
-                        <span className="text-sm text-gray-500">{maxVideosPerDay}개</span>
-                      </div>
-                      <Slider
-                        value={[maxVideosPerDay]}
-                        onValueChange={(value) => setMaxVideosPerDay(value[0])}
-                        min={5}
-                        max={50}
-                        step={5}
-                        className="w-full"
-                      />
-                      <p className="text-xs text-gray-500">
-                        하루에 분석할 최대 영상 수를 선택하세요. 숫자가 클수록 분석 시간이 길어집니다.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {/* 호버시 설명 란*/}
-                <div className="mt-4 flex justify-center">
-                  <HoverCard>
-                    <HoverCardTrigger>
-                      <Button
-                        variant="ghost"
-                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
-                      >
-                        <HelpCircle className="w-5 h-5" />
-                        <span>Google Takeout 가이드 보기</span>
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-[600px] p-6 rounded-xl shadow-lg" side="bottom" align="center">
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
-                          <Youtube className="w-5 h-5 text-blue-500" />
-                          Google Takeout에서 Youtube 시청기록 내보내기
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
-                            <a 
-                              href="https://takeout.google.com/" 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="text-sm text-blue-500 hover:underline"
-                            >
-                              takeout.google.com
-                            </a>
-                          </div>
-                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">2. YouTube 데이터 선택</div>
-                            <p className="text-sm text-gray-500">다른 항목 모두 해제</p>
-                          </div>
-                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">3. 시청기록 선택</div>
-                            <p className="text-sm text-gray-500">모든 YouTube 데이터 포함 → 시청기록</p>
-                          </div>
-                          <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">4. 내보내기</div>
-                            <p className="text-sm text-gray-500">HTML 형식 선택 후 내보내기</p>
-                          </div>
-                        </div>
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
-              </>
-            )
-          ) : 
-            <p> 업로드 기간이 아닙니다. </p>
-          }
         </div>
       </div>
 

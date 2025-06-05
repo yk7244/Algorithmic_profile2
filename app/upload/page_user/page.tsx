@@ -11,7 +11,7 @@ HoverCard,
 HoverCardContent,
 HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { transformClustersToImageData, transformClusterToImageData } from '../../utils/clusterTransform';
+import { transformClustersToImageData, transformClusterToImageData } from '../../utils/clusterTransform';    
 
 import { OpenAILogger } from '../../utils/init-logger';
 import { parseJSONWatchHistory, processSelectedItems } from '../VideoParsing/jsonParser';
@@ -26,6 +26,9 @@ import { fetchVideoInfo } from '../VideoAnalysis/videoKeyword';
 import { useClusterStorage } from '../hooks/useClusterStorage';
 import { my_account } from '../../data/dummyData';
 import { useRouter } from 'next/navigation';    
+import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
+import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
+import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -107,7 +110,7 @@ const [dateRange, setDateRange] = useState<{
 });
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
-
+const [profile, setProfile] = useState({ nickname: '', description: '' });
 
 // useClusterStorage 커스텀 훅 사용
 useClusterStorage({
@@ -121,6 +124,14 @@ useClusterStorage({
 });
 //console.log(isOneWeekPassed(my_account.updated_at))
 //console.log(my_account.updated_at)
+
+// useGenerateUserProfile 훅을 컴포넌트 레벨에서 호출
+const { generateProfile } = useGenerateUserProfile({
+    openai,
+    setShowGeneratingDialog: setIsGeneratingProfile,
+    setGeneratingStep,
+    setProfile: setProfile,
+});
 
 useEffect(() => {
     if (showCompletePage && countdown > 0) {
@@ -136,7 +147,7 @@ useEffect(() => {
 }, [showCompletePage, countdown, router]);
 
 
-    
+
 return (
     <main className="flex min-h-[calc(110vh-4rem)] flex-col items-center p-4 py-40 relative overflow-hidden">
     
@@ -146,7 +157,7 @@ return (
         <div className="absolute -bottom-[30%] -right-[20%] w-[70%] h-[70%] rounded-full bg-black blur-[120px] animate-blob animation-delay-20" />
         <div className="absolute top-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-black blur-[120px] animate-blob animation-delay-200" />
     </div>
-    
+
     <div className="flex flex-col items-center space-y-8 text-center relative z-10 w-full">
         
         {/* 파일 업로드 버튼 */}
@@ -243,7 +254,17 @@ return (
                                 setShowCompletePage(true);
                                 setShowGeneratingDialog(false);
                                 setCountdown(10);
-                                
+                                //별명만들기
+                                await generateProfile();
+
+                                //clusterHistory, sliderHistory 저장하기
+                                const clusterHistoryResult = saveClusterHistory(clusters);
+                                const sliderResult = saveSliderHistory(clusters);
+
+                                if (clusterHistoryResult.success && sliderResult.success) {
+                                    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
+                                    alert('프로필 데이터가 성공적으로 저장되었습니다!');
+                                } 
                             } catch (error) {
                                 console.error('분석 중 오류:', error);
                                 setError('분석 중 오류가 발생했습니다.');
@@ -371,58 +392,58 @@ return (
             <>
                 {/* 타이틀 */}
                 <div className="space-y-7 max-w-8xl mx-auto px-4 mb-10">
-                    <div className="text-center space-y-4">
+        <div className="text-center space-y-4">
                         <h1 className="text-4xl  font-bold px-4 ">
-                        <div className="inline-block">
+            <div className="inline-block">
                             <span className="bg-clip-text text-transparent text-white opacity-80">
-                            Are you curious how your algorithm sees you?
-                            </span>
-                        </div>
-                        </h1>
-                    </div>
-                </div>
+                Are you curious how your algorithm sees you?
+                </span>
+            </div>
+            </h1>
+        </div>
+        </div>
                 {/* 업데이트 가능하면 파일 업로드 버튼 */}
-                <div
-                onClick={() => fileInputRef.current?.click()}
+        <div
+            onClick={() => fileInputRef.current?.click()}
                 className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
-                    isDragging 
-                    ? 'border-2 border-blue-500 bg-blue-50/30 scale-[1.02] shadow-lg' 
-                    : 'border-2 border-gray-200/60 hover:border-blue-400/60 shadow-sm hover:shadow-md bg-white/70'
-                }`}
-                onDragEnter={e => handleDragEnter(e, setIsDragging)}
-                onDragOver={handleDragOver}
-                onDragLeave={e => handleDragLeave(e, setIsDragging)}
-                onDrop={e => handleDrop(e, {
-                    setIsDragging,
-                    setIsLoading,
-                    setError,
-                    setSuccessCount,
-                    dateRange,
-                    maxVideosPerDay,
-                    fetchVideoInfo,
-                    openai,
-                    OpenAILogger,
-                    parseWatchHistory
-                })}
-                >
+            isDragging 
+                ? 'border-2 border-blue-500 bg-blue-50/30 scale-[1.02] shadow-lg' 
+                : 'border-2 border-gray-200/60 hover:border-blue-400/60 shadow-sm hover:shadow-md bg-white/70'
+            }`}
+            onDragEnter={e => handleDragEnter(e, setIsDragging)}
+            onDragOver={handleDragOver}
+            onDragLeave={e => handleDragLeave(e, setIsDragging)}
+            onDrop={e => handleDrop(e, {
+            setIsDragging,
+            setIsLoading,
+            setError,
+            setSuccessCount,
+            dateRange,
+            maxVideosPerDay,
+            fetchVideoInfo,
+            openai,
+            OpenAILogger,
+            parseWatchHistory
+            })}
+        >
                 
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".json,.html"
+            <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.html"
                     onChange={e => {
                     handleFileUpload(e, {
-                        setIsLoading,
-                        setError,
-                        setSuccessCount,
-                        setWatchHistory,
+                setIsLoading,
+                setError,
+                setSuccessCount,
+                setWatchHistory,
                         dateRange, // 영상 분석 기간 고정값 (현재 날짜로 부터 최근 일주일)
                         maxVideosPerDay, // 하루 당 분석될 영상 개수 고정값 20으로 설정
-                        fetchVideoInfo,
-                        openai,
-                        OpenAILogger,
-                        parseJSONWatchHistory,
-                        parseWatchHistory
+                fetchVideoInfo,
+                openai,
+                OpenAILogger,
+                parseJSONWatchHistory,
+                parseWatchHistory
                     });
                     // 파일 업로드 성공 시 true로 변경
                     setIsFileUploaded(true); 
@@ -440,94 +461,94 @@ return (
                     //setMaxVideosPerDay(10);
                     }}
                     
-                    className="hidden"
-                />
-                <div className="flex flex-col items-center gap-4">
-                    <Upload className="w-12 h-12 text-blue-500" />
-                    <div className="text-center">
-                    <p className="text-xl font-semibold text-gray-700 mb-2">
-                        {isLoading ? '처리 중...' : (
-                        isDragging 
-                            ? '여기에 파일을 놓아주세요'
-                            : 'Google Takeout에서 다운로드한\nYoutube 시청기록 파일을 업로드하세요'
-                        )}
-                    </p>
-                    <style jsx>{`
-                        p {
-                        white-space: pre-line;
-                        }
-                    `}</style>
-                    <p className="text-sm text-gray-500">
-                        {isLoading ? (
-                        <span className="w-full max-w-md mx-auto">
-                            <span className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                            <span 
-                                className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
-                                style={{ 
-                                width: `${(successCount / maxVideosPerDay) * 100}%`,
-                                animation: 'progress-animation 1.5s ease-in-out infinite'
-                                }}
-                            />
-                            </span>
-                            <span className="mt-2 text-sm text-gray-600">{successCount}/{maxVideosPerDay}개 분석 완료</span>
-                        </span>
-                        ) : (
-                        '파일을 드래그하거나 클릭하여 업로드'
-                        )}
-                    </p>
-                    </div>
-                </div>
+            className="hidden"
+            />
+            <div className="flex flex-col items-center gap-4">
+            <Upload className="w-12 h-12 text-blue-500" />
+            <div className="text-center">
+                <p className="text-xl font-semibold text-gray-700 mb-2">
+                {isLoading ? '처리 중...' : (
+                    isDragging 
+                    ? '여기에 파일을 놓아주세요'
+                    : 'Google Takeout에서 다운로드한\nYoutube 시청기록 파일을 업로드하세요'
+                )}
+                </p>
+                <style jsx>{`
+                p {
+                    white-space: pre-line;
+                }
+                `}</style>
+                <p className="text-sm text-gray-500">
+                {isLoading ? (
+                    <span className="w-full max-w-md mx-auto">
+                    <span className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                        <span 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500 ease-out"
+                        style={{ 
+                            width: `${(successCount / maxVideosPerDay) * 100}%`,
+                            animation: 'progress-animation 1.5s ease-in-out infinite'
+                        }}
+                        />
+                    </span>
+                    <span className="mt-2 text-sm text-gray-600">{successCount}/{maxVideosPerDay}개 분석 완료</span>
+                    </span>
+                ) : (
+                    '파일을 드래그하거나 클릭하여 업로드'
+                )}
+                </p>
+    </div>
+            </div>
                 
-                </div>
+        </div>
                 {/* 날짜, 영상 개수 설정-삭제*/}
-                {/* 호버시 설명 란*/}
-                <div className="mt-4 flex justify-center">
-                <HoverCard>
-                    <HoverCardTrigger>
-                    <Button
-                        variant="ghost"
-                        className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
+        {/* 호버시 설명 란*/}
+        <div className="mt-4 flex justify-center">
+            <HoverCard>
+            <HoverCardTrigger>
+                <Button
+                variant="ghost"
+                className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
+                >
+                <HelpCircle className="w-5 h-5" />
+                <span>Google Takeout 가이드 보기</span>
+                </Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-[600px] p-6 rounded-xl shadow-lg" side="bottom" align="center">
+                <div className="space-y-4">
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
+                    <Youtube className="w-5 h-5 text-blue-500" />
+                    Google Takeout에서 Youtube 시청기록 내보내기
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
+                    <a 
+                        href="https://takeout.google.com/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-sm text-blue-500 hover:underline"
                     >
-                        <HelpCircle className="w-5 h-5" />
-                        <span>Google Takeout 가이드 보기</span>
-                    </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent className="w-[600px] p-6 rounded-xl shadow-lg" side="bottom" align="center">
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
-                        <Youtube className="w-5 h-5 text-blue-500" />
-                        Google Takeout에서 Youtube 시청기록 내보내기
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
-                            <a 
-                            href="https://takeout.google.com/" 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-sm text-blue-500 hover:underline"
-                            >
-                            takeout.google.com
-                            </a>
-                        </div>
-                        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                        takeout.google.com
+                    </a>
+                    </div>
+                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
                             <div className="font-medium text-gray-700 mb-2">2.'포함할 데이터 선택'에서
                             YouTube 선택</div>
                             <p className="text-sm text-gray-500">제일 하단에 위치한 YouTube 및 YouTube Music 선택</p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                    </div>
+                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
                             <div className="font-medium text-gray-700 mb-2">3. 버튼 '모든 Youtube 데이터 포함됨'에서 시청기록 선택</div>
                             <p className="text-sm text-gray-500">모든 선택해제 후, 시청기록만 선택</p>
-                        </div>
-                        <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+                    </div>
+                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
                             <div className="font-medium text-gray-700 mb-2">4. 버튼 '여러형식'에서 하단 기록에서 JSON 형식 선택</div>
                             <p className="text-sm text-gray-500">JSON 형식 선택 후 내보내기</p>
-                        </div>
-                        </div>
                     </div>
-                    </HoverCardContent>
-                </HoverCard>
                 </div>
+                </div>
+            </HoverCardContent>
+            </HoverCard>
+        </div>
             </>
             )
         ) : 
