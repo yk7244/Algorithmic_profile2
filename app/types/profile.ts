@@ -143,9 +143,18 @@ export interface ImportedImageData {
   desired_self: boolean;
   desired_self_profile: string | null;
   color?: string;
-  }
+  position?: {
+    x: number;
+    y: number;
+  };
+}
 
-export type MoodboardImageData = Required<ImportedImageData>;
+export type MoodboardImageData = Required<ImportedImageData> & {
+  position: {
+    x: number;
+    y: number;
+  };
+};
 
 export interface HistoryData {
   timestamp: number;

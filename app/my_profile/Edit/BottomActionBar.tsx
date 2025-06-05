@@ -40,7 +40,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
             )}
         </Button>
         {/* 업로드 버튼 */}
-        <Link href="/upload">
+        <Link href="/upload/page_user">
             <Button
                 variant="outline"
                 size="lg"

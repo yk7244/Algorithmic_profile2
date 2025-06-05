@@ -17,7 +17,7 @@ const loadProfileFromStorage = (): ProfileData | null => {
     const stored = localStorage.getItem('ProfileData');
     if (stored) {
         const profileData = JSON.parse(stored) as ProfileData;
-        console.log('localStorage에서 프로필을 불러왔습니다:', profileData);
+        //console.log('localStorage에서 프로필을 불러왔습니다:', profileData);
         return profileData;
     }
     } catch (error) {

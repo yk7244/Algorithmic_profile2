@@ -474,7 +474,7 @@ function getFrameStyle(image: ImageData): string {
 // 클립 패스 가져오기
 function getClipPath(image: ImageData): string {
   // frameStyle이 'star'인 경우 별 모양 클립패스 반환
-  if (image.frameStyle === 'star') {
+  if (image.desired_self === true) {
     return 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
   }
   

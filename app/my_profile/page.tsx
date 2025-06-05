@@ -2,6 +2,7 @@
 import OpenAI from "openai";
 import { useState, useEffect, useRef } from 'react';
 import {DndContext} from '@dnd-kit/core';
+import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
@@ -34,6 +35,33 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
+// 커스텀 modifier - 드래그 영역을 컨테이너로 제한
+const restrictToContainer = ({ transform, draggingNodeRect, overlayNodeRect }: any) => {
+  if (!draggingNodeRect || !overlayNodeRect) {
+    return transform;
+  }
+
+  // 컨테이너 크기 (1000x680)
+  const containerWidth = 1000;
+  const containerHeight = 680;
+  
+  // 이미지 크기
+  const imageWidth = draggingNodeRect.width;
+  const imageHeight = draggingNodeRect.height;
+  
+  // 제한된 위치 계산
+  const minX = 0;
+  const maxX = containerWidth - imageWidth;
+  const minY = 0;
+  const maxY = containerHeight - imageHeight;
+  
+  return {
+    ...transform,
+    x: Math.min(Math.max(transform.x, minX - draggingNodeRect.left), maxX - draggingNodeRect.left),
+    y: Math.min(Math.max(transform.y, minY - draggingNodeRect.top), maxY - draggingNodeRect.top),
+  };
+};
+
 export default function MyProfilePage() {
   // --- 상태 선언 ---
   const [visibleImageIds, setVisibleImageIds] = useState<Set<string>>(new Set());
@@ -59,6 +87,7 @@ export default function MyProfilePage() {
     setPositions,
     setFrameStyles,
     setVisibleImageIds,
+    setImages,
   });
   const {
     histories: sliderHistories,
@@ -120,6 +149,40 @@ export default function MyProfilePage() {
 
   // localStorage 프로필 관리 훅 사용
   const { loadProfileFromStorage, isProfileExpired } = useProfileStorage();
+
+  // 원본 ProfileImages 로드 핸들러
+  const handleProfileImagesClick = () => {
+    if (typeof window !== 'undefined') {
+      const savedProfileImages = localStorage.getItem('profileImages');
+      if (savedProfileImages) {
+        const parsedImages = JSON.parse(savedProfileImages);
+        
+        // 배열인지 객체인지 확인
+        let imageArray: ImportedImageData[];
+        if (Array.isArray(parsedImages)) {
+          imageArray = parsedImages;
+        } else {
+          // 객체인 경우 Object.values()로 배열로 변환
+          imageArray = Object.values(parsedImages) as ImportedImageData[];
+        }
+        
+        const processedImages = imageArray.map(img => ({
+          ...img,
+          src: img.src || placeholderImage,
+          color: img.color || 'gray',
+          desired_self_profile: img.desired_self_profile || null,
+          position: img.position || {
+            x: Number(img.left?.replace('px', '') || 0),
+            y: Number(img.top?.replace('px', '') || 0),
+          }
+        }));
+        
+        setImages(processedImages);
+        setVisibleImageIds(new Set(processedImages.map(img => img.id)));
+        console.log('원본 ProfileImages 로드됨:', processedImages);
+      }
+    }
+  };
 
   // --- 데이터 마이그레이션 및 초기화 이펙트 ---
   useEffect(() => {
@@ -235,16 +298,20 @@ export default function MyProfilePage() {
   useEffect(() => {
     setPositions(prevPositions => {
       const newPositions = { ...prevPositions };
-      const imageIdSet = new Set(images.map(img => img.id));
+      const imageIdSet = new Set(images.map(img => img.id).filter(id => id)); // undefined 제거
 
       // images 배열에 있는 각 이미지에 대해
       images.forEach(image => {
+        // id가 없으면 건너뛰기
+        if (!image.id) return;
+        
         // positions에 해당 이미지가 없으면 초기 위치 설정
         if (!newPositions[image.id]) {
           newPositions[image.id] = {
             x: Number(image.left?.replace('px', '') || 0),
             y: Number(image.top?.replace('px', '') || 0),
           };
+          console.log('newPositions', newPositions);
         }
       });
 
@@ -285,18 +352,7 @@ export default function MyProfilePage() {
 
   // 클라이언트에서만 localStorage에서 이미지 불러오기 (hydration mismatch 방지)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedProfileImages = localStorage.getItem('profileImages');
-      if (savedProfileImages) {
-        const parsedImages = JSON.parse(savedProfileImages) as ImportedImageData[];
-        setImages(parsedImages.map(img => ({
-          ...img,
-          src: img.src || placeholderImage,
-          color: img.color || 'gray',
-          desired_self_profile: img.desired_self_profile || null
-        })));
-      }
-    }
+    handleProfileImagesClick();
   }, []);
 
   return (
@@ -335,20 +391,20 @@ export default function MyProfilePage() {
           )}
 
           {/* DraggableImage 컴포넌트 렌더링 -> DraggableImage.tsx */}
-          <div className="relative w-[1000px] h-[800px] mx-auto mt-8">
-            <DndContext onDragEnd={handleDragEnd}>
+          <div className="relative w-[1000px] h-[680px] mx-auto mt-8">
+            <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToContainer]}>
               {images.map((image) => (
                 <div
-                  key={image.id}
+                  key={image.id || Math.random().toString()}
                   className={`transition-all duration-500 ${
-                    isEditing || visibleImageIds.has(image.id)
+                    isEditing || (image.id && visibleImageIds.has(image.id))
                       ? 'opacity-100 scale-100'
                       : 'opacity-0 scale-95 pointer-events-none'
                   }`}
                 >
                   <DraggableImage
                     image={image}
-                    position={positions[image.id]}
+                    position={positions[image.id] || image.position}
                     isEditing={isEditing && !isSearchMode}
                     positions={positions}
                     frameStyle={image.desired_self ? 'star' : (frameStyles[image.id] || 'healing')}
@@ -378,6 +434,7 @@ export default function MyProfilePage() {
               isPlaying={sliderIsPlaying}
               handlePlayHistory={handlePlayHistory}
               handleHistoryClick={handleHistoryClick}
+              handleProfileImagesClick={handleProfileImagesClick}
             />
           )}
         </div>

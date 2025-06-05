@@ -44,12 +44,12 @@ export const transformClusterToImageData = (
   const strength = cluster.strength || cluster.metadata?.videoCount || 1;
   let sizeWeight = 0.02; // 기본값
   if (maxStrength > minStrength) {
-    // 0.005 ~ 0.05 사이로 정규화
+    // 0.015 ~ 0.03 사이로 정규화
     const ratio = (strength - minStrength) / (maxStrength - minStrength);
-    sizeWeight = 0.005 + ratio * (0.05 - 0.005);
+    sizeWeight = 0.015 + ratio * (0.03 - 0.01);
   } else {
     // 모든 strength가 동일한 경우 중간값 사용
-    sizeWeight = (0.005 + 0.05) / 2; // 0.0275
+    sizeWeight = (0.015 + 0.03) / 2; // 0.0275
   }
 
   return {
