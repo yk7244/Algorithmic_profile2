@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function useImageFrame(frameStyleProp: string, image: any, onFrameStyleChange: (id: string, style: string) => void) {
     const [frameStyle, setFrameStyle] = useState(frameStyleProp);
+
+    // frameStyleProp이 변경될 때마다 내부 frameStyle 상태를 업데이트
+    useEffect(() => {
+        //console.log(`[useImageFrame] useEffect 실행 - ID: ${image.id}, frameStyleProp: ${frameStyleProp}, 현재 내부 frameStyle: ${frameStyle}`);
+        if (frameStyle !== frameStyleProp) {
+            setFrameStyle(frameStyleProp);
+            //console.log(`[useImageFrame] 내부 frameStyle을 ${frameStyleProp}(으)로 업데이트 함 - ID: ${image.id}`);
+        } else {
+            //console.log(`[useImageFrame] frameStyleProp (${frameStyleProp})과 내부 frameStyle (${frameStyle})이 동일하여 업데이트 안함 - ID: ${image.id}`);
+        }
+    }, [frameStyleProp, image.id, frameStyle]); // frameStyle도 의존성에 추가하여 무한 루프 방지 확인
 
     // 프레임 스타일에 따라 클립패스 반환
     const getClipPath = () => {
@@ -54,8 +65,10 @@ export function useImageFrame(frameStyleProp: string, image: any, onFrameStyleCh
 
     // 프레임 스타일 변경 핸들러
     const handleFrameStyleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFrameStyle(e.target.value);
-        onFrameStyleChange(image.id, e.target.value);
+        const newStyle = e.target.value;
+        //console.log(`[useImageFrame] handleFrameStyleChange 호출 - ID: ${image.id}, 새 스타일: ${newStyle}`);
+        setFrameStyle(newStyle);
+        onFrameStyleChange(image.id, newStyle);
     };
 
     return {

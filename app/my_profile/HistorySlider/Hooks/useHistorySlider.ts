@@ -1,19 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Position, 
   MoodboardImageData, 
-  HistoryData 
+  HistoryData, 
+  ImportedImageData
 } from '../../../types/profile';
 
-export function useHistorySlider({
-    images,
-    positions,
-    frameStyles,
-    setPositions,
-    setFrameStyles,
-    setVisibleImageIds,
-    setImages,
-}: {
+interface UseHistorySliderProps {
     images: MoodboardImageData[];
     positions: Record<string, Position>;
     frameStyles: Record<string, string>;
@@ -21,206 +14,184 @@ export function useHistorySlider({
     setFrameStyles: (frameStyles: Record<string, string>) => void;
     setVisibleImageIds: (ids: Set<string>) => void;
     setImages: (images: MoodboardImageData[]) => void;
-}) {
+    placeholderImage: string;
+}
+
+export function useHistorySlider({
+    images: initialImages,
+    positions: initialPositions,
+    frameStyles: initialFrameStyles,
+    setPositions,
+    setFrameStyles,
+    setVisibleImageIds,
+    setImages,
+    placeholderImage,
+}: UseHistorySliderProps) {
     const [histories, setHistories] = useState<HistoryData[]>([]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
     const [isPlaying, setIsPlaying] = useState(false);
 
-    // 히스토리 불러오기 및 마이그레이션
-    useEffect(() => {
-        const savedHistories = localStorage.getItem('SliderHistory');
-        //console.log('히스토리 불러오기 확인', savedHistories);
-        if (savedHistories) {
-        const parsedHistories = JSON.parse(savedHistories);
-        const migratedHistories = parsedHistories.map((history: any) => ({
-            ...history,
-            images: history.images || images
-        }));
-        setHistories(migratedHistories);
-        if (migratedHistories.length > 0) {
-            const latestHistory = migratedHistories[migratedHistories.length - 1];
-            
-            // 이미지 내부의 position에서 positions 객체 생성
-            const positionsFromImages: Record<string, Position> = {};
-            latestHistory.images.forEach((img: any) => {
-                if (img.id && img.position) {
-                    positionsFromImages[img.id] = img.position;
+    const loadAndSetProfileImages = useCallback(() => {
+        console.log('🔵 [useHistorySlider] 원본 ProfileImages 상태로 전환 시도');
+        const savedProfileImages = localStorage.getItem('profileImages');
+        if (savedProfileImages) {
+            try {
+                const parsedImagesData = JSON.parse(savedProfileImages);
+                let imageArray: ImportedImageData[];
+                if (Array.isArray(parsedImagesData)) {
+                    imageArray = parsedImagesData;
+                } else {
+                    imageArray = Object.values(parsedImagesData) as ImportedImageData[];
                 }
-            });
-            
-            setPositions(positionsFromImages);
-            setCurrentHistoryIndex(migratedHistories.length - 1);
-            setFrameStyles(latestHistory.frameStyles || {});
-            if (latestHistory.images && latestHistory.images.length > 0) {
-            setVisibleImageIds(new Set<string>(latestHistory.images.map((img: any) => img.id)));
+
+                const processedImages: MoodboardImageData[] = [];
+                const newFrameStyles: Record<string, string> = {};
+                const newPositions: Record<string, Position> = {};
+
+                imageArray.forEach(img => {
+                    processedImages.push({
+                        ...img,
+                        src: img.src || placeholderImage,
+                        main_keyword: img.main_keyword || '',
+                        user_id: img.user_id || '',
+                        position: img.position || { x: Number(img.left?.replace('px', '') || 0), y: Number(img.top?.replace('px', '') || 0) },
+                        frameStyle: img.frameStyle || 'normal',
+                        keywords: img.keywords || [],
+                        sizeWeight: img.sizeWeight || 0,
+                        relatedVideos: img.relatedVideos || [],
+                        category: img.category || '',
+                        mood_keyword: img.mood_keyword || '',
+                        sub_keyword: img.sub_keyword || '',
+                        description: img.description || '',
+                        desired_self: img.desired_self || false,
+                        desired_self_profile: img.desired_self_profile || null,
+                        metadata: img.metadata || {},
+                        rotate: img.rotate || 0,
+                        width: img.width || 0,
+                        height: img.height || 0,
+                        alt: img.alt || '',
+                        cluster: img.cluster || '',
+                        color: img.color || 'gray',
+                        left: img.left || '0px',
+                        top: img.top || '0px',
+                        created_at: img.created_at || new Date().toISOString(),
+                    });
+
+                    if (img.id) {
+                        newFrameStyles[img.id] = img.frameStyle || 'normal';
+                        if (img.position) {
+                            newPositions[img.id] = img.position;
+                        } else if (img.left !== undefined && img.top !== undefined) {
+                            newPositions[img.id] = { x: Number(img.left.replace('px', '')), y: Number(img.top.replace('px', '')) };
+                        } else {
+                            newPositions[img.id] = { x: 0, y: 0 };
+                        }
+                    }
+                });
+
+                setImages(processedImages);
+                setVisibleImageIds(new Set(processedImages.map(img => img.id).filter(Boolean) as string[]));
+                setFrameStyles(newFrameStyles);
+                setPositions(newPositions);
+                console.log('✅ [useHistorySlider] ProfileImages 로드 및 상태 설정 완료');
+            } catch (error) {
+                console.error('[useHistorySlider] ProfileImages 파싱 또는 처리 중 에러:', error);
             }
-        }
-        localStorage.setItem('moodboardHistories', JSON.stringify(migratedHistories));
         } else {
-        const initialHistory = {
-            timestamp: Date.now(),
-            positions: positions,
-            frameStyles: frameStyles,
-            images: images
-        };
-        setHistories([initialHistory]);
-        localStorage.setItem('moodboardHistories', JSON.stringify([initialHistory]));
-        setCurrentHistoryIndex(0);
-        setVisibleImageIds(new Set<string>(images.map((img: any) => img.id)));
+            console.log('❌ [useHistorySlider] localStorage에 ProfileImages가 없습니다');
         }
-        // eslint-disable-next-line
+    }, [placeholderImage, setImages, setVisibleImageIds, setFrameStyles, setPositions]);
+
+    useEffect(() => {
+        const savedSliderHistories = localStorage.getItem('moodboardHistories');
+        if (savedSliderHistories) {
+            const parsed = JSON.parse(savedSliderHistories);
+            setHistories(parsed);
+            setCurrentHistoryIndex(-1);
+        }
     }, []);
 
-    // 히스토리 재생 효과
     useEffect(() => {
-        let intervalId: NodeJS.Timeout;
+        let intervalId: NodeJS.Timeout | undefined = undefined;
         if (isPlaying && histories.length > 0) {
-        intervalId = setInterval(() => {
-            setCurrentHistoryIndex(prev => {
-            const nextIndex = prev + 1;
-            if (nextIndex >= histories.length) {
-                setIsPlaying(false);
-                return prev;
-            }
-            const nextHistoryImageIds = new Set<string>(histories[nextIndex].images.map((img: any) => img.id));
-            setVisibleImageIds(nextHistoryImageIds);
-            
-            // 해당 히스토리의 이미지 데이터로 업데이트 (position 포함)
-            setImages(histories[nextIndex].images);
-            
-            // 이미지 내부의 position에서 positions 객체 생성 (호환성을 위해)
-            const positionsFromImages: Record<string, Position> = {};
-            histories[nextIndex].images.forEach((img: any) => {
-                if (img.id && img.position) {
-                    positionsFromImages[img.id] = img.position;
-                }
-            });
-            
-            setPositions(positionsFromImages);
-            setFrameStyles(histories[nextIndex].frameStyles || {});
-            return nextIndex;
-            });
-        }, 2000);
-        }
-        return () => {
-        if (intervalId) clearInterval(intervalId);
-        };
-    }, [isPlaying, histories, setPositions, setFrameStyles, setVisibleImageIds, setImages]);
-
-    // 히스토리 클릭 핸들러
-    const handleHistoryClick = (index: number) => {
-        console.log(`🕐 === 히스토리 ${index} 클릭 ===`);
-        
-        // -1은 원본 ProfileImages 상태를 의미
-        if (index === -1) {
-            console.log('🔵 원본 ProfileImages 상태로 전환');
-            setCurrentHistoryIndex(-1);
-            // ProfileImages는 handleProfileImagesClick에서 처리되므로 
-            // 여기서는 히스토리 관련 상태만 리셋
-            
-            const profileImagesData = localStorage.getItem('profileImages');
-            
-            if (profileImagesData) {
-                try {
-                    const profileImages = JSON.parse(profileImagesData);
-                    
-                    // 해당 히스토리의 이미지 데이터로 업데이트 (position 포함)
-                    console.log('🖼️ ProfileImages 데이터 업데이트 중...');
-                    
-                    // 배열인지 객체인지 확인해서 처리
-                    let imageArray: any[] = [];
-                    if (Array.isArray(profileImages)) {
-                        imageArray = profileImages;
-                    } else {
-                        // 객체인 경우 Object.values()로 배열로 변환
-                        imageArray = Object.values(profileImages);
+            intervalId = setInterval(() => {
+                setCurrentHistoryIndex(prev => {
+                    const nextIndex = prev + 1;
+                    if (nextIndex >= histories.length) {
+                        setIsPlaying(false);
+                        loadAndSetProfileImages();
+                        return -1;
                     }
-                    
-                    setImages(imageArray);
-                    
-                    // 이미지 내부의 position에서 positions 객체 생성 (호환성을 위해)
+                    const selectedHistory = histories[nextIndex];
+                    setImages(selectedHistory.images);
                     const positionsFromImages: Record<string, Position> = {};
-                    imageArray.forEach((img: any) => {
-                        if (img.id && img.position) {
-                            positionsFromImages[img.id] = img.position;
-                            console.log(`📍 이미지 ${img.id} 위치:`, img.position);
-                        } else {
-                            console.log(`❌ 이미지 ${img.id}에 position 없음`);
+                    const frameStylesFromImages: Record<string, string> = {};
+                    selectedHistory.images.forEach((img: MoodboardImageData) => {
+                        if (img.id) {
+                            positionsFromImages[img.id] = img.position || { x: 0, y: 0 };
+                            frameStylesFromImages[img.id] = img.frameStyle || 'normal';
                         }
                     });
-                    
-                    console.log('📍 최종 positions:', positionsFromImages);
                     setPositions(positionsFromImages);
-                    
-                    // visibleImageIds 설정
-                    const imageIds = imageArray.map((img: any) => img.id).filter(id => id);
-                    setVisibleImageIds(new Set<string>(imageIds));
-                    
-                    console.log('✅ ProfileImages 로드 완료');
-                } catch (error) {
-                    console.error('ProfileImages 파싱 에러:', error);
-                }
-            } else {
-                console.log('❌ ProfileImages가 localStorage에 없습니다');
-            }
-            
-            return;
+                    setFrameStyles(frameStylesFromImages);
+                    setVisibleImageIds(new Set(selectedHistory.images.map((img: MoodboardImageData) => img.id).filter(Boolean) as string[]));
+                    return nextIndex;
+                });
+            }, 2000);
         }
-        
-        const selectedHistory = histories[index];
-        console.log('선택된 히스토리:', selectedHistory);
-        console.log('히스토리의 이미지 개수:', selectedHistory.images.length);
-        
-        const selectedHistoryImageIds = new Set<string>(selectedHistory.images.map((img: any) => img.id));
-        console.log('히스토리의 이미지 ID들:', Array.from(selectedHistoryImageIds));
-        
-        setVisibleImageIds(selectedHistoryImageIds);
-        setCurrentHistoryIndex(index);
-        
-        // 해당 히스토리의 이미지 데이터로 업데이트 (position 포함)
-        console.log('🖼️ 이미지 데이터 업데이트 중...');
-        setImages(selectedHistory.images);
-        
-        // 이미지 내부의 position에서 positions 객체 생성 (호환성을 위해)
-        const positionsFromImages: Record<string, Position> = {};
-        selectedHistory.images.forEach((img: any) => {
-            if (img.id && img.position) {
-                positionsFromImages[img.id] = img.position;
-                console.log(`📍 이미지 ${img.id} 위치:`, img.position);
-            } else {
-                console.log(`❌ 이미지 ${img.id}에 position 없음`);
-            }
-        });
-        
-        console.log('📍 최종 positions:', positionsFromImages);
-        setPositions(positionsFromImages);
-        setFrameStyles(selectedHistory.frameStyles || {});
-        console.log('✅ 히스토리 로드 완료');
-    };
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [isPlaying, histories, loadAndSetProfileImages, setImages, setPositions, setFrameStyles, setVisibleImageIds]);
 
-    // 히스토리 재생 시작 핸들러
-    const handlePlayHistory = () => {
-        if (histories.length > 0) {
-        const firstHistoryImageIds = new Set<string>(histories[0].images.map((img: any) => img.id));
-        setVisibleImageIds(firstHistoryImageIds);
-        setCurrentHistoryIndex(0);
-        
-        // 첫 번째 히스토리의 이미지 데이터로 업데이트 (position 포함)
-        setImages(histories[0].images);
-        
-        // 이미지 내부의 position에서 positions 객체 생성 (호환성을 위해)
-        const positionsFromImages: Record<string, Position> = {};
-        histories[0].images.forEach((img: any) => {
-            if (img.id && img.position) {
-                positionsFromImages[img.id] = img.position;
-            }
-        });
-        
-        setPositions(positionsFromImages);
-        setFrameStyles(histories[0].frameStyles || {});
-        setIsPlaying(true);
+    const handleHistoryClick = useCallback((index: number) => {
+        console.log(`[useHistorySlider] 히스토리 인덱스 ${index} 클릭`);
+        setIsPlaying(false);
+        if (index === -1) {
+            loadAndSetProfileImages();
+            setCurrentHistoryIndex(-1);
+        } else if (histories[index]) {
+            const selectedHistory = histories[index];
+            setImages(selectedHistory.images);
+            const positionsFromImages: Record<string, Position> = {};
+            const frameStylesFromImages: Record<string, string> = {};
+            selectedHistory.images.forEach((img: MoodboardImageData) => {
+                if (img.id) {
+                    positionsFromImages[img.id] = img.position || { x: 0, y: 0 };
+                    frameStylesFromImages[img.id] = img.frameStyle || 'normal';
+                }
+            });
+            setPositions(positionsFromImages);
+            setFrameStyles(frameStylesFromImages);
+            setVisibleImageIds(new Set(selectedHistory.images.map((img: MoodboardImageData) => img.id).filter(Boolean) as string[]));
+            setCurrentHistoryIndex(index);
         }
-    };
+    }, [histories, loadAndSetProfileImages, setImages, setPositions, setFrameStyles, setVisibleImageIds]);
+
+    const handlePlayHistory = useCallback(() => {
+        setIsPlaying(prev => !prev);
+        if (!isPlaying && (currentHistoryIndex === -1 || currentHistoryIndex === histories.length - 1)) {
+            if (histories.length > 0) {
+                const firstHistory = histories[0];
+                setImages(firstHistory.images);
+                const positionsFromImages: Record<string, Position> = {};
+                const frameStylesFromImages: Record<string, string> = {};
+                firstHistory.images.forEach((img: MoodboardImageData) => {
+                    if (img.id) {
+                        positionsFromImages[img.id] = img.position || { x: 0, y: 0 };
+                        frameStylesFromImages[img.id] = img.frameStyle || 'normal';
+                    }
+                });
+                setPositions(positionsFromImages);
+                setFrameStyles(frameStylesFromImages);
+                setVisibleImageIds(new Set(firstHistory.images.map(img => img.id).filter(Boolean) as string[]));
+                setCurrentHistoryIndex(0); 
+            } else {
+                setIsPlaying(false);
+                return;
+            }
+        }
+    }, [isPlaying, currentHistoryIndex, histories, setImages, setPositions, setFrameStyles, setVisibleImageIds]);
 
     return {
         histories,

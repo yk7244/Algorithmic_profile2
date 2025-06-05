@@ -115,9 +115,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 isSelected ? "ring-4 ring-blue-500 ring-opacity-70 shadow-xl scale-105" : ""
                 }`}
             >
-                {/* 메인 키워드 - 편집 모드와 일반 모드 모두에서 표시 */}
+                {/* 이미지 */}
                 <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 group hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                 >
+                    {/* 메인키워드 */}
                     <div 
                         className="absolute -top-10 z-20 whitespace-nowrap"
                         style={{
@@ -127,6 +128,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         <div 
                         className="px-8 py-4"
                         >
+                        
                         <span className="font-bold text-gray-800">
                             #{image.main_keyword}
                         </span>
