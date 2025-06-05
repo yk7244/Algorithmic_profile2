@@ -1,5 +1,8 @@
 // Pinterest 이미지 검색 함수 import
 import { searchClusterImage_pinterest } from '../ImageSearch/GoogleImageSearch';
+import { saveClusterHistory } from '../../utils/saveClusterHistory';
+import { saveSliderHistory } from '../../utils/saveSliderHistory';
+import { ClusterHistory } from '../../types/profile';
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
@@ -283,52 +286,15 @@ export const handleCluster = async (
     });
     console.log('[handleCluster] 변환된 프로필 이미지 데이터:', profileImages);
 
-    // 프로필 이미지 데이터 저장 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
+    // 프로필 이미지 데이터 저장 ✅ [3]나중에 DB로 확인하고 호출하는걸로 바꾸기
     localStorageObj.setItem('profileImages', JSON.stringify(profileImages));
     
-    // ClusterHistory 테이블 저장 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기 - 배열에 push하는 방식으로 변경
-    const existingClusterHistory = JSON.parse(localStorageObj.getItem('ClusterHistory') || '[]');
     
-    // 새로운 클러스터 데이터를 ClusterHistory 형식으로 변환
-    const newClusterHistoryItems = newClusters.map((cluster: any, index: number) => ({
-      id: `${Date.now()}_${index}`,
-      user_id: 'current_user', // 나중에 실제 user_id로 바꾸기
-      main_keyword: cluster.main_keyword,
-      keywords: cluster.keyword_list ? cluster.keyword_list.split(', ').filter(Boolean) : [],
-      mood_keyword: cluster.mood_keyword,
-      description: cluster.description,
-      category: cluster.category,
-      sizeWeight: cluster.strength,
-      src: clusterImagesData[index]?.url || placeholderImage,
-      relatedVideos: cluster.related_videos.map((video: any) => ({
-        title: video.title || '제목 없음',
-        embedId: video.url || video.videoId || ''
-      })),
-      desired_self: false,
-      desired_self_profile: null,
-      metadata: cluster.metadata,
-      rotate: 0,
-      width: 200,
-      height: 200,
-      left: '0px',
-      top: '0px',
-      position: {
-        x: 0,
-        y: 0
-      },
-      frameStyle: 'normal',
-      created_at: new Date().toISOString()
-    }));
     
-    // 기존 배열에 새 데이터 push
-    const updatedClusterHistory = [...existingClusterHistory, ...newClusterHistoryItems];
-    localStorageObj.setItem('ClusterHistory', JSON.stringify(updatedClusterHistory));
-    console.log('[handleCluster] ClusterHistory 업데이트됨:', updatedClusterHistory);
-
-    //setIsGeneratingProfile(true);
-    //generateUserProfile(localStorageObj);
     setShowAnalysis(true);
     console.log('[handleCluster] setShowAnalysis(true) 호출');
+
+    
   } 
   catch (error) {
     console.error('클러스터링 실패:', error);

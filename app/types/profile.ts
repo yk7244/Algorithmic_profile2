@@ -1,4 +1,3 @@
-
 //[0] users 테이블 
 //[1] WatchHistory 테이블  (비디오들 키워드 분석)
 //[2] ClusterHistory 테이블 (AI 클러스터 분석한거 기록)
@@ -28,7 +27,7 @@ export interface WatchHistory{
 }
 
 //[2] ClusterHistory 테이블 -> upload/VideoAnalysis/videoCluster.ts 에서 저장함
-export interface ClusterHistory{
+export interface ClusterHistory {
   id: string;
   user_id?: string; // 유저 아이디
 
@@ -60,7 +59,7 @@ export interface ClusterHistory{
   created_at: string;
 }
 
-//[3]ClusterImages 테이블->배열 X(지금 profile에 보이는)
+//[3]ClusterImages 테이블->배열 X(지금 profile에 보이는)-> 
 export interface ImageData { //ProfileImages(저장명) - ClusterImages(변수명)
   id: string;
   user_id?: string; 
@@ -103,9 +102,15 @@ export interface ProfileData {
 
 // [5] SliderHistory 테이블 
 export interface SliderHistory{
-  id: string;
-  user_id: string;
-  created_at: string;
+  id: string; // UUID/int PK
+  user_id: string; // UUID FK
+  version_type: 'upload' | 'self'; // "upload" or "self"
+
+  nickname: string; // 당시의 별명 (ProfileData에서 복사)
+  description: string; // 당시의 별명의 설명 (ProfileData에서 복사)
+
+  images: ImageData[]; //profileImages로 복사되거나 ClusterHistory로 복사됨
+  created_at: string; // timestamp - 저장 시점
 }
 
 // 무드보드 관련 타입들
