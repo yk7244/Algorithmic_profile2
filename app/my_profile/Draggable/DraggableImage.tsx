@@ -4,7 +4,7 @@ import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
 
 //refactoring
-import ClusterDetailPanel from "./ClusterDetailPanel";
+import ClusterDetailPanel from "../Modal/ClusterDetailPanel";
 import ImageResearchModal from "./ImageRe-searchModal";
 import { useImageSearch } from "./Hooks/Image/useImageResearch_naver";
 import { useImageFrame } from "./Hooks/Frame/useImageFrame";

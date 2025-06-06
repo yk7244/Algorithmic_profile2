@@ -9,12 +9,12 @@ import {
     DialogTitle, 
     DialogClose 
 } from "@/components/ui/dialog";
-import { VideoData } from "./DraggableImage";   
+import { VideoData } from "../Draggable/DraggableImage";   
 import { useRouter } from 'next/navigation';
 import { useAddAsInterest } from "@/app/others_profile/hooks/useAddAsInterest";
-import { saveWatchedVideoToLocalStorage } from './Hooks/Youtube/saveExploreWatchHistory';
-import { useRecommend } from './Hooks/Youtube/useRecommend';
-import VideoList from './Hooks/Modal/VideoList';
+import { saveWatchedVideoToLocalStorage } from './Hooks/saveExploreWatchHistory';
+import { useRecommend } from './Hooks/useRecommend';
+import VideoList from './Hooks/VideoList'; 
 
 interface ClusterDetailPanelProps {
     image: any;

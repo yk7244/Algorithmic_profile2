@@ -98,6 +98,9 @@ export interface ProfileData {
   description: string;
   created_at: string;
   updated_at: string;
+
+  profileImage?: string; //search_map에서 사용
+  open_to_connect?: boolean; //search_map에서 사용
 }
 
 // [5] SliderHistory 테이블 -> utils/saveSliderHistory.ts 에서 저장함
