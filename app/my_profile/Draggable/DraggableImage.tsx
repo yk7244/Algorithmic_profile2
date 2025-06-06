@@ -1,13 +1,13 @@
-import React, { useState} from 'react';
-import { useDraggableImage } from './Hooks/useDraggableImage';
+import React, { useState, useEffect } from 'react';
+import { useDraggableImage } from './Hooks/Drag/useDraggableImage';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
-import { RefreshCw} from 'lucide-react';
+import { RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
 
 //refactoring
 import ClusterDetailPanel from "./ClusterDetailPanel";
 import ImageResearchModal from "./ImageRe-searchModal";
-import { useImageSearch } from "./Hooks/useImageResearch_naver";
-import { useImageFrame } from "./Hooks/useImageFrame";
+import { useImageSearch } from "./Hooks/Image/useImageResearch_naver";
+import { useImageFrame } from "./Hooks/Frame/useImageFrame";
 
 // YouTube IFrame API 타입 선언 (TS 에러 방지)
 declare global {
@@ -35,6 +35,8 @@ export interface DraggableImageProps {
     isSelected: boolean;
     isSearchMode: boolean;
     onImageDelete: (id: string) => void;
+    isOwner?: boolean;
+    ownerId?: string;
 }
 
 // 모양별 정보 배열
@@ -48,7 +50,7 @@ const frameOptions = [
   //{ value: 'pentagon', icon: '🔺', label: '펜타곤' },
   //{ value: 'star', icon: '⭐️', label: '별' },
   { value: 'pill', icon: '💊', label: '알약' },
-  { value: 'wavy-star', icon: '🍪', label: '쿠키' },
+  { value: 'cokie', icon: '🍪', label: '쿠키' },
 ];
 
 const DraggableImage: React.FC<DraggableImageProps> = ({ 
@@ -61,6 +63,9 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
     onImageSelect,
     isSelected,
     isSearchMode,
+    isOwner = true,
+    ownerId,
+    onImageDelete,
 }) => {
     const { attributes, listeners, setNodeRef, style } = useDraggableImage(
         image.id,
@@ -69,10 +74,25 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
         image.rotate
     );
 
+    const [imageLoadError, setImageLoadError] = useState(false);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showDetails, setShowDetails] = useState(false);
     const [showThumbnailModal, setShowThumbnailModal] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('search');
+    const [showDeleteTooltip, setShowDeleteTooltip] = useState(false);
+
+    useEffect(() => {
+        // src가 없거나 logo.png를 포함하는 경우, 유효하지 않은 것으로 간주합니다.
+        const isInvalid = !image.src || image.src.includes('/images/logo.png');
+        if (isInvalid) {
+            const target = document.getElementById(image.id) as HTMLImageElement;
+            if (target) {
+                target.src = '/images/default_image.png';
+            }
+            setImageLoadError(true); // 이미지 로드 에러 상태 설정
+        }
+        // 이 효과는 이미지 소스가 바뀔 때마다 실행됩니다.
+    }, [image.src, image.id, image.main_keyword, onImageChange]);
 
     const {
         alternativeImages,
@@ -147,26 +167,24 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             className={`relative w-full h-full ${getFrameStyle()} overflow-hidden`}
                         >
                             <img
-                            src={image.src || "/images/default_image.png"}
-                            alt={image.main_keyword}
-                            className={`w-full h-full object-cover shadow-lg transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if (!isEditing && isSearchMode) {
-                                    onImageSelect(image);
-                                } else if (!isEditing && !isSearchMode) {
-                                    setShowDetails(true);
-                                }
-                            }}
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                // 기본 이미지이거나 이미 에러가 발생했으면 더 이상 시도하지 않음
-                                if (target.src.includes('default_image.png') || target.dataset.errorHandled) return;
-                                console.error('이미지 로드 실패:', target.src);
-                                target.dataset.errorHandled = 'true'; // 에러 처리 완료 표시
-                                target.src = "/images/default_image.png";
-                            }}
+                                src={imageLoadError ? "/images/default_image.png" : image.src}
+                                alt={image.main_keyword}
+                                className={`w-full h-full object-cover shadow-lg transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!isEditing && isSearchMode) {
+                                        onImageSelect(image);
+                                    } else if (!isEditing && !isSearchMode) {
+                                        setShowDetails(true);
+                                    }
+                                }}
+                                onError={() => setImageLoadError(true)}
                             />
+                            {imageLoadError && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                    <AlertTriangle className="text-yellow-400 w-10 h-10" />
+                                </div>
+                            )}
                         </div>
                         
                         {/* 키워드를 이미지 하단에 배치 
@@ -192,19 +210,31 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                     {image.desired_self ? (
                     <button 
-                        className="z-[60] flex items-center justify-center gap-1.5 py-2 px-4 min-w-[100px] bg-red-500/90 text-white 
-                        backdrop-blur-sm rounded-full hover:bg-red-600 shadow-sm transition-colors pointer-events-auto"
+                        className="mb-10 z-[70] flex items-center justify-center gap-1.5 py-2 px-4 bg-red-500/90 text-white 
+                        backdrop-blur-sm rounded-full hover:bg-red-600 shadow-sm transition-colors pointer-events-auto relative"
+                        onMouseEnter={() => setShowDeleteTooltip(true)}
+                        onMouseLeave={() => setShowDeleteTooltip(false)}
                         onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        setShowDetails(true);
+                        // 실제 삭제 기능 실행
+                        if (window.confirm('정말로 이 관심사를 삭제하시겠습니까?')) {
+                            onImageDelete(image.id);
+                        }
                         }}
                         onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         }}
                     >
-                        <span className="text-sm font-medium">관심사 삭제하기</span>
+                        {/* 툴크 */}
+                        {showDeleteTooltip && (
+                            <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-[100]">
+                                내가 추가한 관심사 삭제하기
+                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                            </div>
+                        )}
+                        <Trash2 className="h-4 w-4" />
                     </button>
                     ) : (
                     <button 
@@ -230,7 +260,9 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 {/* 편집 모드-프레임 변경하기*/}
                 {isEditing && (
                 <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
-                    {frameOptions.map(opt => (
+                    {!image.desired_self && (
+                        <>
+                        {frameOptions.map(opt => (
                         <button
                             key={opt.value}
                             className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
@@ -245,6 +277,9 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             <span>{opt.icon}</span>
                         </button>
                     ))}
+                        </>
+                    )}
+                    
                 </div>
                 )}
                 {/* 편집 모드-드래그 가능한 영역*/}
@@ -280,7 +315,9 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 showDetails={showDetails}
                 setShowDetails={setShowDetails}
                 isEditing={isEditing}
+                isOwner={isOwner}
                 onImageSelect={onImageSelect}
+                ownerId={ownerId} 
             />
         )}
     </> 
@@ -288,3 +325,4 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
 }
 
 export default DraggableImage;
+

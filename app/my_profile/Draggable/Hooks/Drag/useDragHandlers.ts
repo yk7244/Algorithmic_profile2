@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { DragEndEvent } from '@dnd-kit/core';
-import { MoodboardImageData, Position } from '../../../types/profile';
+import { MoodboardImageData, Position } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
 
 export function useDragEnd(

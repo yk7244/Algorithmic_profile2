@@ -17,7 +17,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     handleHistoryClick,
     handleProfileImagesClick,
 }) => {
-    console.log('[HistorySlider] Received histories prop:', histories, 'Length:', histories.length);
+    //console.log('[HistorySlider] Received histories prop:', histories, 'Length:', histories.length);
     if (histories.length === 0 && currentHistoryIndex === -1) {
         // 히스토리가 없고, 현재 선택된 것도 없다면 (즉, 초기 상태이거나 아무것도 저장되지 않은 상태)
         // 파란 점만 표시하거나, 아무것도 표시 안 할 수 있습니다.

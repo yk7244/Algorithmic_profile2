@@ -56,9 +56,7 @@ const handleProfileImagesClick = () => {
             top: img.top || '0px',
             position: img.position || { x: Number(img.left?.replace('px', '') || 0), y: Number(img.top?.replace('px', '') || 0) },
             frameStyle: img.frameStyle || 'normal',
-            alt: img.alt || '',
-            cluster: img.cluster || '',
-            color: img.color || 'gray',
+            
             user_id: img.user_id || '',
             created_at: img.created_at || new Date().toISOString(),
         });
