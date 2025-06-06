@@ -1,6 +1,6 @@
 "use client";
 import OpenAI from "openai";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import {DndContext} from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
@@ -24,12 +24,8 @@ import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
 import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
 import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
 import { 
-  ProfileData, 
-  Position, 
-  VideoData, 
-  ImportedImageData, 
-  MoodboardImageData, 
-  HistoryData 
+  ImageData,
+  HistoryData,
 } from '../types/profile';
 
 // OpenAI 클라이언트 초기화
@@ -45,17 +41,17 @@ export default function MyProfilePage() {
   const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
   const { bgColor, handleBgColorChange } = useBgColor();
-  const [images, setImages] = useState<MoodboardImageData[]>([]);
-  const [positions, setPositions] = useState<Record<string, Position>>({});
+  const [images, setImages] = useState<ImageData[]>([]);
+  const [positions, setPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [histories, setHistories] = useState<HistoryData[]>([]);
+  const [histories, setHistories] = useState<HistoryData[]>([]);  
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "../../../public/images/default_image.png"
   
   // [새로고침시] ProfileImages 로드 훅 사용
   useProfileImagesLoad({
-    setImages,
+    setImages: setImages as Dispatch<SetStateAction<ImageData[]>>,
     setVisibleImageIds,
     setFrameStyles,
     setPositions,
@@ -63,7 +59,7 @@ export default function MyProfilePage() {
   });
 
   const historySlider = useHistorySlider({
-    images,
+    images: images as ImageData[],
     positions,
     frameStyles,
     setPositions,
@@ -117,11 +113,11 @@ export default function MyProfilePage() {
     setSelectedImage,
     setSelectedImages,
     setIsSearchMode,
-  } = useSearchMode(images);
+  } = useSearchMode(images as ImageData[]); 
 
   const handleImageDelete = useImageDelete({
     images,
-    setImages,
+    setImages: setImages as Dispatch<SetStateAction<ImageData[]>>,
     positions,
     frameStyles,
     histories,
@@ -222,7 +218,6 @@ export default function MyProfilePage() {
                     image={image}
                     position={positions[image.id] || image.position}
                     isEditing={isEditing && !isSearchMode}
-                    positions={positions}
                     frameStyle={image.desired_self ? 'cokie' : (frameStyles[image.id] || 'normal')}
                     onFrameStyleChange={handleFrameStyleChange}
                     onImageChange={handleImageChange}

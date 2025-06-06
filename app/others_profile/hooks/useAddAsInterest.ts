@@ -4,6 +4,27 @@ import { saveSliderHistory } from '../../utils/saveSliderHistory';
 export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
     const router = useRouter();
 
+    // 화면 중심 위주로 랜덤 위치 생성 함수
+    const generateRandomCenterPosition = () => {
+        // 화면 크기 추정 (일반적인 데스크톱 크기)
+        const screenWidth = 1200;
+        const screenHeight = 800;
+        
+        // 중심점 계산
+        const centerX = screenWidth / 2;
+        const centerY = screenHeight / 2;
+        
+        // 중심에서 ±200px 범위에서 랜덤 생성
+        const randomOffsetX = (Math.random() - 0.5) * 400; // -200 ~ +200
+        const randomOffsetY = (Math.random() - 0.5) * 400; // -200 ~ +200
+        
+        // 최종 위치 계산 (화면 경계 체크)
+        const x = Math.max(50, Math.min(screenWidth - 150, centerX + randomOffsetX));
+        const y = Math.max(50, Math.min(screenHeight - 150, centerY + randomOffsetY));
+        
+        return { x: Math.round(x), y: Math.round(y) };
+    };
+
     const handleAddAsInterest = (image: any, ownerId?: string) => {
         if (!ownerId) {
             console.error("Owner ID is not available. Cannot add as interest.");
@@ -25,15 +46,18 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
             imageList = Object.values(profileImages);
         }
 
+        // 랜덤 위치 생성
+        const randomPosition = generateRandomCenterPosition();
+        
         const newInterestImage = {
             ...image,
             id: `desired_${image.id}_${Date.now()}`,
             desired_self: true,
             desired_self_profile: ownerId,
             frameStyle: 'cokie',
-            left: "440px",
-            top: "440px",
-            position: { x: 440, y: 440 },
+            left: `${randomPosition.x}px`,
+            top: `${randomPosition.y}px`,
+            position: { x: randomPosition.x, y: randomPosition.y },
             sizeWeight: 0.7,
             rotate: 0,
             user_id: '',

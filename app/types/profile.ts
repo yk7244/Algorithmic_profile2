@@ -113,62 +113,17 @@ export interface SliderHistory{
   created_at: string; // timestamp - 저장 시점
 }
 
-// 무드보드 관련 타입들
-export interface Position {
-  x: number;
-  y: number;
-}
 
 export interface VideoData {
   title: string;
   embedId: string;
 }
 
-//[6] ImportedImageData 테이블 - 다른 사람의 프로필 페이지에서 가져올때
-export interface ImportedImageData {
-  id: string;
-  user_id?: string; 
-
-  main_keyword: string;
-  keywords: string[]; 
-  sub_keyword?: string;
-  mood_keyword: string;
-  description: string;
-  category: string;
-  sizeWeight: number; 
-  src: string; //update되는 값
-  relatedVideos: {
-    title: string;
-    embedId: string;
-  }[];
-  desired_self: boolean;
-  desired_self_profile: any;
-  metadata: any;
-  rotate: number;
-  width: number;
-  height: number;
-  left: string;
-  top: string;
-  position: { //update되는 값
-    x: number;
-    y: number;
-  };
-  frameStyle: string; //update되는 값
-  created_at: string;
-}
-
-export type MoodboardImageData = Required<ImportedImageData> & {
-  position: {
-    x: number;
-    y: number;
-  };
-};
 
 export interface HistoryData {
   timestamp: number;
-  positions: Record<string, Position>;
   frameStyles: Record<string, string>;
-  images: MoodboardImageData[];
+  images: ImageData[];
 }
 
 /* 유상님이 만드신 테이블

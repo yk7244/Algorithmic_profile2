@@ -45,7 +45,7 @@ const frameOptions = [
   { value: 'people', icon: '⚪️', label: '내가 좋아하는 사람' },
     //{ value: 'interest', icon: '🔶', label: '나만의 관심사' },
   //{ value: 'cloud', icon: '🌥️', label: '클라우드' },
-  //{ value: 'heart', icon: '💖', label: '하트' },
+  { value: 'heart', icon: '💖', label: '하트' },
   //{ value: 'pentagon', icon: '🔺', label: '펜타곤' },
   //{ value: 'star', icon: '⭐️', label: '별' },
   { value: 'pill', icon: '💊', label: '알약' },
@@ -179,11 +179,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 }}
                                 onError={() => setImageLoadError(true)}
                             />
-                            {imageLoadError && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                    <AlertTriangle className="text-yellow-400 w-10 h-10" />
-                                </div>
-                            )}
+                            
                         </div>
                         
                         {/* 키워드를 이미지 하단에 배치 

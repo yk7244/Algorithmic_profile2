@@ -1,6 +1,5 @@
 import { useCallback } from "react";
 import { 
-  Position, 
   ImageData, 
   HistoryData 
 } from '../../../types/profile';
@@ -14,7 +13,7 @@ export function useHistorySave({
   setCurrentHistoryIndex,
   setIsEditing,
 }: {
-  positions: Record<string, Position>;
+  positions: Record<string, {x: number, y: number}>;
   frameStyles: Record<string, string>;
   images: ImageData[];
   histories: HistoryData[];

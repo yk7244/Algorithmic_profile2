@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { ImportedImageData, MoodboardImageData, Position } from '../../../types/profile';
+import { ImageData } from '../../../types/profile';
 
 interface UseProfileImagesLoadProps {
-setImages: React.Dispatch<React.SetStateAction<MoodboardImageData[]>>;
+setImages: React.Dispatch<React.SetStateAction<ImageData[]>>;
 setVisibleImageIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 setFrameStyles: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-setPositions: React.Dispatch<React.SetStateAction<Record<string, Position>>>;
+setPositions: React.Dispatch<React.SetStateAction<Record<string, {x: number, y: number}>>>;
 placeholderImage: string;
 }
 
@@ -22,16 +22,16 @@ const handleProfileImagesClick = () => {
     if (savedProfileImages) {
         const parsedImagesData = JSON.parse(savedProfileImages);
         
-        let imageArray: ImportedImageData[];
+        let imageArray: ImageData[];
         if (Array.isArray(parsedImagesData)) {
         imageArray = parsedImagesData;
         } else {
-        imageArray = Object.values(parsedImagesData) as ImportedImageData[];
+        imageArray = Object.values(parsedImagesData) as ImageData[];
         }
         
-        const processedImages: MoodboardImageData[] = [];
+        const processedImages: ImageData[] = [];   
         const newFrameStyles: Record<string, string> = {};
-        const newPositions: Record<string, Position> = {};
+        const newPositions: Record<string, {x: number, y: number}> = {};
 
         imageArray.forEach(img => {
         processedImages.push({
@@ -40,7 +40,6 @@ const handleProfileImagesClick = () => {
             src: img.src || placeholderImage,
             main_keyword: img.main_keyword || '',
             keywords: img.keywords || [],
-            sub_keyword: img.sub_keyword || '',
             mood_keyword: img.mood_keyword || '',
             description: img.description || '',
             category: img.category || '',

@@ -4,22 +4,20 @@ import { useDragEnd } from './Draggable/Hooks/Drag/useDragHandlers';
 import { useImageChange } from './Draggable/Hooks/Image/useImageChange';
 import { useGenerateUserProfile } from './Nickname/Hooks/useGenerateUserProfile';
 import { 
-  Position, 
-  ImageData,
-  MoodboardImageData,
+  ImageData,  
   HistoryData 
 } from '../types/profile';
 import { Dispatch, SetStateAction } from 'react';
 
 export function useMoodboardHandlers(params: {
   setFrameStyles: Dispatch<SetStateAction<Record<string, string>>>;
-  positions: Record<string, Position>;
+  positions: Record<string, {x: number, y: number}>;
   frameStyles: Record<string, string>;
   images: ImageData[];   
   setCurrentHistoryIndex: Dispatch<SetStateAction<number>>;
   setIsEditing: Dispatch<SetStateAction<boolean>>;
   isEditing: boolean;
-  setPositions: Dispatch<SetStateAction<Record<string, Position>>>;
+  setPositions: Dispatch<SetStateAction<Record<string, {x: number, y: number}>>>;
   setImages: Dispatch<SetStateAction<ImageData[]>>;  
   openai: any;
   setShowGeneratingDialog: Dispatch<SetStateAction<boolean>>;
@@ -33,7 +31,7 @@ export function useMoodboardHandlers(params: {
   const handleSave = useHistorySave({
     positions: params.positions,
     frameStyles: params.frameStyles,
-    images: params.images as MoodboardImageData[],
+    images: params.images as ImageData[],
     histories: params.histories,
     setHistories: params.setHistories,
     setCurrentHistoryIndex: params.setCurrentHistoryIndex,
@@ -47,7 +45,7 @@ export function useMoodboardHandlers(params: {
     params.setPositions);
     
   const handleImageChange = useImageChange(
-    params.images as MoodboardImageData[],
+    params.images as ImageData[],
     params.setImages,
     params.positions,
     params.frameStyles,
