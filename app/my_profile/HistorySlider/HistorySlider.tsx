@@ -74,7 +74,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                     {/* 원본 ProfileImages 점 */}
                     <div className="relative group flex flex-col items-center">
                         <button
-                            className={`w-4 h-4 rounded-full transition-all opacity-80 hover:opacity-100 ${currentHistoryIndex === -1 ? 'bg-blue-500' : 'bg-black'}`}
+                            className="w-4 h-4 rounded-full bg-black transition-all opacity-80 hover:opacity-100"
                             onClick={() => {
                                 console.log('🔵 파란색 점 클릭 - ProfileImages 로드');
                                 if (handleProfileImagesClick) {

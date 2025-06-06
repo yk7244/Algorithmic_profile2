@@ -99,9 +99,7 @@ export function Navbar() {
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
                   <Link href="/search">관심사 탐색</Link>
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/watch-history">시청기록</Link>
-                </Button>
+                
                 {/* 언어 선택 버튼 
                 <Button variant="ghost" size="sm" onClick={handleLanguageToggle} className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium flex items-center px-6 hover: rounded-[20px]`}>
                   {language === "KO" ? "KO" : "EN"} 
@@ -170,9 +168,7 @@ export function Navbar() {
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
                         <Link href="/search">관심사 탐색</Link>
                       </Button>
-                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start  hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/watch-history">시청기록</Link>
-                      </Button>
+                      
                       
                       <Button variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`} onClick={logout}>
                         로그아웃

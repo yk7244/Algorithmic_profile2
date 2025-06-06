@@ -67,14 +67,14 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
 
         // 드래그 중일 때만 위치 업데이트
         if (isDragging) {
-            const newX = window.innerWidth - (e.clientX - dragStart.x) - 80; // 80은 버튼 크기
-            const newY = window.innerHeight - (e.clientY - dragStart.y) - 80;
+        const newX = window.innerWidth - (e.clientX - dragStart.x) - 80; // 80은 버튼 크기
+        const newY = window.innerHeight - (e.clientY - dragStart.y) - 80;
 
-            // 화면 경계 제한
-            const clampedX = Math.max(20, Math.min(newX, window.innerWidth - 100));
-            const clampedY = Math.max(20, Math.min(newY, window.innerHeight - 100));
+        // 화면 경계 제한
+        const clampedX = Math.max(20, Math.min(newX, window.innerWidth - 100));
+        const clampedY = Math.max(20, Math.min(newY, window.innerHeight - 100));
 
-            setPosition({ x: clampedX, y: clampedY });
+        setPosition({ x: clampedX, y: clampedY });
         }
     };
 

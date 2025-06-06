@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
-import { dummyProfiles, ProfileData } from '../data/dummyOthersProfiles';
+import { dummyUsers } from '@/app/others_profile/dummy-data';
+import { ProfileData, ImageData } from '@/app/types/profile';
+import SearchCard from '@/components/searchCard/SearchCard';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchResults, setSearchResults] = useState<ProfileData[]>([]);
+  const [searchResults, setSearchResults] = useState<(ProfileData & { images: ImageData[] })[]>([]);
 
   useEffect(() => {
     // URL에서 키워드 파라미터 가져오기
@@ -33,8 +35,12 @@ export default function SearchPage() {
     try {
       // 필터링 로직 주석 처리하고 모든 더미 프로필 표시
       setTimeout(() => {
-        // 모든 더미 프로필을 결과로 설정
-        setSearchResults(dummyProfiles);
+        // dummyUsers를 ProfileData 배열로 변환
+        const profiles = Object.values(dummyUsers).map(user => ({
+          ...user.profile,
+          images: user.images
+        }));
+        setSearchResults(profiles);
         setIsLoading(false);
       }, 1500); // 로딩 효과를 위해 지연 시간 유지
       
@@ -111,51 +117,24 @@ export default function SearchPage() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4"></div>
-              <p className="text-white text-xl">Searching for matching profiles...</p>
+              <p className="text-white text-xl"> 당신과 비슷한 취향의 사람을 찾고 있어요...</p>
             </div>
           ) : searchResults.length > 0 ? (
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {searchResults.map((profile) => (
-                <div 
+                <SearchCard
                   key={profile.id}
-                  className="bg-white/10 backdrop-blur-md rounded-xl p-6 hover:bg-white/15 transition-all cursor-pointer"
-                  onClick={() => router.push(`/others_profile/${profile.id}`)}
-                >
-                  <h3 className="text-2xl font-bold text-white mb-3">{profile.nickname}</h3>
-                  <p className="text-white/80 text-sm mb-4 line-clamp-2">{profile.description}</p>
-                  
-                  {/* 프로필 이미지 미리보기 */}
-                  <div className="grid grid-cols-2 gap-2 mb-4">
-                    {profile.images.slice(0, 4).map((image) => (
-                      <div key={image.id} className="aspect-square rounded-lg overflow-hidden">
-                        <img 
-                          src={image.src} 
-                          alt={image.main_keyword}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* 키워드 표시 */}
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {Array.from(new Set(profile.images.map(img => img.main_keyword))).slice(0, 5).map((keyword, idx) => (
-                      <span 
-                        key={idx}
-                        className="bg-white/20 px-3 py-1 rounded-full text-sm text-white"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                  profile={profile}
+                  onCardClick={(profileId) => router.push(`/others_profile/${profileId}`)}
+                />
               ))}
             </div>
           ) : (
             <div className="text-center py-20">
               <Search className="w-16 h-16 text-white/40 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-2">No matching profiles found</h3>
-              <p className="text-white/70">Try selecting different interests or check back later</p>
+              <h3 className="text-2xl font-bold text-white mb-2">아쉽게도 비슷한 취향을 가진 유저가 없습니다.</h3>
+              <p className="text-white/70">다른 관심사를 선택해보거나 나중에 다시 시도해보세요</p>
             </div>
           )}
         </div>
