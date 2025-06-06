@@ -206,7 +206,7 @@ export default function MyProfilePage() {
           {/* DraggableImage 컴포넌트 렌더링 -> DraggableImage.tsx */}
           <div className="relative w-[1000px] h-[680px] mx-auto mt-8">
             <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToContainer]}>
-              {images.map((image, index) => (
+              {images.map((image) => (
                 <div
                   key={image.id || Math.random().toString()}
                   className={`transition-all duration-500 ${
@@ -214,9 +214,6 @@ export default function MyProfilePage() {
                       ? 'opacity-100 scale-100'
                       : 'opacity-0 scale-95 pointer-events-none'
                   }`}
-                  style={{
-                    transitionDelay: isSearchMode ? `${0.5 + index * 0.1}s` : '0s'
-                  }}
                 >
                   <DraggableImage
                     image={image}

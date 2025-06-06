@@ -113,10 +113,20 @@ export interface SliderHistory{
   created_at: string; // timestamp - 저장 시점
 }
 
+//[6] ExploreWatchHistory 테이블 
+export interface ExploreWatchHistory{
+  id: string;
+  user_id: string;
+  videoId: string;
+  title: string;
+  description: string; 
+  timestamp: string;
+}
 
 export interface VideoData {
   title: string;
   embedId: string;
+  description: string;
 }
 
 

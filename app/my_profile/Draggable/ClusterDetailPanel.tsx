@@ -9,9 +9,12 @@ import {
     DialogTitle, 
     DialogClose 
 } from "@/components/ui/dialog";
-import { VideoData } from "./DraggableImage";
+import { VideoData } from "./DraggableImage";   
 import { useRouter } from 'next/navigation';
 import { useAddAsInterest } from "@/app/others_profile/hooks/useAddAsInterest";
+import { saveWatchedVideoToLocalStorage } from './Hooks/Youtube/saveExploreWatchHistory';
+import { useRecommend } from './Hooks/Youtube/useRecommend';
+import VideoList from './Hooks/Modal/VideoList';
 
 interface ClusterDetailPanelProps {
     image: any;
@@ -34,59 +37,16 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
     }) => {
         if (!showDetails) return null;
 
-        const [aiRecommendedVideos, setAiRecommendedVideos] = useState<VideoData[]>([]);
-        const [isLoadingAiVideos, setIsLoadingAiVideos] = useState(false);
         const [watchedVideos, setWatchedVideos] = useState<string[]>([]);   
         const router = useRouter();
         const { handleAddAsInterest } = useAddAsInterest(setShowDetails);
-
-        // AI 추천 유튜브 비디오 가져오기
-        const fetchAiRecommendedVideos = useCallback(async () => {
-            if (!image.main_keyword || !image.keywords || image.keywords.length === 0) return;
-            setIsLoadingAiVideos(true);
-            try {
-                const API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
-                if (!API_KEY) {
-                    console.error('YouTube API 키가 설정되지 않았습니다.');
-                    throw new Error('API 키가 없습니다.');
-                }
-                const randomKeyword = image.keywords[Math.floor(Math.random() * image.keywords.length)];
-                const searchQuery = `${image.main_keyword} ${randomKeyword}`;
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(searchQuery)}&type=video&maxResults=4&regionCode=KR&key=${API_KEY}`
-                );
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('YouTube API 오류:', errorData);
-                    throw new Error(`YouTube API 오류: ${response.status}`);
-                }
-                const data = await response.json();
-                if (data.items) {
-                    const videoList = data.items.map((item: any) => ({
-                        title: item.snippet.title,
-                        embedId: item.id.videoId
-                    }));
-                    setAiRecommendedVideos(videoList);
-                }
-            } catch (error) {
-                console.error('AI 추천 비디오 가져오기 오류:', error);
-                const fallbackVideos = [
-                    {
-                        title: '추천 영상을 불러올 수 없습니다.',
-                        embedId: ''
-                    }
-                ];
-                setAiRecommendedVideos(fallbackVideos);
-            } finally {
-                setIsLoadingAiVideos(false);
-            }
-        }, [image.main_keyword, image.keywords]);
+        const { isLoading: isLoadingAiVideos, videos: aiRecommendedVideos, fetchAndSet: fetchAndSetVideos } = useRecommend(image);
 
         useEffect(() => {
-            if (showDetails && isOwner && image.main_keyword) {
-                fetchAiRecommendedVideos();
+            if (showDetails && image.main_keyword && (isOwner || image.desired_self)) {
+                fetchAndSetVideos();
             }
-        }, [showDetails, fetchAiRecommendedVideos, isOwner, image.main_keyword]);
+        }, [showDetails, fetchAndSetVideos, isOwner, image.main_keyword, image.desired_self]);
 
         // 이미지 클릭 핸들러 (상세 패널에서 이미지 클릭 시)
         const handleImageClick = () => {
@@ -97,24 +57,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
         // 영상 클릭 핸들러 (시청 기록 관리)
         const handleVideoClick = (video: VideoData) => {
-            // 로컬 스토리지에서 현재 시청 기록 가져오기
-            const currentHistory = localStorage.getItem('watchHistory');
-            const history = currentHistory ? JSON.parse(currentHistory) : [];
-            // 이미 있는 영상인지 확인
-            const isExist = history.some((item: any) => item.embedId === video.embedId);
-            if (!isExist) {
-                // 새로운 시청 기록 추가
-                const newHistory = [
-                    {
-                        title: video.title,
-                        embedId: video.embedId,
-                        timestamp: Date.now()
-                    },
-                    ...history
-                ];
-                // 로컬 스토리지에 저장
-                localStorage.setItem('watchHistory', JSON.stringify(newHistory));
-            }
+            saveWatchedVideoToLocalStorage(video, ownerId || 'guest');
+            setWatchedVideos(prev => [...new Set([...prev, video.embedId])]);
         };
 
         // 프로필 방문 핸들러
@@ -136,6 +80,9 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         alt={image.main_keyword}
                         className="w-full h-full object-cover"
                         onClick={handleImageClick}
+                        onError={(e) => {
+                            e.currentTarget.style.backgroundColor = 'gray';
+                        }}
                     />
                     <DialogHeader className="absolute left-0 top-0 w-full h-full flex flex-col items-start justify-start px-4 pt-4 z-30 pointer-events-none">
                         <div className="flex items-center w-full justify-between pointer-events-auto">
@@ -195,82 +142,24 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             <br/> <br/>
                                             {/* 관련 영상 탭 */}
                                             <TabsContent value="history" className="px-4 pb-4">
-                                                <div className="grid gap-6">
-                                                {(image.relatedVideos || []).map((video: VideoData, idx: number) => (
-                                                    <div key={idx} className="space-y-2">
-                                                    <h5 className="text-sm font-medium text-gray-800 mb-1 truncate">{video.title}</h5>
-                                                    <div 
-                                                        className="relative w-full pt-[56.25%] bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
-                                                        onClick={() => handleVideoClick(video)}
-                                                    >
-                                                        <iframe
-                                                        id={`player-${video.embedId}`}
-                                                        className="absolute inset-0 w-full h-full"
-                                                        src={`https://www.youtube.com/embed/${video.embedId}?enablejsapi=1`}
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                        allowFullScreen
-                                                        title={video.title}
-                                                        />
-                                                        <div className={`absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
-                                                            <CheckCircle2 className={`h-3 w-3 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
-                                                            <span className="text-xs font-medium">
-                                                                {watchedVideos.includes(video.embedId) ? "시청함" : "시청안함"}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    </div>
-                                                ))}
-                                                </div>
+                                                <VideoList
+                                                    videos={image.relatedVideos || []}
+                                                    watchedVideos={watchedVideos}
+                                                    onVideoClick={handleVideoClick}
+                                                />
                                             </TabsContent>
                                             {/* AI 추천 영상 탭 */}
                                             <TabsContent value="AI" className="px-4 pb-4">
-                                                {/* AI 추천 영상 로딩 중 */}
-                                                <div className="grid gap-6">
-                                                    {isLoadingAiVideos ? (
-                                                        <div className="flex justify-center items-center py-8">
-                                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                                                        </div>
-                                                    ) : aiRecommendedVideos.length > 0 && aiRecommendedVideos[0].embedId !== '' ? (
-                                                        aiRecommendedVideos.map((video: VideoData, idx: number) => (
-                                                        <div key={idx} className="space-y-2">
-                                                            <h5 className="text-sm font-medium text-gray-800 mb-1 truncate">
-                                                            <span className="text-blue-500 font-semibold">AI 추천:</span> {video.title}
-                                                            </h5>
-                                                            <div 
-                                                            className="relative w-full pt-[56.25%] bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
-                                                            onClick={() => handleVideoClick(video)}
-                                                            >
-                                                            <iframe
-                                                                id={`player-ai-${video.embedId}`}
-                                                                className="absolute inset-0 w-full h-full"
-                                                                src={`https://www.youtube.com/embed/${video.embedId}?enablejsapi=1`}
-                                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                allowFullScreen
-                                                                title={video.title}
-                                                            />
-                                                            <div className={`absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
-                                                                <CheckCircle2 className={`h-3 w-3 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
-                                                                <span className="text-xs font-medium">
-                                                                {watchedVideos.includes(video.embedId) ? "시청함" : "시청안함"}
-                                                                </span>
-                                                            </div>
-                                                            </div>
-                                                        </div>
-                                                        ))
-                                                    ) : (
-                                                        <div className="text-center py-8">
-                                                        <p className="text-sm text-gray-500">
-                                                            AI 추천 영상을 가져올 수 없습니다.
-                                                        </p>
-                                                        <button
-                                                            onClick={fetchAiRecommendedVideos}
-                                                            className="mt-3 px-3 py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
-                                                        >
-                                                            다시 시도
-                                                        </button>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <VideoList
+                                                    isLoading={isLoadingAiVideos}
+                                                    videos={aiRecommendedVideos}
+                                                    watchedVideos={watchedVideos}
+                                                    onVideoClick={handleVideoClick}
+                                                    titlePrefix="AI 추천: "
+                                                    isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
+                                                    emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                    onRetry={fetchAndSetVideos}
+                                                />
                                             </TabsContent>
                                             
                                         </div>
@@ -295,38 +184,17 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 </Button>
                                             </div>
                                         </div>
-                                        {/* 관련된 추천 영상 탭 */}
-                                        <div className="bg-gray-50 rounded-xl p-4">
-                                            <h3 className="text-sm font-semibold mb-4 text-gray-800">관련된 추천 영상</h3>
-                                            <div className="grid gap-4">
-                                                {(image.relatedVideos || []).map((video: VideoData, idx: number) => (
-                                                <div key={idx} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-                                                    <div className="relative pt-[56.25%]">
-                                                    <iframe
-                                                        className="absolute inset-0 w-full h-full"
-                                                        src={`https://www.youtube.com/embed/${video.embedId}`}
-                                                        title={video.title}
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                        allowFullScreen
-                                                    />
-                                                    </div>
-                                                    <div className="p-3">
-                                                    <h4 className="text-sm font-medium text-gray-900 line-clamp-2">{video.title}</h4>
-                                                    <div className="mt-1 flex items-center gap-2">
-                                                        {watchedVideos.includes(video.embedId) ? (
-                                                        <span className="inline-flex items-center text-green-600 text-xs">
-                                                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                            시청 완료
-                                                        </span>
-                                                        ) : (
-                                                        <span className="text-gray-500 text-xs">아직 시청하지 않음</span>
-                                                        )}
-                                                    </div>
-                                                    </div>
-                                                </div>
-                                                ))}
-                                            </div>
-                                        </div>
+                                        {/* AI 추천 영상 로딩 중 */}
+                                        <VideoList
+                                            isLoading={isLoadingAiVideos}
+                                            videos={aiRecommendedVideos}
+                                            watchedVideos={watchedVideos}
+                                            onVideoClick={handleVideoClick}
+                                            titlePrefix="AI 추천: "
+                                            isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
+                                            emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                            onRetry={fetchAndSetVideos}
+                                        />
                                     </div>
                                     )}
                                 </>
@@ -362,74 +230,32 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                     </Button>
                                                 </div>
                                             </div>
-                                            {/* 관련된 추천 영상 탭 */}
-                                            <div className="bg-gray-50 rounded-xl p-4">
-                                                <h3 className="text-sm font-semibold mb-4 text-gray-800">관련된 추천 영상</h3>
-                                                <div className="grid gap-4">
-                                                    {(image.relatedVideos || []).map((video: VideoData, idx: number) => (
-                                                    <div key={idx} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-                                                        <div className="relative pt-[56.25%]">
-                                                        <iframe
-                                                            className="absolute inset-0 w-full h-full"
-                                                            src={`https://www.youtube.com/embed/${video.embedId}`}
-                                                            title={video.title}
-                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                            allowFullScreen
-                                                        />
-                                                        </div>
-                                                        <div className="p-3">
-                                                        <h4 className="text-sm font-medium text-gray-900 line-clamp-2">{video.title}</h4>
-                                                        <div className="mt-1 flex items-center gap-2">
-                                                            {watchedVideos.includes(video.embedId) ? (
-                                                            <span className="inline-flex items-center text-green-600 text-xs">
-                                                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                                시청 완료
-                                                            </span>
-                                                            ) : (
-                                                            <span className="text-gray-500 text-xs">아직 시청하지 않음</span>
-                                                            )}
-                                                        </div>
-                                                        </div>
-                                                    </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            {/* AI 추천 영상 */}
+                                            <VideoList
+                                                isLoading={isLoadingAiVideos}
+                                                videos={aiRecommendedVideos}
+                                                watchedVideos={watchedVideos}
+                                                onVideoClick={handleVideoClick}
+                                                titlePrefix="AI 추천: "
+                                                isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
+                                                emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                onRetry={fetchAndSetVideos}
+                                            />
                                         </div>
                                     </>
                                     )}
-                                    {/* 관련된 추천 영상 탭 */}
-                                    <div className="bg-gray-50 rounded-xl p-4">
-                                            <h3 className="text-sm font-semibold mb-4 text-gray-800">관련된 추천 영상</h3>
-
-                                            <div className="grid gap-4">
-                                                {(image.relatedVideos || []).map((video: VideoData, idx: number) => (
-                                                <div key={idx} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-                                                    <div className="relative pt-[56.25%]">
-                                                    <iframe
-                                                        className="absolute inset-0 w-full h-full"
-                                                        src={`https://www.youtube.com/embed/${video.embedId}`}
-                                                        title={video.title}
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                        allowFullScreen
-                                                    />
-                                                    </div>
-                                                    <div className="p-3">
-                                                    <h4 className="text-sm font-medium text-gray-900 line-clamp-2">{video.title}</h4>
-                                                    <div className="mt-1 flex items-center gap-2">
-                                                        {watchedVideos.includes(video.embedId) ? (
-                                                        <span className="inline-flex items-center text-green-600 text-xs">
-                                                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                                                            시청 완료
-                                                        </span>
-                                                        ) : (
-                                                        <span className="text-gray-500 text-xs">아직 시청하지 않음</span>
-                                                        )}
-                                                    </div>
-                                                    </div>
-                                                </div>
-                                                ))}
-                                            </div>
-                                    </div>
+                                    {/* 본인꺼 클러스터일때 */}
+                                    {/* AI영상 탭 */}
+                                    <VideoList
+                                        isLoading={isLoadingAiVideos}
+                                        videos={aiRecommendedVideos}
+                                        watchedVideos={watchedVideos}
+                                        onVideoClick={handleVideoClick}
+                                        titlePrefix="AI 추천: "
+                                        isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
+                                        emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                        onRetry={fetchAndSetVideos}
+                                    />
                                 </> 
                             )}
                             

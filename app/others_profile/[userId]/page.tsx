@@ -81,7 +81,7 @@ return (
                 className="opacity-100 scale-100 transition-all duration-500"
                 >
                 <DraggableImage
-                    image={image}
+                    image={image as any}
                     position={positions[image.id] || { x: 0, y: 0 }}        
                     isEditing={false} // 드래그 및 리사이즈 비활성화
                     isOwner={false} // 다른 사람 프로필이므로 isOwner를 false로 설정
