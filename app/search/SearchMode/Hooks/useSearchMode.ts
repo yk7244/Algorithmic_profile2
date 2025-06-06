@@ -32,6 +32,15 @@ export function useSearchMode(images: ImageData[]) {
         router.push(`/search?keywords=${encodeURIComponent(keywords)}`);
     };
 
+    const setIsSearchModeWithReset = (value: boolean) => {
+        setIsSearchMode(value);
+        if (!value) {
+            // 검색 모드 종료 시 선택 상태 초기화
+            setSelectedImages([]);
+            setSelectedImage(null);
+        }
+    };
+
     return {
         isSearchMode,
         selectedImage,
@@ -41,6 +50,6 @@ export function useSearchMode(images: ImageData[]) {
         handleSearch,
         setSelectedImage,
         setSelectedImages,
-        setIsSearchMode,
+        setIsSearchMode: setIsSearchModeWithReset,
     };
 } 

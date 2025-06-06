@@ -250,14 +250,14 @@ return (
                                 setGeneratingStep(4);
                                 await new Promise(resolve => setTimeout(resolve, 1000));
                                 
-                                // 완료 페이지 표시
+                                // 5단계: 완료 페이지 표시
                                 setShowCompletePage(true);
                                 setShowGeneratingDialog(false);
                                 setCountdown(10);
-                                //별명만들기
+                                // 6단계: 별명만들기
                                 await generateProfile();
 
-                                //clusterHistory, sliderHistory 저장하기
+                                // 7단계: clusterHistory, sliderHistory 저장하기
                                 const clusterHistoryResult = saveClusterHistory(clusters);
                                 const sliderResult = saveSliderHistory(clusters);
 

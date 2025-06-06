@@ -13,10 +13,10 @@ import HistorySlider from './HistorySlider/HistorySlider';
 import GeneratingDialog from './GeneratingDialog/GeneratingDialog';
 import { useHistorySlider } from './HistorySlider/Hooks/useHistorySlider';
 import { colorOptions } from './CustomEdit/hooks/colorOptions';
-import SearchModeUI from './SearchMode/SearchModeUI';
-import { useSearchMode } from './SearchMode/Hooks/useSearchMode';
+import SearchModeUI from '../search/SearchMode/SearchModeUI';
+import { useSearchMode } from '../search/SearchMode/Hooks/useSearchMode';
 import ProfileHeader from './Nickname/ProfileHeader';
-import SearchFloatingButton from './SearchMode/SearchFloatingButton';
+import SearchFloatingButton from '../search/SearchMode/SearchFloatingButton';
 import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Draggable/Hooks/Image/useImageDelete";
@@ -184,6 +184,7 @@ export default function MyProfilePage() {
         selectedImages={selectedImages}
         handleSearch={handleSearch}
         toggleSearchMode={toggleSearchMode}
+        setIsSearchMode={setIsSearchMode}
       />
 
       {/* My_profile 페이지 레이아웃 */}
@@ -205,7 +206,7 @@ export default function MyProfilePage() {
           {/* DraggableImage 컴포넌트 렌더링 -> DraggableImage.tsx */}
           <div className="relative w-[1000px] h-[680px] mx-auto mt-8">
             <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToContainer]}>
-              {images.map((image) => (
+              {images.map((image, index) => (
                 <div
                   key={image.id || Math.random().toString()}
                   className={`transition-all duration-500 ${
@@ -213,6 +214,9 @@ export default function MyProfilePage() {
                       ? 'opacity-100 scale-100'
                       : 'opacity-0 scale-95 pointer-events-none'
                   }`}
+                  style={{
+                    transitionDelay: isSearchMode ? `${0.5 + index * 0.1}s` : '0s'
+                  }}
                 >
                   <DraggableImage
                     image={image}
@@ -232,10 +236,13 @@ export default function MyProfilePage() {
           </div>
 
           {/* 플로팅 검색 버튼 분리 */}
-          <SearchFloatingButton
+          {!isEditing && !isSearchMode &&(
+            <SearchFloatingButton
             isSearchMode={isSearchMode}
             toggleSearchMode={toggleSearchMode}
           />
+          )}
+          
 
           {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
           {!isEditing && !isSearchMode && (
