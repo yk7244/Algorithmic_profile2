@@ -1,12 +1,12 @@
 import { useCallback } from "react";
 import { DragEndEvent } from '@dnd-kit/core';
-import { MoodboardImageData, Position } from '../../../../types/profile';
+import { ImageData, Position } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
 
 export function useDragEnd(
   isEditing: boolean, 
-  images: MoodboardImageData[], 
-  setImages: (imgs: MoodboardImageData[] | ((prev: MoodboardImageData[]) => MoodboardImageData[])) => void,
+  images: ImageData[], 
+  setImages: (imgs: ImageData[] | ((prev: ImageData[]) => ImageData[])) => void,
   setPositions: Dispatch<SetStateAction<Record<string, Position>>>
 ) {
   return useCallback((event: DragEndEvent) => {
@@ -23,9 +23,9 @@ export function useDragEnd(
     const imageId = active.id.toString();
     console.log(`🔄 드래그 종료 - 이미지 ID: ${imageId}, 델타:`, delta);
     
-    setImages((prevImages: MoodboardImageData[]) => {
-      return prevImages.map((image: MoodboardImageData) => {
-        if (image.id === imageId) {
+    setImages((prevImages: ImageData[]) => {
+      return prevImages.map((image: ImageData) => {
+        if (image.id === imageId) { 
           const currentPosition = image.position;
           console.log(`📍 현재 위치 (image.position):`, currentPosition);
           console.log('✅ 객체 형태 profileImages 즉시 업데이트 전 (${imageId}):', currentPosition);

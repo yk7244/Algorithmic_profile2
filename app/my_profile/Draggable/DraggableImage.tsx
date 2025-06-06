@@ -27,7 +27,6 @@ export interface DraggableImageProps {
     image: any;
     position?: { x: number; y: number };
     isEditing: boolean;
-    positions?: any;
     frameStyle: string;
     onFrameStyleChange: (id: string, style: string) => void;
     onImageChange: (id: string, src: string, keyword: string) => void;
@@ -262,21 +261,23 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
                     {!image.desired_self && (
                         <>
-                        {frameOptions.map(opt => (
-                        <button
-                            key={opt.value}
-                            className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
-                            onClick={() => {
-                                handleFrameStyleChangeByValue(opt.value);
-                                onFrameStyleChange(image.id, opt.value);
-                            }}
-                            onMouseDown={e => e.stopPropagation()}
-                            title={opt.label}
-                            type="button"
-                        >
-                            <span>{opt.icon}</span>
-                        </button>
-                    ))}
+                        {frameOptions
+                            .filter(opt => opt.value !== 'cokie') // cokie 옵션을 일반 이미지에서 제외
+                            .map(opt => (
+                            <button
+                                key={opt.value}
+                                className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
+                                onClick={() => {
+                                    handleFrameStyleChangeByValue(opt.value);
+                                    onFrameStyleChange(image.id, opt.value);
+                                }}
+                                onMouseDown={e => e.stopPropagation()}
+                                title={opt.label}
+                                type="button"
+                            >
+                                <span>{opt.icon}</span>
+                            </button>
+                        ))}
                         </>
                     )}
                     
