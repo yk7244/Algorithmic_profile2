@@ -130,9 +130,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 zIndex: isSelected ? 30 : 10,
                 transition: isEditing ? 'none' : 'transform 0.8s ease-in-out',
                 }}
-                className={`${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""} ${
-                isSelected ? "ring-4 ring-blue-500 ring-opacity-70 shadow-xl scale-105" : ""
-                }`}
+                className={`${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""}`}
             >
                 {/* 이미지 */}
                 <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 group hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
@@ -163,7 +161,9 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             style={{
                             clipPath: getClipPath(),
                             }}
-                            className={`relative w-full h-full ${getFrameStyle()} overflow-hidden`}
+                            className={`relative w-full h-full ${getFrameStyle()} overflow-hidden ${
+                                isSelected ? 'ring-4 ring-white ring-opacity-70 shadow-xl' : ''
+                            }`}
                         >
                             <img
                                 src={imageLoadError ? "/images/default_image.png" : image.src}
@@ -262,7 +262,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             .map(opt => (
                             <button
                                 key={opt.value}
-                                className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
+                                className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto 
+                                    ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
                                 onClick={() => {
                                     handleFrameStyleChangeByValue(opt.value);
                                     onFrameStyleChange(image.id, opt.value);

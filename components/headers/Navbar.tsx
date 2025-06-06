@@ -33,7 +33,7 @@ export function Navbar() {
   return (
       <header
         className={`sticky top-0 z-50 w-full ${
-          pathname === "/my_profile"
+          pathname === "/my_profile" || pathname === "/search"
             ? "bg-white/30 text-black backdrop-blur-lg"
             : "bg-black text-white"
         }`}
@@ -93,13 +93,13 @@ export function Navbar() {
             {isLoggedIn ? (
               <>
                 
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
                   <Link href="/my_profile">나의 튜브렌즈</Link>
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/search_map">관심사 탐색</Link>
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
+                  <Link href="/search">관심사 탐색</Link>
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
                   <Link href="/watch-history">시청기록</Link>
                 </Button>
                 {/* 언어 선택 버튼 
@@ -107,7 +107,7 @@ export function Navbar() {
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
                 */}
-                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
                   <Link href="/my_page" className="flex items-center gap-1.5">
                     <UserCircle2 className="w-4 h-4" />
                     <span>{userName}</span>
@@ -122,7 +122,7 @@ export function Navbar() {
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
                 */}
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 rounded-[20px]`}>
                   <Link href="/login">로그인</Link>
                 </Button>
               </>
@@ -144,7 +144,7 @@ export function Navbar() {
             )}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={pathname === "/my_profile" ? "text-black" : "text-white"}>
+                <Button variant="ghost" size="icon" className={pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
@@ -168,7 +168,7 @@ export function Navbar() {
                         <Link href="/my_profile">나의 튜브렌즈</Link>
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/search_map">관심사 탐색</Link>
+                        <Link href="/search">관심사 탐색</Link>
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start  hover:bg-white hover:text-black rounded-[20px]`}>
                         <Link href="/watch-history">시청기록</Link>

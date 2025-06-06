@@ -26,7 +26,7 @@ export interface WatchHistory{
   timestamp: string;
 }
 
-//[2] ClusterHistory 테이블 -> upload/VideoAnalysis/videoCluster.ts 에서 저장함
+//[2] ClusterHistory 테이블 -> utils/saveClusterHistory.ts 에서 저장함
 export interface ClusterHistory {
   id: string;
   user_id?: string; // 유저 아이디
@@ -100,7 +100,7 @@ export interface ProfileData {
   updated_at: string;
 }
 
-// [5] SliderHistory 테이블 
+// [5] SliderHistory 테이블 -> utils/saveSliderHistory.ts 에서 저장함
 export interface SliderHistory{
   id: string; // UUID/int PK
   user_id: string; // UUID FK

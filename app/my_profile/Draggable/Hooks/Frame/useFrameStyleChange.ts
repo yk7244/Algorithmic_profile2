@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
-import { MoodboardImageData } from "../../../../types/profile";
+import { ImageData } from "../../../../types/profile";
 
 export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Record<string, string>>>) {
   return useCallback((id: string, style: string) => {
@@ -20,7 +20,7 @@ export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Reco
         let updated = false;
 
         if (Array.isArray(profileImages)) {
-          const updatedProfileImagesArray = profileImages.map((img: MoodboardImageData) => {
+            const updatedProfileImagesArray = profileImages.map((img: ImageData) => {
             if (img.id === id) {
               console.log(` localStorage (배열) - 이미지 ${id}의 frameStyle을 ${style}(으)로 업데이트합니다.`);
               updated = true;
