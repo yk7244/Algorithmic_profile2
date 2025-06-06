@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
-  Position, 
-  MoodboardImageData, 
   HistoryData, 
-  ImportedImageData
+  ImageData
 } from '../../../types/profile';
 
 export function useHistorySlider({
@@ -16,13 +14,13 @@ export function useHistorySlider({
     setImages,
     placeholderImage,
 }: {
-    images: MoodboardImageData[];
-    positions: Record<string, Position>;
+    images: ImageData[];   
+    positions: Record<string, {x: number, y: number}>;
     frameStyles: Record<string, string>;
-    setPositions: (positions: Record<string, Position>) => void;
+    setPositions: (positions: Record<string, {x: number, y: number}>) => void;
     setFrameStyles: (frameStyles: Record<string, string>) => void;
     setVisibleImageIds: (ids: Set<string>) => void;
-    setImages: (images: MoodboardImageData[]) => void;
+    setImages: (images: ImageData[]) => void;
     placeholderImage: string;
 }) {
     const [histories, setHistories] = useState<HistoryData[]>([]);
@@ -52,7 +50,7 @@ export function useHistorySlider({
         if (profileImagesRaw) {
             try {
                 const profileImages = JSON.parse(profileImagesRaw);
-                let imageArray: MoodboardImageData[] = [];
+                let imageArray: ImageData[] = [];
                 if (Array.isArray(profileImages)) {
                     imageArray = profileImages;
                 } else {
@@ -62,10 +60,10 @@ export function useHistorySlider({
                 // 페이지가 처음 열릴 때, 슬라이더의 기본 상태는 profileImages
                 setImages(imageArray);
                 
-                const positionsFromImages: Record<string, Position> = {};
+                const positionsFromImages: Record<string, {x: number, y: number}> = {};
                 const frameStylesFromImages: Record<string, string> = {};
 
-                imageArray.forEach((img: MoodboardImageData) => {
+                imageArray.forEach((img: ImageData) => {
                     if (img.id && img.position) {
                         positionsFromImages[img.id] = img.position;
                     }
@@ -88,7 +86,7 @@ export function useHistorySlider({
             if (histories.length > 0) {
                 const latestHistory = histories[histories.length - 1];
                 setImages(latestHistory.images || []);
-                const positionsFromImages: Record<string, Position> = {};
+                const positionsFromImages: Record<string, {x: number, y: number}> = {};
                 (latestHistory.images || []).forEach((img: any) => {
                     if (img.id && img.position) positionsFromImages[img.id] = img.position;
                 });
@@ -105,7 +103,7 @@ export function useHistorySlider({
                 frameStyles: frameStyles,
                 images: images
             };
-            setHistories([initialHistory]);
+            setHistories([initialHistory] as unknown as HistoryData[]);
             setCurrentHistoryIndex(0);
             setVisibleImageIds(new Set<string>(images.map((img: any) => img.id)));
         }
@@ -127,25 +125,24 @@ export function useHistorySlider({
                 if (profileImagesData) {
                     try {
                         const parsedProfileImages = JSON.parse(profileImagesData);
-                        let imageArrayToProcess: ImportedImageData[];
+                        let imageArrayToProcess: ImageData[];
                         if (Array.isArray(parsedProfileImages)) {
                             imageArrayToProcess = parsedProfileImages;
                         } else {
-                            imageArrayToProcess = Object.values(parsedProfileImages) as ImportedImageData[];
+                            imageArrayToProcess = Object.values(parsedProfileImages) as ImageData[];
                         }
 
-                        const processedImagesForBlueDot: MoodboardImageData[] = [];
-                        const newPositionsForBlueDot: Record<string, Position> = {};
+                        const processedImagesForBlueDot: ImageData[] = [];
+                        const newPositionsForBlueDot: Record<string, {x: number, y: number}> = {};
                         const newFrameStylesForBlueDot: Record<string, string> = {};
 
                         imageArrayToProcess.forEach((img) => {
-                            const moodboardImage: MoodboardImageData = {
+                            const moodboardImage: ImageData = {
                                 ...img, // ImportedImageData의 모든 속성 복사
                                 id: img.id || `fallback_id_${Math.random().toString(36).substr(2, 9)}`, // id는 필수, 없으면 임의 생성
                                 src: img.src || placeholderImage,
                                 main_keyword: img.main_keyword || '',
                                 keywords: img.keywords || [],
-                                sub_keyword: img.sub_keyword || '',
                                 mood_keyword: img.mood_keyword || '',
                                 description: img.description || '',
                                 category: img.category || '',
@@ -190,7 +187,7 @@ export function useHistorySlider({
             const nextHistoryImageIds = new Set<string>(histories[nextIndex].images.map((img: any) => img.id));
             setVisibleImageIds(nextHistoryImageIds);
             setImages(histories[nextIndex].images);
-            const positionsFromImages: Record<string, Position> = {};
+            const positionsFromImages: Record<string, {x: number, y: number}> = {};
             histories[nextIndex].images.forEach((img: any) => {
                 if (img.id && img.position) {
                     positionsFromImages[img.id] = img.position;
@@ -223,7 +220,7 @@ export function useHistorySlider({
                     const profileImages = JSON.parse(profileImagesData);
                     //console.log('🖼️ ProfileImages 데이터 업데이트 중...');
                     
-                    let imageArray: MoodboardImageData[] = [];
+                    let imageArray: ImageData[] = [];
                     if (Array.isArray(profileImages)) {
                         imageArray = profileImages;
                     } else {
@@ -232,10 +229,10 @@ export function useHistorySlider({
                     
                     setImages(imageArray);
                     
-                    const positionsFromImages: Record<string, Position> = {};
+                    const positionsFromImages: Record<string, {x: number, y: number}> = {};
                     const frameStylesFromImages: Record<string, string> = {}; // frameStyles 추출용 객체
 
-                    imageArray.forEach((img: MoodboardImageData) => {
+                    imageArray.forEach((img: ImageData) => {
                         if (img.id && img.position) {
                             positionsFromImages[img.id] = img.position;
                         } else {
@@ -253,7 +250,7 @@ export function useHistorySlider({
                     //console.log('🎨 최종 frameStyles:', frameStylesFromImages); // 추출된 frameStyles 로그
                     setFrameStyles(frameStylesFromImages); // 추출된 frameStyles로 상태 업데이트
                     console.log('🔵 ', imageArray);
-                    const imageIds = imageArray.map((img: MoodboardImageData) => img.id).filter(id => id);
+                    const imageIds = imageArray.map((img: ImageData) => img.id).filter(id => id);
                     setVisibleImageIds(new Set<string>(imageIds));
                     
                     //console.log('✅ ProfileImages 로드 완료 (positions 및 frameStyles 포함)');
@@ -282,7 +279,7 @@ export function useHistorySlider({
         setImages(selectedHistory.images);
         
         // 이미지 내부의 position에서 positions 객체 생성 (호환성을 위해)
-        const positionsFromImages: Record<string, Position> = {};
+        const positionsFromImages: Record<string, {x: number, y: number}> = {};
         const frameStylesFromImages: Record<string, string> = {}; // frameStyles 추출용 객체
         selectedHistory.images.forEach((img: any) => {
             if (img.id) {
@@ -314,7 +311,7 @@ export function useHistorySlider({
         setImages(histories[0].images);
         
         // 이미지 내부의 position에서 positions 객체 생성 (호환성을 위해)
-        const positionsFromImages: Record<string, Position> = {};
+        const positionsFromImages: Record<string, {x: number, y: number}> = {};
         histories[0].images.forEach((img: any) => {
             if (img.id && img.position) {
                 positionsFromImages[img.id] = img.position;

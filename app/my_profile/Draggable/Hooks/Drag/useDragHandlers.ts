@@ -1,13 +1,13 @@
 import { useCallback } from "react";
 import { DragEndEvent } from '@dnd-kit/core';
-import { ImageData, Position } from '../../../../types/profile';
+import { ImageData } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
 
 export function useDragEnd(
   isEditing: boolean, 
   images: ImageData[], 
   setImages: (imgs: ImageData[] | ((prev: ImageData[]) => ImageData[])) => void,
-  setPositions: Dispatch<SetStateAction<Record<string, Position>>>
+  setPositions: Dispatch<SetStateAction<Record<string, {x: number, y: number}>>>
 ) {
   return useCallback((event: DragEndEvent) => {
     if (!isEditing) return;

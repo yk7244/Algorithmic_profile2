@@ -37,29 +37,44 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                     
                     
                     {/* 기존 히스토리 점들 */}
-                    {histories.map((history, index) => (
-                        <div key={index} className="relative group flex flex-col items-center">
-                            <button
-                                className="w-4 h-4 rounded-full bg-black transition-all opacity-80"
-                                onClick={() => {
-                                    handleHistoryClick(index);
-                                    console.log(history);
-                                }}
-                            />
-                            <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                                {new Date(history.timestamp).toLocaleDateString('ko-KR', {
-                                    month: 'long',
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                })}
-                            </span>
-                        </div>
-                    ))}
+                    {histories.map((history, index) => {
+                        // desired_self가 true인 이미지가 포함된 히스토리인지 확인
+                        const hasDesiredSelf = history.images && history.images.some((img: any) => img.desired_self === true);
+                        // 현재 선택된 히스토리인지 확인
+                        const isSelected = currentHistoryIndex === index;
+                        
+                        return (
+                            <div key={index} className="relative group flex flex-col items-center">
+                                <button
+                                    className="w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center"
+                                    onClick={() => {
+                                        handleHistoryClick(index);
+                                        console.log(history);
+                                    }}
+                                >
+                                    {hasDesiredSelf ? (
+                                        <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M0 0L9.32795 3.45455L19 0L15.5455 9.5L19 19L9.32795 16.4091L0 19L3.71431 9.5L0 0Z" fill={isSelected ? "#3B82F6" : "#000000"}/>
+                                        </svg>
+                                    ) : (
+                                        <div className={`w-4 h-4 rounded-full transition-colors ${isSelected ? 'bg-blue-500' : 'bg-black'}`} />
+                                    )}
+                                </button>
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                    {new Date(history.timestamp).toLocaleDateString('ko-KR', {
+                                        month: 'long',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                            </div>
+                        );
+                    })}
                     {/* 원본 ProfileImages 점 */}
                     <div className="relative group flex flex-col items-center">
                         <button
-                            className="w-4 h-4 rounded-full bg-blue-500 transition-all opacity-80 hover:opacity-100"
+                            className={`w-4 h-4 rounded-full transition-all opacity-80 hover:opacity-100 ${currentHistoryIndex === -1 ? 'bg-blue-500' : 'bg-black'}`}
                             onClick={() => {
                                 console.log('🔵 파란색 점 클릭 - ProfileImages 로드');
                                 if (handleProfileImagesClick) {
