@@ -1,19 +1,13 @@
 import { useCallback } from "react";
-import { 
-  VideoData, 
-  ImportedImageData, 
-  MoodboardImageData, 
-  Position, 
-  HistoryData 
-} from '../../../../types/profile';
+import { ImageData } from '../../../../types/profile';
 
 type UseImageDeleteProps = {
-    images: MoodboardImageData[];
-    setImages: (imgs: MoodboardImageData[]) => void;
-    positions: Record<string, Position>;
+    images: ImageData[];
+    setImages: (imgs: ImageData[]) => void;
+    positions: Record<string, ImageData['position']>;
     frameStyles: Record<string, string>;
-    histories: HistoryData[];
-    setHistories: (h: HistoryData[]) => void;
+    histories: any[];
+    setHistories: (h: any[]) => void;
     setCurrentHistoryIndex: (i: number) => void;
     setVisibleImageIds: (ids: Set<string>) => void;
 };
@@ -56,18 +50,9 @@ export function useImageDelete({
             }
         }
         
-        const newHistory: HistoryData = {
-            timestamp: Date.now(),
-            positions,
-            frameStyles,
-            images: updatedImages
-        };
-        const updatedHistories = [...histories, newHistory];
-        setHistories(updatedHistories);
-        localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
-        setCurrentHistoryIndex(updatedHistories.length - 1);
+        // 삭제 후 현재 보이는 이미지 ID 업데이트
         setVisibleImageIds(new Set(updatedImages.map(img => img.id)));
         },
-        [images, setImages, positions, frameStyles, histories, setHistories, setCurrentHistoryIndex, setVisibleImageIds]
+        [images, setImages, setVisibleImageIds]
     );
 } 

@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { 
   Position, 
-  MoodboardImageData, 
+  ImageData, 
   HistoryData 
 } from '../../../types/profile';
 
@@ -16,7 +16,7 @@ export function useHistorySave({
 }: {
   positions: Record<string, Position>;
   frameStyles: Record<string, string>;
-  images: MoodboardImageData[];
+  images: ImageData[];
   histories: HistoryData[];
   setHistories: (h: HistoryData[]) => void;
   setCurrentHistoryIndex: (idx: number) => void;
@@ -33,7 +33,7 @@ export function useHistorySave({
     };
     
     const updatedHistories = [...histories, newHistory];
-    setHistories(updatedHistories);
+    setHistories(updatedHistories as HistoryData[]);
     //localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
     //setCurrentHistoryIndex(updatedHistories.length - 1);
     setIsEditing(false);

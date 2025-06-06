@@ -7,8 +7,7 @@ import ProfileHeader from '@/app/my_profile/Nickname/ProfileHeader';
 import { dummyUsers } from '../dummy-data';
 import { 
 ProfileData, 
-Position, 
-MoodboardImageData,
+ImageData,
 } from '@/app/types/profile';
 import { DndContext } from '@dnd-kit/core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -22,8 +21,8 @@ const router = useRouter();
 const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
 const [profile, setProfile] = useState<ProfileData | null>(null);
-const [images, setImages] = useState<MoodboardImageData[]>([]);
-const [positions, setPositions] = useState<Record<string, Position>>({});
+const [images, setImages] = useState<ImageData[]>([]);
+const [positions, setPositions] = useState<Record<string, ImageData['position']>>({});
 const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
 const [bgColor, setBgColor] = useState('bg-gray-50'); // 기본 배경색
 const [isLoading, setIsLoading] = useState(true);
@@ -34,8 +33,15 @@ useEffect(() => {
     if (userData) {
         setProfile(userData.profile);
         setImages(userData.images);
-        setPositions(userData.positions);
-        setFrameStyles(userData.frameStyles);
+        setPositions(userData.images.reduce((acc, image) => {
+            acc[image.id] = image.position;
+            return acc;
+        }, {} as Record<string, ImageData['position']>));
+
+        setFrameStyles(userData.images.reduce((acc, image) => {
+            acc[image.id] = image.frameStyle;
+            return acc;
+        }, {} as Record<string, string>));
     }
     setIsLoading(false);
     }
@@ -76,11 +82,10 @@ return (
                 >
                 <DraggableImage
                     image={image}
-                    position={positions[image.id] || image.position}
+                    position={positions[image.id] || { x: 0, y: 0 }}        
                     isEditing={false} // 드래그 및 리사이즈 비활성화
                     isOwner={false} // 다른 사람 프로필이므로 isOwner를 false로 설정
                     ownerId={userId}
-                    positions={positions}
                     frameStyle={image.desired_self ? 'star' : (frameStyles[image.id] || 'healing')}
                     onFrameStyleChange={() => {}} // 동작 안 함
                     onImageChange={() => {}} // 동작 안 함

@@ -1,4 +1,5 @@
 import { useRouter } from 'next/navigation';
+import { saveSliderHistory } from '../../utils/saveSliderHistory';
 
 export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
     const router = useRouter();
@@ -54,6 +55,15 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
         imageList.push(newInterestImage);
         localStorage.setItem('profileImages', JSON.stringify(imageList));
         
+        // 슬라이더 히스토리에도 기록 추가
+        const sliderResult = saveSliderHistory(imageList);
+        if (sliderResult.success) {
+            console.log('✅ 슬라이더 히스토리에 새로운 관심사 기록 추가됨');
+        } else {
+            console.error('❌ 슬라이더 히스토리 저장 실패:', sliderResult.error);
+        }
+        
+        console.log('✅ 새로운 관심사 이미지 추가됨:', newInterestImage);
         alert('새로운 관심사가 내 프로필에 추가되었습니다.');
         setShowDetails(false);
         router.push('/my_profile');

@@ -1,13 +1,11 @@
-import { ProfileData, MoodboardImageData, Position } from '@/app/types/profile';
+import { ProfileData, ImageData } from '@/app/types/profile';
 
 interface DummyUserData {
 profile: ProfileData;
-images: MoodboardImageData[];
-positions: Record<string, Position>;
-frameStyles: Record<string, string>;
+images: ImageData[];
 }
 
-const addDefaultImageFields = (image: any): MoodboardImageData => {
+const addDefaultImageFields = (image: any): ImageData => {
     const defaults = {
         desired_self_profile: null,
         metadata: {},
@@ -70,16 +68,66 @@ export const dummyUsers: Record<string, DummyUserData> = {
             desired_self: false,
             keywords: ["호수", "데크", "새벽", "안개"],
             relatedVideos: [{ title: "고요한 호수 소리", embedId: "m2-2B_2bL2E" }],
+        }),
+        addDefaultImageFields({
+            id: 'dummy1-3',
+            user_id: 'user1',
+            src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071&auto=format&fit=crop',
+            alt: 'A dense forest with sunlight filtering through trees',
+            main_keyword: '숲',
+            sub_keyword: '나무',
+            mood_keyword: '#신비로운 #생명력',
+            description: '햇살이 스며드는 울창한 숲의 모습입니다.',
+            position: { x: 150, y: 400 },
+            left: '150px',
+            top: '400px',
+            frameStyle: 'normal',
+            sizeWeight: 0.04,
+            category: "자연",
+            desired_self: false,
+            keywords: ["숲", "나무", "햇살", "신비"],
+            relatedVideos: [{ title: "숲 속의 새소리", embedId: "xNN7iTA57jM" }],
+        }),
+        addDefaultImageFields({
+            id: 'dummy1-4',
+            user_id: 'user1',
+            src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop',
+            alt: 'A night sky filled with stars over a mountain',
+            main_keyword: '별',
+            sub_keyword: '밤하늘',
+            mood_keyword: '#로맨틱한 #감동적인',
+            description: '산 위로 펼쳐진 별이 가득한 밤하늘입니다.',
+            position: { x: 500, y: 150 },
+            left: '500px',
+            top: '150px',
+            frameStyle: 'people',
+            sizeWeight: 0.045,
+            category: "천체",
+            desired_self: false,
+            keywords: ["별", "밤하늘", "은하수", "산"],
+            relatedVideos: [{ title: "밤하늘 타임랩스", embedId: "drGj8_tnq3A" }],
+        }),
+        addDefaultImageFields({
+            id: 'dummy1-5',
+            user_id: 'user1',
+            src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop',
+            alt: 'A beautiful sunset over the ocean with waves',
+            main_keyword: '바다',
+            sub_keyword: '일몰',
+            mood_keyword: '#따뜻한 #평온한',
+            description: '파도가 치는 바다 위로 지는 황금빛 일몰입니다.',
+            position: { x: 300, y: 500 },
+            left: '300px',
+            top: '500px',
+            frameStyle: 'pill',
+            sizeWeight: 0.035,
+            category: "바다",
+            desired_self: false,
+            keywords: ["바다", "일몰", "파도", "황금빛"],
+            relatedVideos: [{ title: "바다 파도 소리", embedId: "V1bFr2SWP1I" }],
         })
     ],
-    positions: {
-    'dummy1-1': { x: 50, y: 100 },
-    'dummy1-2': { x: 350, y: 250 },
-    },
-    frameStyles: {
-        'dummy1-1': 'healing',
-        'dummy1-2': 'love',
-    }
+    
 },
 'user2': {
     profile: {
@@ -110,11 +158,5 @@ export const dummyUsers: Record<string, DummyUserData> = {
             relatedVideos: [{ title: "웃긴 고양이 영상", embedId: "hY7m5jjJ9e4" }],
         })
     ],
-    positions: {
-    'dummy2-1': { x: 100, y: 150 },
-    },
-    frameStyles: {
-        'dummy2-1': 'star',
-    }
 },
 }; 

@@ -1,17 +1,13 @@
 import { useCallback } from "react";
-import { 
-  Position, 
-  MoodboardImageData, 
-  HistoryData 
-} from '../../../../types/profile';
+import { ImageData } from '../../../../types/profile';
 
 export function useImageChange(
-    images: MoodboardImageData[],
-    setImages: (imgs: MoodboardImageData[]) => void,
-    positions: Record<string, Position>,
+    images: ImageData[],
+    setImages: (imgs: ImageData[]) => void,
+    positions: Record<string, ImageData['position']>,
     frameStyles: Record<string, string>,
-    histories: HistoryData[],
-    setHistories: (h: HistoryData[]) => void,
+    histories: any[],
+    setHistories: (h: any[]) => void,
     setCurrentHistoryIndex: (idx: number) => void
     ) {
     return useCallback(
@@ -73,7 +69,7 @@ export function useImageChange(
             console.log('❌ profileImages가 localStorage에 없습니다');
         }
 
-        // 새로운 히스토리 생성 및 저장
+        // 새로운 히스토리 생성 및 저장 - 이미지 변경은 의미있는 변경사항이므로 히스토리 저장이 필요
         const newHistory = {
             timestamp: Date.now(),
             positions,
