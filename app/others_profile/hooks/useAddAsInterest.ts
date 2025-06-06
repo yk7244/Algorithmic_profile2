@@ -41,6 +41,14 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
             metadata: image.metadata || {}
         };
         
+        // 현재 desired_self가 true인 이미지 개수 확인
+        const currentDesiredSelfCount = imageList.filter(img => img.desired_self === true).length;
+        
+        if (currentDesiredSelfCount >= 3) {
+            alert('관심사는 최대 3개까지만 추가할 수 있습니다. 기존 관심사를 삭제한 후 다시 시도해주세요.');
+            return; // 3개 제한
+        }
+
         // 이미 추가된 관심사인지 확인 (원본 이미지 src와 프로필 주인을 기준)
         const isAlreadyAdded = imageList.some(
             img => img.desired_self && img.src === newInterestImage.src && img.desired_self_profile === ownerId
