@@ -3,7 +3,7 @@ import {
   Position, 
   MoodboardImageData, 
   HistoryData 
-} from '../../../types/profile';
+} from '../../../../types/profile';
 
 export function useImageChange(
     images: MoodboardImageData[],

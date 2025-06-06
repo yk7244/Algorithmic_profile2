@@ -102,7 +102,7 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
             {showNotification && (
                 <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-100 px-6 py-3 bg-black text-white rounded-xl shadow-lg font-medium transition-all duration-300">
                     검색 모드로 전환되었습니다
-                </div>
+        </div>
             )}
             
             {/* 플로팅 버튼 */}
@@ -114,17 +114,17 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
                     cursor: isDragging ? 'grabbing' : 'grab'
                 }}
             >
-                {/* 별 모양 버튼 */}
-                <button
+        {/* 별 모양 버튼 */}
+        <button
                     ref={buttonRef}
                     onClick={!isDragging ? toggleSearchMode : undefined}
                     onMouseDown={handleMouseDown}
                     className={`relative w-20 h-20 flex justify-center focus:outline-none group transition-all duration-200 ${
                         isDragging ? 'scale-110 opacity-80' : 'hover:scale-105'
                     }`}
-                    aria-label={isSearchMode ? '검색 모드 종료' : '검색하기'}
-                    style={{ background: 'none' }}
-                >
+            aria-label={isSearchMode ? '검색 모드 종료' : '검색하기'}
+            style={{ background: 'none' }}
+        >
                     {/* 호버 메시지 - 드래그 중에는 숨김 */}
                     {!isDragging && (
                         <div 
@@ -135,11 +135,11 @@ const SearchFloatingButton: React.FC<SearchFloatingButtonProps> = ({
                             {isSearchMode ? '검색모드를 종료하시고 싶으시면 한번더 클릭하세요' : '당신의 관심사로, 새로운 연결을 탐색해보세요.'}
                         </div>
                     )}
-                    <img src={search_star.src} alt="search" className="w-20 h-20" />
-                </button>
-            </div>
+        <img src={search_star.src} alt="search" className="w-20 h-20" />
+        </button>
+    </div>
         </>
-    );
+);
 };
 
 export default SearchFloatingButton; 

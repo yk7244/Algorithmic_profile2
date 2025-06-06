@@ -124,6 +124,7 @@ export interface VideoData {
   embedId: string;
 }
 
+//[6] ImportedImageData 테이블 - 다른 사람의 프로필 페이지에서 가져올때
 export interface ImportedImageData {
   id: string;
   user_id?: string; 
@@ -153,9 +154,6 @@ export interface ImportedImageData {
     y: number;
   };
   frameStyle: string; //update되는 값
-  alt?: string;
-  cluster?: string;
-  color?: string;
   created_at: string;
 }
 

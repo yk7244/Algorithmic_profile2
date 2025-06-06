@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { useState, useEffect, useRef } from 'react';
 import {DndContext} from '@dnd-kit/core';
 import { restrictToWindowEdges } from '@dnd-kit/modifiers';
-import { restrictToContainer } from './Draggable/Hooks/useDragConstraints';
+import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
 
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
@@ -19,7 +19,7 @@ import ProfileHeader from './Nickname/ProfileHeader';
 import SearchFloatingButton from './SearchMode/SearchFloatingButton';
 import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
-import { useImageDelete } from "./Draggable/Hooks/useImageDelete";
+import { useImageDelete } from "./Draggable/Hooks/Image/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
 import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
 import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
@@ -223,7 +223,7 @@ export default function MyProfilePage() {
                     position={positions[image.id] || image.position}
                     isEditing={isEditing && !isSearchMode}
                     positions={positions}
-                    frameStyle={image.desired_self ? 'star' : (frameStyles[image.id] || 'healing')}
+                    frameStyle={image.desired_self ? 'cokie' : (frameStyles[image.id] || 'normal')}
                     onFrameStyleChange={handleFrameStyleChange}
                     onImageChange={handleImageChange}
                     onImageSelect={handleImageSelect}
@@ -266,16 +266,16 @@ export default function MyProfilePage() {
 
       {/* 하단 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}
       {!isSearchMode && (
-        <BottomActionBar
-          isEditing={isEditing}
+      <BottomActionBar
+        isEditing={isEditing}
           isGeneratingProfile={showGeneratingDialog}
-          onEditClick={() => setIsEditing(true)}
-          onSaveClick={handleSave}
+        onEditClick={() => setIsEditing(true)}
+        onSaveClick={handleSave}
           onGenerateProfile={generateProfile}
           sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
-        />
+      />
       )}
 
     </main>
   );
-}
+} 
