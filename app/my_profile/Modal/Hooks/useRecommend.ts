@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { VideoData } from "../../../../types/profile";
+import { VideoData } from "../../../types/profile";
 
 export async function fetchAiRecommendedVideos(mainKeyword: string, keywords: string[]): Promise<VideoData[]> {
 if (!mainKeyword || !keywords || keywords.length === 0) return [];

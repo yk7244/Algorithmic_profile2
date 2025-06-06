@@ -1,5 +1,5 @@
 import React from 'react';
-import { VideoData } from '../../DraggableImage';
+import { VideoData } from '../../Draggable/DraggableImage';
 import { CheckCircle2 } from 'lucide-react';
 
 interface VideoListProps {

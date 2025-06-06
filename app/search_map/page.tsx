@@ -1,108 +1,58 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { ZoomIn, ZoomOut, RotateCcw, Info } from 'lucide-react';
+import { mapPoints, MapPoint } from './mockData';
+import { Button } from '@/components/ui/button';
+import router from 'next/router';
 
-interface MapPoint {
-  id: number;
-  x: number;
-  y: number;
-  nickname: string;
-  isMe?: boolean;
-  profileImage: string;
-}
+const ConnectionMap = () => {
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [hoveredUser, setHoveredUser] = useState<string | null>(null);
 
-export default function SearchMapPage() {
-  const [zoomLevel, setZoomLevel] = useState(1.8); // 시작을 사진 모드로
-  const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 25, 200));
+  };
 
-  // 고정된 포인트들 (랜덤하지 않음)
-  const mapPoints: MapPoint[] = [
-    // 나 (가운데)
-    {
-      id: 0,
-      x: 50,
-      y: 50,
-      nickname: '나',
-      isMe: true,
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-    },
-    // 다른 유저들
-    {
-      id: 1,
-      x: 30,
-      y: 25,
-      nickname: '여행가 감자',
-      profileImage: 'https://images.unsplash.com/photo-1494790108755-2616c39e1f76?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 2,
-      x: 25,
-      y: 60,
-      nickname: '고양이 집사',
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 3,
-      x: 70,
-      y: 30,
-      nickname: '커피 러버',
-      profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 4,
-      x: 75,
-      y: 70,
-      nickname: '책벌레',
-      profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 5,
-      x: 50,
-      y: 80,
-      nickname: '운동광',
-      profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face'
-    }
-  ];
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 25, 50));
+  };
 
-  const zoomIn = () => setZoomLevel(prev => Math.min(3, prev + 0.3));
-  const zoomOut = () => setZoomLevel(prev => Math.max(0.5, prev - 0.3));
-  const resetView = () => setZoomLevel(1.8);
+  const resetView = () => setZoomLevel(100);
 
-  const zoomPercentage = Math.round(zoomLevel * 100);
+  const zoomPercentage = Math.round(zoomLevel);
   const shouldShowPhoto = zoomPercentage >= 150;
 
   return (
     <div className="h-screen bg-gray-50 relative overflow-hidden">
       {/* 제목 오버레이 */}
-      <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-20 text-center">
-        <div className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl shadow-sm border border-gray-200">
+      <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-20 text-center">
           <h1 className="text-2xl font-light text-gray-900 tracking-tight mb-1">
             connections
           </h1>
           <p className="text-gray-600 text-sm font-light">
             discover people worth connecting with
           </p>
-        </div>
+          {/* 줌 레벨 표시 */}
+          <div className="fixed top-20 left-20 z-20">
+            <div className="bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-center">
+              <span className="text-white text-sm font-medium">{zoomPercentage}%</span>
+            </div>
+          </div>
       </div>
 
-      {/* 줌 레벨 표시 */}
-      <div className="fixed top-8 left-8 z-20">
-        <div className="bg-gray-900/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm text-center">
-          <span className="text-white text-sm font-medium">{zoomPercentage}%</span>
-        </div>
-      </div>
+      
 
       {/* 줌 컨트롤 버튼들 */}
-      <div className="fixed bottom-8 right-8 z-20 flex flex-col gap-3">
+      <div className="fixed bottom-20 right-20 z-20 flex flex-col gap-3">
         <button
-          onClick={zoomIn}
+          onClick={handleZoomIn}
           className="w-12 h-12 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md flex items-center justify-center text-gray-700 hover:text-gray-900"
         >
           <ZoomIn size={18} />
         </button>
         <button
-          onClick={zoomOut}
+          onClick={handleZoomOut}
           className="w-12 h-12 bg-white border border-gray-200 rounded-full shadow-sm hover:shadow-md flex items-center justify-center text-gray-700 hover:text-gray-900"
         >
           <ZoomOut size={18} />
@@ -141,7 +91,7 @@ export default function SearchMapPage() {
         <div 
           className="w-full h-full relative"
           style={{
-            transform: `scale(${zoomLevel})`,
+            transform: `scale(${zoomLevel/100})`,
             transformOrigin: 'center center'
           }}
         >
@@ -159,8 +109,8 @@ export default function SearchMapPage() {
                   width: `${size}px`,
                   height: `${size}px`,
                 }}
-                onMouseEnter={() => setHoveredPoint(point.id)}
-                onMouseLeave={() => setHoveredPoint(null)}
+                onMouseEnter={() => setHoveredUser(point.nickname)}
+                onMouseLeave={() => setHoveredUser(null)}
               >
                 {shouldShowPhoto ? (
                   /* 사진 모드 */
@@ -186,14 +136,22 @@ export default function SearchMapPage() {
                 )}
                 
                 {/* 호버시 나타나는 닉네임 */}
-                {hoveredPoint === point.id && (
+                {hoveredUser === point.nickname && (
                   <div 
                     className="absolute left-1/2 transform -translate-x-1/2 text-gray-900 text-sm font-medium whitespace-nowrap pointer-events-none"
                     style={{
                       top: shouldShowPhoto ? '-35px' : '-25px'
                     }}
                   >
-                    {point.nickname}
+                    <div className="bg-black/80 text-white px-2 py-1 rounded-full flex items-center gap-2">
+                      {point.nickname}
+                    </div>
+                    <Button
+                      onClick={() => router.push(`/others_profile/${point.id}`)}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
+                      >
+                      프로필 방문하기
+                    </Button>
                   </div>
                 )}
               </div>
@@ -203,7 +161,9 @@ export default function SearchMapPage() {
       </div>
     </div>
   );
-} 
+}
+
+export default ConnectionMap; 
 
 
  
