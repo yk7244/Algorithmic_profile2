@@ -34,8 +34,17 @@ export const transformClusterToImageData = (
   // Step2. 영상 데이터 변환
   const relatedVideos = cluster.related_videos?.map((video: any) => ({
     title: video.title,
-    embedId: video.videoId || video.url?.split('v=')[1] || ''
+    embedId: video.embedId || video.videoId || video.url?.split('v=')[1] || ''
   })) || [];
+
+  // 🆕 디버깅용 로깅 추가
+  console.log('🔧 [transformClusterToImageData] relatedVideos 변환:', {
+    'cluster.main_keyword': cluster.main_keyword,
+    'cluster.related_videos (원본)': cluster.related_videos,
+    'relatedVideos (변환 후)': relatedVideos,
+    '변환된 영상 수': relatedVideos.length,
+    '유효한 embedId 수': relatedVideos.filter((v: any) => v.embedId).length
+  });
 
   // Step4. 키워드 리스트 변환
   const keywords = cluster.keyword_list?.split(',').map((k: string) => k.trim()) || [];

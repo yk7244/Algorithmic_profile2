@@ -102,7 +102,7 @@ const [dateRange, setDateRange] = useState<{
     to: Date | undefined;
 }>({
     from: new Date('Tue Apr 14 2025 14:00:00 GMT+0900'),
-    to: new Date('Tue Apr 20 2025 14:00:00 GMT+0900'),
+    to: new Date('Tue Apr 16 2025 14:00:00 GMT+0900'),
     ////✅나중에 이걸로 바꾸기
     //from: new Date(new Date().setDate(new Date().getDate() - 7)),
     //to: new Date()

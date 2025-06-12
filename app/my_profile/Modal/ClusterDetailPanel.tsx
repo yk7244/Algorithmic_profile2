@@ -109,6 +109,16 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
         const normalizedRelatedVideos = normalizeRelatedVideos(image.relatedVideos || []);
 
+        // 🆕 디버깅용 로깅 추가
+        console.log('🔍 [ClusterDetailPanel] 관련 영상 디버깅:', {
+            'image.main_keyword': image.main_keyword,
+            'image.relatedVideos (원본)': image.relatedVideos,
+            'normalizedRelatedVideos (정규화 후)': normalizedRelatedVideos,
+            'normalizedRelatedVideos.length': normalizedRelatedVideos.length,
+            'image.relatedVideos가 배열인가?': Array.isArray(image.relatedVideos),
+            'image.relatedVideos 길이': image.relatedVideos ? image.relatedVideos.length : '없음'
+        });
+
         // 프로필 방문 핸들러
         const handleVisitProfile = () => {
             if (image.desired_self_profile) {
