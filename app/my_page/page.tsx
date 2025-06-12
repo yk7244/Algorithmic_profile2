@@ -12,7 +12,8 @@ import {
   getWatchHistory, 
   getCurrentUserId, 
   ensureUserExists,
-  saveProfileData
+  saveProfileData,
+  getExploreWatchHistory
 } from '@/lib/database';
 // 페이지 컴포넌트에 전달될 props가 있다면 여기에 타입을 정의할 수 있습니다.
 // interface PageProps {
@@ -158,17 +159,34 @@ export default function MyPage() {
 
   // 🆕 기존 전역 localStorage 키 정리 함수
   const cleanupOldWatchHistoryKeys = () => {
-    const oldKeys = [
-      'watchHistory',
-      'exploreWatchHistory',
-      'video_history',
-      'explore_video_history'
-    ];
-    
-    oldKeys.forEach(key => {
+    const keysToRemove = ['watchHistory', 'watchHistory_guest'];
+    keysToRemove.forEach(key => {
       if (localStorage.getItem(key)) {
-        console.log(`[Cleanup] 기존 전역 시청기록 키 삭제: ${key}`);
+        console.log(`[MyPage] 기존키 삭제: ${key}`);
         localStorage.removeItem(key);
+      }
+    });
+  };
+
+  // 🆕 localStorage 디버깅 함수
+  const debugLocalStorageWatchHistory = () => {
+    console.log('🔍 [MyPage] localStorage 디버깅:');
+    
+    // 모든 localStorage 키 검사
+    const allKeys = Object.keys(localStorage);
+    const watchHistoryKeys = allKeys.filter(key => key.includes('watchHistory') || key.includes('exploreWatch'));
+    
+    console.log('관련 키들:', watchHistoryKeys);
+    
+    watchHistoryKeys.forEach(key => {
+      try {
+        const data = JSON.parse(localStorage.getItem(key) || '[]');
+        console.log(`${key}: ${Array.isArray(data) ? data.length : 'not array'}개 항목`);
+        if (Array.isArray(data) && data.length > 0) {
+          console.log(`${key} 샘플:`, data.slice(0, 2));
+        }
+      } catch (e) {
+        console.log(`${key}: 파싱 오류`);
       }
     });
   };
@@ -203,6 +221,9 @@ export default function MyPage() {
         // 🆕 기존 전역 localStorage 키 정리
         cleanupOldWatchHistoryKeys();
         
+        // 🆕 localStorage 디버깅
+        debugLocalStorageWatchHistory();
+        
         const userId = await getCurrentUserId();
         if (!userId) {
           console.log('[MyPage] 로그인되지 않음, 빈 시청 기록으로 초기화');
@@ -213,29 +234,82 @@ export default function MyPage() {
         // 🆕 DB-first: 통합된 WatchHistory에서 모든 시청기록 가져오기
         try {
           const dbWatchHistory = await getWatchHistory(userId, 50); // 전체 시청기록 50개
+          const exploreWatchHistory = await getExploreWatchHistory(userId, 50); // 🆕 탐색 시청기록 50개
 
+          // 🆕 디버깅용 로깅 추가
+          console.log('🔍 [MyPage] DB 시청기록 로드 결과:', {
+            'userId': userId,
+            'Upload DB에서 가져온 개수': dbWatchHistory?.length || 0,
+            'Explore DB에서 가져온 개수': exploreWatchHistory?.length || 0,
+            'DB 데이터 샘플': dbWatchHistory?.slice(0, 3) || [],
+            'Explore 데이터 샘플': exploreWatchHistory?.slice(0, 3) || [],
+            'source 분포': dbWatchHistory?.reduce((acc: any, item: any) => {
+              acc[item.source || 'unknown'] = (acc[item.source || 'unknown'] || 0) + 1;
+              return acc;
+            }, {}) || {}
+          });
+
+          let allHistory: any[] = [];
+
+          // watch_history 데이터 변환
           if (dbWatchHistory && dbWatchHistory.length > 0) {
-            // DB 데이터를 WatchHistory 형식으로 변환
             const formattedHistory = dbWatchHistory.map((item: any) => ({
               id: item.id,
               user_id: item.user_id,
               videoId: item.video_id,
               title: item.title,
               description: item.description,
-              source: item.source,
+              source: item.source || 'upload',
               timestamp: item.timestamp
             }));
+            allHistory = [...allHistory, ...formattedHistory];
+          }
 
+          // 🆕 explore_watch_history 데이터 변환
+          if (exploreWatchHistory && exploreWatchHistory.length > 0) {
+            const exploreFormatted = exploreWatchHistory.map((item: any) => ({
+              id: item.id,
+              user_id: item.user_id,
+              videoId: item.video_id,
+              title: item.title,
+              description: item.description,
+              source: 'explore', // explore_watch_history는 항상 explore
+              timestamp: item.timestamp
+            }));
+            allHistory = [...allHistory, ...exploreFormatted];
+          }
+
+          if (allHistory.length > 0) {
             // 시간순 정렬 (최신순)
-            formattedHistory.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            allHistory.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
             // 중복 제거 (같은 videoId)
-            const uniqueHistory = formattedHistory.filter((item, index, self) => 
+            const uniqueHistory = allHistory.filter((item, index, self) => 
               index === self.findIndex((t) => t.videoId === item.videoId)
             );
 
+            // 🆕 디버깅용 로깅 추가
+            console.log('🔍 [MyPage] 시청기록 처리 결과:', {
+              '전체 통합 개수': allHistory.length,
+              '중복 제거 후 개수': uniqueHistory.length,
+              '중복 제거된 항목들': allHistory.filter((item, index, self) => 
+                index !== self.findIndex((t) => t.videoId === item.videoId)
+              ).map(item => item.title),
+              'source별 개수': uniqueHistory.reduce((acc: any, item: any) => {
+                acc[item.source || 'unknown'] = (acc[item.source || 'unknown'] || 0) + 1;
+                return acc;
+              }, {}),
+              '최종 시청기록 첫 5개': uniqueHistory.slice(0, 5).map(item => ({
+                title: item.title,
+                source: item.source,
+                timestamp: item.timestamp
+              }))
+            });
+
             setWatchHistory(uniqueHistory);
             console.log('[MyPage] DB에서 통합 시청 기록 로드 완료:', uniqueHistory.length);
+            console.log(`- Upload 기록: ${dbWatchHistory?.length || 0}개`);
+            console.log(`- Explore 기록: ${exploreWatchHistory?.length || 0}개`);
 
             // 🆕 사용자별 localStorage에 캐시 저장
             const cacheKey = `watchHistory_${userId}`;
