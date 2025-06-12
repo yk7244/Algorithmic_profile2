@@ -5,8 +5,7 @@ import {
 } from '../../../types/profile';
 import { 
   updateClusterImages, 
-  saveClusterHistory, 
-  saveSliderHistory,
+  saveClusterHistory,
   getCurrentUserId, 
   ensureUserExists 
 } from '@/lib/database';
@@ -35,7 +34,6 @@ export function useHistorySave({
       // 사용자별 키 사용
       const historyKey = userId ? `moodboardHistories_${userId}` : 'moodboardHistories';
       const imagesKey = userId ? `profileImages_${userId}` : 'profileImages';
-      const sliderKey = userId ? `SliderHistory_${userId}` : 'SliderHistory';
       
       // 히스토리 저장 (moodboard용)
       localStorage.setItem(historyKey, JSON.stringify(updatedHistories));
@@ -45,26 +43,16 @@ export function useHistorySave({
       localStorage.setItem(imagesKey, JSON.stringify(currentImages));
       console.log(`✅ 사용자별 프로필 이미지 localStorage 저장: ${imagesKey}`);
 
-      // 슬라이더 히스토리도 저장
-      const sliderHistoryData = {
-        timestamp: Date.now(),
-        positions,
-        frameStyles,
-        images: currentImages
-      };
-      
-      const existingSliderHistory = JSON.parse(localStorage.getItem(sliderKey) || '[]');
-      const updatedSliderHistory = [...existingSliderHistory, sliderHistoryData];
-      localStorage.setItem(sliderKey, JSON.stringify(updatedSliderHistory));
-      console.log(`✅ 사용자별 슬라이더 히스토리 localStorage 저장: ${sliderKey}`);
+      // 🚨 슬라이더 히스토리 localStorage 저장 로직 제거
+      // 일반적인 편집 저장에서는 SliderHistory를 생성하지 않음
       
     } catch (fallbackError) {
       console.error('localStorage 저장 실패:', fallbackError);
     }
-  }, [positions, frameStyles]); // positions와 frameStyles만 의존성으로 추가
+  }, [positions, frameStyles]);
 
   return useCallback(async () => {
-    console.log('💾 === 명시적 저장 시작 ===');
+    console.log('💾 === 일반 편집 저장 시작 (SliderHistory 생성 안함) ===');
     
     const currentTimestamp = Date.now();
     const newHistory = {
@@ -78,9 +66,9 @@ export function useHistorySave({
     setHistories(updatedHistories as HistoryData[]);
     setIsEditing(false);
     
-    console.log('✅ 히스토리 상태 업데이트 완료, DB 저장 시작...');
+    console.log('✅ moodboard 히스토리 상태 업데이트 완료, DB 저장 시작...');
 
-    // 🆕 DB 역할 분담에 맞는 저장 로직
+    // 🆕 일반 편집 저장은 현재 상태만 업데이트 (SliderHistory 생성 안함)
     try {
       const userId = await getCurrentUserId();
       if (!userId) {
@@ -153,31 +141,19 @@ export function useHistorySave({
       await saveClusterHistory(clusterHistoryData);
       console.log('✅ cluster_history DB 저장 완료 (저장된 클러스터 기록 - 누적):', clusterHistoryData.length);
 
-      // 🎯 3. slider_history 저장 (슬라이더로 보는 히스토리)
-      const sliderHistoryData = {
-        user_id: userId,
-        version_type: 'self' as const, // 🆕 타입 수정: 사용자가 직접 저장
-        nickname: `Saved_${new Date(currentTimestamp).toLocaleString()}`,
-        description: `수동 저장 - ${images.length}개 클러스터`,
-        images: images.map(img => ({
-          ...img,
-          position: positions[img.id] || img.position,
-          frameStyle: frameStyles[img.id] || img.frameStyle
-        }))
-      };
+      // 🚨 slider_history 저장 로직 완전 제거
+      // 일반적인 편집 저장에서는 SliderHistory를 생성하지 않음
+      console.log('⚠️ SliderHistory 생성 안함 - 일반 편집 저장이므로');
 
-      await saveSliderHistory(sliderHistoryData);
-      console.log('✅ slider_history DB 저장 완료 (슬라이더용 히스토리)');
-
-      // 🎯 4. 사용자별 localStorage 캐시도 업데이트
+      // 🎯 3. 사용자별 localStorage 캐시도 업데이트
       await saveToLocalStorageOnly(userId, updatedHistories, images);
       
-      console.log('🎉 명시적 저장 완료 - 3개 테이블 + localStorage 모두 성공');
+      console.log('🎉 일반 편집 저장 완료 - cluster_images + cluster_history + localStorage (SliderHistory 제외)');
 
     } catch (error) {
       console.error('❌ DB 저장 실패, localStorage fallback:', error);
       await saveToLocalStorageOnly(await getCurrentUserId(), updatedHistories, images);
     }
     
-  }, [positions, frameStyles, images, histories, setHistories, setCurrentHistoryIndex, setIsEditing]);
+  }, [positions, frameStyles, images, histories, setHistories, setCurrentHistoryIndex, setIsEditing, saveToLocalStorageOnly]);
 } 

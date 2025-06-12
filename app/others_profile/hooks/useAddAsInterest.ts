@@ -1,6 +1,5 @@
 import { useRouter } from 'next/navigation';
-import { saveSliderHistory } from '../../utils/saveSliderHistory';
-import { getCurrentUserId, updateClusterImages, getClusterImages } from '@/lib/database';
+import { getCurrentUserId, updateClusterImages, getClusterImages, saveSliderHistory as saveSliderHistoryDB, getProfileData } from '@/lib/database';
 
 export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
     const router = useRouter();
@@ -109,16 +108,45 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
                 // DB 저장 실패해도 localStorage는 유지
             }
             
-            // 슬라이더 히스토리에도 기록 추가
+            // 🎯 desired_self 추가 시에만 SliderHistory 생성 (version_type: 'self')
             try {
-                const sliderResult = await saveSliderHistory(imageList);
-                if (sliderResult.success) {
-                    console.log('✅ 슬라이더 히스토리에 새로운 관심사 기록 추가됨');
-                } else {
-                    console.error('❌ 슬라이더 히스토리 저장 실패:', sliderResult.error);
+                // 현재 사용자의 프로필 정보 가져오기
+                let currentNickname = '새로운 사용자';
+                let currentDescription = '프로필 설명이 없습니다';
+
+                try {
+                    const profileData = await getProfileData(currentUserId);
+                    if (profileData) {
+                        currentNickname = profileData.nickname || currentNickname;
+                        currentDescription = profileData.description || currentDescription;
+                    }
+                } catch (profileError) {
+                    console.log('[desired_self] DB에서 프로필 로드 실패, localStorage fallback');
+                    try {
+                        const profileDataKey = `ProfileData_${currentUserId}`;
+                        const savedProfileData = JSON.parse(localStorage.getItem(profileDataKey) || '{}');
+                        currentNickname = savedProfileData.nickname || currentNickname;
+                        currentDescription = savedProfileData.description || currentDescription;
+                    } catch (localError) {
+                        console.log('[desired_self] localStorage 프로필 로드도 실패, 기본값 사용');
+                    }
                 }
+
+                // 🎯 SliderHistory 데이터 생성 (version_type: 'self')
+                const sliderHistoryData = {
+                    user_id: currentUserId,
+                    version_type: 'self' as const, // 🎯 desired_self 추가 시에는 'self' 타입
+                    nickname: currentNickname,
+                    description: `${currentDescription} (+관심사 추가: ${newInterestImage.main_keyword})`,
+                    images: imageList
+                };
+
+                await saveSliderHistoryDB(sliderHistoryData);
+                console.log('✅ SliderHistory DB 저장 완료 (version_type: self)');
+                
             } catch (sliderError) {
-                console.error('❌ 슬라이더 히스토리 저장 중 오류:', sliderError);
+                console.error('❌ SliderHistory 저장 중 오류:', sliderError);
+                // SliderHistory 저장 실패해도 관심사 추가는 성공으로 처리
             }
             
             console.log('✅ 새로운 관심사 이미지 추가됨:', newInterestImage);
