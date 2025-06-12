@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
-import { ExploreWatchHistory, WatchHistory } from '../types/profile';
+import { WatchHistory } from '../types/profile';
+import { 
+  getProfileData, 
+  getClusterImages, 
+  getWatchHistory, 
+  getCurrentUserId, 
+  ensureUserExists,
+  saveProfileData
+} from '@/lib/database';
 // 페이지 컴포넌트에 전달될 props가 있다면 여기에 타입을 정의할 수 있습니다.
 // interface PageProps {
 //   // 예: params: { slug: string };
@@ -34,51 +42,223 @@ export default function MyPage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileImages, setProfileImages] = useState<ProfileImage[]>([]);
   const [profileImageUrl, setProfileImageUrl] = useState<string>('images/default.png');
+  const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
+  const [isSavingPublicSetting, setIsSavingPublicSetting] = useState(false);
+  // 🆕 프로필 사진 변경 관련 상태
+  const [showImageSelectModal, setShowImageSelectModal] = useState(false);
+  const [isChangingProfileImage, setIsChangingProfileImage] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // 프로필 데이터
-      const raw = localStorage.getItem('ProfileData');
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw);
-          setProfile(parsed);
-        } catch {
+    const loadProfileData = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('로그인되지 않음, 빈 상태로 초기화');
+          // 🔥 로그인되지 않으면 데이터 초기화
           setProfile(null);
-        }
-      }
-      // 프로필 이미지
-      const imgRaw = localStorage.getItem('profileImages');
-      if (imgRaw) {
-        try {
-          const parsedImgs = JSON.parse(imgRaw);
-          if (Array.isArray(parsedImgs) && parsedImgs.length > 0) {
-            setProfileImages(parsedImgs);
-            // strength가 가장 큰 이미지 찾기
-            const maxImg = parsedImgs.reduce((prev, curr) =>
-              curr.strength > prev.strength ? curr : prev
-            );
-            if (maxImg.url) setProfileImageUrl(maxImg.url);
-            else setProfileImageUrl('images/default.png');
-          } else {
-            setProfileImageUrl('images/default.png');
-          }
-        } catch {
+          setProfileImages([]);
           setProfileImageUrl('images/default.png');
+          return;
         }
-      } else {
+
+        // DB에서 프로필 데이터 로드
+        const profileData = await getProfileData(userId);
+        if (profileData) {
+          setProfile({
+            id: profileData.id || profileData.user_id,
+            nickname: profileData.nickname,
+            description: profileData.description,
+            created_at: profileData.created_at,
+            updated_at: profileData.updated_at
+          });
+          // 🆕 프로필 공개 설정 로드
+          setIsProfilePublic(profileData.open_to_connect ?? true);
+          console.log('[MyPage] DB에서 프로필 로드 완료');
+        } else {
+          console.log('[MyPage] DB에 프로필 없음, localStorage 확인');
+          loadProfileFromLocalStorage(userId);
+        }
+
+        // DB에서 클러스터 이미지 로드
+        const clusterImages = await getClusterImages(userId);
+        if (clusterImages && clusterImages.length > 0) {
+          // DB 데이터를 ProfileImage 형식으로 변환
+          const formattedImages = clusterImages.map((item: any) => ({
+            url: item.src,
+            strength: item.size_weight || 1,
+            main_keyword: item.main_keyword,
+            id: item.id
+          }));
+          
+          setProfileImages(formattedImages);
+          
+          // strength가 가장 큰 이미지 찾기
+          const maxImg = formattedImages.reduce((prev, curr) =>
+            curr.strength > prev.strength ? curr : prev
+          );
+          setProfileImageUrl(maxImg.url || 'images/default.png');
+          
+          console.log('[MyPage] DB에서 클러스터 이미지 로드 완료');
+        } else {
+          console.log('[MyPage] DB에 클러스터 이미지 없음, 사용자별 localStorage 확인');
+          loadImagesFromLocalStorage(userId);
+        }
+
+      } catch (error) {
+        console.error('[MyPage] DB 로드 실패, 빈 상태로 초기화:', error);
+        // 🔥 에러 시에도 빈 상태로 초기화
+        setProfile(null);
+        setProfileImages([]);
         setProfileImageUrl('images/default.png');
       }
-    }
+    };
+
+    const loadProfileFromLocalStorage = (userId?: string) => {
+      if (typeof window !== 'undefined' && userId) {
+        const raw = localStorage.getItem(`ProfileData_${userId}`);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw);
+            setProfile(parsed);
+          } catch {
+            setProfile(null);
+          }
+        }
+      }
+    };
+
+    const loadImagesFromLocalStorage = (userId?: string) => {
+      if (typeof window !== 'undefined' && userId) {
+        const imgRaw = localStorage.getItem(`profileImages_${userId}`);
+        if (imgRaw) {
+          try {
+            const parsedImgs = JSON.parse(imgRaw);
+            if (Array.isArray(parsedImgs) && parsedImgs.length > 0) {
+              setProfileImages(parsedImgs);
+              // strength가 가장 큰 이미지 찾기
+              const maxImg = parsedImgs.reduce((prev, curr) =>
+                curr.strength > prev.strength ? curr : prev
+              );
+              if (maxImg.url) setProfileImageUrl(maxImg.url);
+              else setProfileImageUrl('images/default.png');
+            } else {
+              setProfileImageUrl('images/default.png');
+            }
+          } catch {
+            setProfileImageUrl('images/default.png');
+          }
+        } else {
+          setProfileImageUrl('images/default.png');
+        }
+      }
+    };
+
+    loadProfileData();
   }, []);
-  const [watchHistory, setWatchHistory] = useState<ExploreWatchHistory[]>([]);
+
+  // 🆕 기존 전역 localStorage 키 정리 함수
+  const cleanupOldWatchHistoryKeys = () => {
+    const oldKeys = [
+      'watchHistory',
+      'exploreWatchHistory',
+      'video_history',
+      'explore_video_history'
+    ];
+    
+    oldKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        console.log(`[Cleanup] 기존 전역 시청기록 키 삭제: ${key}`);
+        localStorage.removeItem(key);
+      }
+    });
+  };
+
+  // 🆕 사용자별 localStorage에서 시청기록 로드하는 fallback 함수
+  const loadWatchHistoryFromLocalStorage = async (userId: string) => {
+    try {
+      const cacheKey = `watchHistory_${userId}`;
+      const savedHistory = localStorage.getItem(cacheKey);
+      
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+          setWatchHistory(parsedHistory);
+          console.log('[MyPage] 사용자별 localStorage에서 시청기록 로드 완료:', parsedHistory.length);
+        } else {
+          setWatchHistory([]);
+        }
+      } else {
+        console.log('[MyPage] 사용자별 localStorage에 시청기록 없음');
+        setWatchHistory([]);
+      }
+    } catch (fallbackError) {
+      console.error('[MyPage] localStorage 시청기록 로드 실패:', fallbackError);
+      setWatchHistory([]);
+    }
+  };
 
   useEffect(() => {
-    // 로컬 스토리지에서 시청 기록 불러오기
-    const history = localStorage.getItem('exploreWatchHistory');
-    if (history) {
-      setWatchHistory(JSON.parse(history));
-    }
+    const loadWatchHistory = async () => {
+      try {
+        // 🆕 기존 전역 localStorage 키 정리
+        cleanupOldWatchHistoryKeys();
+        
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('[MyPage] 로그인되지 않음, 빈 시청 기록으로 초기화');
+          setWatchHistory([]);
+          return;
+        }
+
+        // 🆕 DB-first: 통합된 WatchHistory에서 모든 시청기록 가져오기
+        try {
+          const dbWatchHistory = await getWatchHistory(userId, 50); // 전체 시청기록 50개
+
+          if (dbWatchHistory && dbWatchHistory.length > 0) {
+            // DB 데이터를 WatchHistory 형식으로 변환
+            const formattedHistory = dbWatchHistory.map((item: any) => ({
+              id: item.id,
+              user_id: item.user_id,
+              videoId: item.video_id,
+              title: item.title,
+              description: item.description,
+              source: item.source,
+              timestamp: item.timestamp
+            }));
+
+            // 시간순 정렬 (최신순)
+            formattedHistory.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+            // 중복 제거 (같은 videoId)
+            const uniqueHistory = formattedHistory.filter((item, index, self) => 
+              index === self.findIndex((t) => t.videoId === item.videoId)
+            );
+
+            setWatchHistory(uniqueHistory);
+            console.log('[MyPage] DB에서 통합 시청 기록 로드 완료:', uniqueHistory.length);
+
+            // 🆕 사용자별 localStorage에 캐시 저장
+            const cacheKey = `watchHistory_${userId}`;
+            localStorage.setItem(cacheKey, JSON.stringify(uniqueHistory));
+            console.log('[MyPage] 시청기록 localStorage 캐시 저장 완료');
+
+          } else {
+            console.log('[MyPage] DB에 시청기록 없음, localStorage fallback');
+            await loadWatchHistoryFromLocalStorage(userId);
+          }
+
+        } catch (dbError) {
+          console.error('[MyPage] DB 시청기록 로드 실패, localStorage fallback:', dbError);
+          await loadWatchHistoryFromLocalStorage(userId);
+        }
+
+      } catch (error) {
+        console.error('[MyPage] 시청 기록 로드 전체 실패:', error);
+        setWatchHistory([]);
+      }
+    };
+
+    loadWatchHistory();
   }, []);
 
   // 기본값
@@ -89,6 +269,33 @@ export default function MyPage() {
   const canUpdate = !profile?.updated_at
     ? true
     : (Date.now() - new Date(profile.updated_at).getTime()) > 7 * 24 * 60 * 60 * 1000;
+
+  // 🆕 프로필 공개 설정 토글 함수
+  const handleProfilePublicToggle = async () => {
+    if (isSavingPublicSetting) return; // 이미 저장 중이면 중복 실행 방지
+    
+    const newPublicState = !isProfilePublic;
+    setIsProfilePublic(newPublicState);
+    setIsSavingPublicSetting(true);
+    
+    try {
+      const userId = await getCurrentUserId();
+      if (userId && profile) {
+        await saveProfileData(userId, {
+          nickname: profile.nickname,
+          description: profile.description,
+          open_to_connect: newPublicState
+        });
+        console.log('[MyPage] 프로필 공개 설정 저장 완료:', newPublicState);
+      }
+    } catch (error) {
+      console.error('[MyPage] 프로필 공개 설정 저장 실패:', error);
+      // 에러 시 상태 되돌리기
+      setIsProfilePublic(!newPublicState);
+    } finally {
+      setIsSavingPublicSetting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen h-screen bg-gray-50 flex flex-row overflow-hidden">
@@ -141,10 +348,11 @@ export default function MyPage() {
               <div className="flex items-center mt-8 mb-2">
                 <span className="text-sm text-gray-500">내 프로필 공개</span>
                 <button
-                  onClick={() => setIsProfilePublic(!isProfilePublic)}
+                  onClick={handleProfilePublicToggle}
+                  disabled={isSavingPublicSetting}
                   className={`ml-4 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     isProfilePublic ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
+                  } ${isSavingPublicSetting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span
                     className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
@@ -152,6 +360,9 @@ export default function MyPage() {
                     }`}
                   />
                 </button>
+                {isSavingPublicSetting && (
+                  <span className="ml-2 text-xs text-gray-400">저장 중...</span>
+                )}
               </div>
               {/* 프로필 업데이트 안내/버튼 */}
               <div className="flex flex-col items-end mt-6">

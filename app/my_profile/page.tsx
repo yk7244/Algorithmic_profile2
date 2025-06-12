@@ -77,6 +77,7 @@ export default function MyProfilePage() {
     setIsPlaying: setSliderIsPlaying,
     handleHistoryClick,
     handlePlayHistory,
+    isTransitioning: sliderIsTransitioning,
   } = historySlider;
 
   const {
@@ -129,6 +130,64 @@ export default function MyProfilePage() {
   // localStorage 프로필 관리 훅 사용
   const { loadProfileFromStorage, isProfileExpired } = useProfileStorage();
 
+  // 🆕 DB-first 프로필 데이터 로딩
+  useEffect(() => {
+    const loadLatestProfile = async () => {
+      try {
+        const latestProfile = await loadProfileFromStorage();
+        if (latestProfile) {
+          setProfile({
+            nickname: latestProfile.nickname,
+            description: latestProfile.description
+          });
+          console.log('[MyProfile] 최신 프로필 로드 완료:', latestProfile);
+        }
+      } catch (error) {
+        console.error('[MyProfile] 프로필 로드 실패:', error);
+      }
+    };
+
+    loadLatestProfile();
+  }, []); // 컴포넌트 마운트 시 1회 실행
+
+  // 🆕 개발용: localStorage 강제 정리 함수 (콘솔에서 호출 가능)
+  useEffect(() => {
+    // @ts-ignore - 개발용 전역 함수
+    window.clearAllTubeLensData = async () => {
+      console.log('🧹 TubeLens 모든 데이터 정리 시작...');
+      
+      // localStorage 모든 관련 키 정리
+      const allKeys = Object.keys(localStorage);
+      const tubeLensKeys = allKeys.filter(key => 
+        key.includes('profileImages') || 
+        key.includes('moodboardHistories') || 
+        key.includes('SliderHistory') || 
+        key.includes('exploreWatchHistory') || 
+        key.includes('watchHistory') || 
+        key.includes('ProfileData') ||
+        key.includes('moodboard-bg-color')
+      );
+      
+      tubeLensKeys.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`삭제: ${key}`);
+      });
+      
+      // 상태 초기화
+      setImages([]);
+      setVisibleImageIds(new Set());
+      setFrameStyles({});
+      setPositions({});
+      setHistories([]);
+      setCurrentHistoryIndex(-1);
+      
+      console.log('✅ TubeLens 모든 데이터 정리 완료!');
+      console.log('새로고침하여 확인하세요.');
+    };
+    
+    console.log('💡 개발용: window.clearAllTubeLensData() 함수가 등록되었습니다.');
+  }, []);
+
   //새로고침시 별명 생성/로드 훅 사용
   useInitialProfileLoad({
     loadProfileFromStorage,
@@ -137,9 +196,18 @@ export default function MyProfilePage() {
     setProfile,
   });
 
+  // 🆕 frameStyles 상태 디버깅
   useEffect(() => {
+    console.log('[MyProfile] frameStyles 상태 변경:', frameStyles);
+  }, [frameStyles]);
+
+  // 🆕 positions 동기화 최적화 - 중복 업데이트 방지
+  useEffect(() => {
+    if (images.length === 0) return; // 이미지가 없으면 스킵
+    
     setPositions(prevPositions => {
       const newPositions = { ...prevPositions };
+      let hasChanges = false;
       const imageIdSet = new Set(images.map(img => img.id).filter(id => id)); // undefined 제거
 
       // images 배열에 있는 각 이미지에 대해
@@ -153,7 +221,7 @@ export default function MyProfilePage() {
             x: Number(image.left?.replace('px', '') || 0),
             y: Number(image.top?.replace('px', '') || 0),
           };
-          console.log('newPositions', newPositions);
+          hasChanges = true;
         }
       });
 
@@ -161,11 +229,14 @@ export default function MyProfilePage() {
       for (const id in newPositions) {
         if (!imageIdSet.has(id)) {
           delete newPositions[id];
+          hasChanges = true;
         }
       }
-      return newPositions;
+      
+      // 변경사항이 있을 때만 새 객체 반환
+      return hasChanges ? newPositions : prevPositions;
     });
-  }, [images]);
+  }, [images]); // images가 변경될 때만 실행
 
   return (
     <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
@@ -206,7 +277,19 @@ export default function MyProfilePage() {
           {/* DraggableImage 컴포넌트 렌더링 -> DraggableImage.tsx */}
           <div className="relative w-[1000px] h-[680px] mx-auto mt-8">
             <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToContainer]}>
-              {images.map((image) => (
+              {images.map((image) => {
+                // 🆕 DB에서 로드한 frameStyle을 우선적으로 사용
+                const currentFrameStyle = image.desired_self 
+                  ? 'cokie' 
+                  : (image.frameStyle || frameStyles[image.id] || 'normal');
+                
+                console.log(`[MyProfile] 이미지 ${image.id} frameStyle 전달:`, {
+                  'image.frameStyle': image.frameStyle,
+                  'frameStyles[image.id]': frameStyles[image.id],
+                  'currentFrameStyle': currentFrameStyle
+                });
+                
+                return (
                 <div
                   key={image.id || Math.random().toString()}
                   className={`transition-all duration-500 ${
@@ -219,16 +302,18 @@ export default function MyProfilePage() {
                     image={image}
                     position={positions[image.id] || image.position}
                     isEditing={isEditing && !isSearchMode}
-                    frameStyle={image.desired_self ? 'cokie' : (frameStyles[image.id] || 'normal')}
+                    frameStyle={currentFrameStyle}
                     onFrameStyleChange={handleFrameStyleChange}
                     onImageChange={handleImageChange}
                     onImageSelect={handleImageSelect}
                     isSelected={selectedImages.some(img => img.id === image.id)}
                     isSearchMode={isSearchMode}
                     onImageDelete={handleImageDelete}
+                    isTransitioning={sliderIsTransitioning}
                   />
                 </div>
-              ))}
+                )
+              })}
             </DndContext>
           </div>
 
@@ -249,6 +334,7 @@ export default function MyProfilePage() {
               isPlaying={sliderIsPlaying}
               handlePlayHistory={handlePlayHistory}
               handleHistoryClick={handleHistoryClick}
+              isTransitioning={sliderIsTransitioning}
             />
           )}
         </div>

@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { DragEndEvent } from '@dnd-kit/core';
 import { ImageData } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
+import { updateClusterImages, getCurrentUserId, ensureUserExists } from '@/lib/database';
 
 export function useDragEnd(
   isEditing: boolean, 
@@ -48,53 +49,61 @@ export function useDragEnd(
             return updatedPositions;
           });
           
-          // profileImages localStorage 즉시 업데이트
-          const profileImagesData = localStorage.getItem('profileImages');
-          if (profileImagesData) {
+          // 🆕 사용자별 profileImages localStorage 즉시 업데이트
+          const updateLocalStorageWithUserKey = async () => {
             try {
-              const profileImages = JSON.parse(profileImagesData);
-              console.log('🔄 드래그 시 profileImages 즉시 업데이트 시작');
+              const userId = await getCurrentUserId();
+              const profileImagesKey = userId ? `profileImages_${userId}` : 'profileImages';
               
-              if (Array.isArray(profileImages)) {
-                // 배열인 경우
-                const updatedProfileImages = profileImages.map((img: any) => {
-                  if (img.id === imageId) {
-                    return {
-                      ...img,
-                      left: `${newPosition.x}px`,
-                      top: `${newPosition.y}px`,
-                      position: newPosition,
-                    };
-                  }
-                  return img;
-                });
-                localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));
-                console.log(`✅ 배열 형태 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
-              } else {
-                // 객체인 경우
-                if (profileImages[imageId]) {
-                  const updatedProfileImages = {
-                    ...profileImages,
-                    [imageId]: {
-                      ...profileImages[imageId],
-                      left: `${newPosition.x}px`,
-                      top: `${newPosition.y}px`,
-                      position: newPosition,
+              const profileImagesData = localStorage.getItem(profileImagesKey);
+              if (profileImagesData) {
+                const profileImages = JSON.parse(profileImagesData);
+                console.log('🔄 드래그 시 사용자별 profileImages 즉시 업데이트 시작');
+                
+                if (Array.isArray(profileImages)) {
+                  // 배열인 경우
+                  const updatedProfileImages = profileImages.map((img: any) => {
+                    if (img.id === imageId) {
+                      return {
+                        ...img,
+                        left: `${newPosition.x}px`,
+                        top: `${newPosition.y}px`,
+                        position: newPosition,
+                      };
                     }
-                  };
-                  
-                  localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));
-                  console.log(`✅ 객체 형태 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
-                  const check =  localStorage.getItem('profileImages');
-                  console.log('check', check);
+                    return img;
+                  });
+                  localStorage.setItem(profileImagesKey, JSON.stringify(updatedProfileImages));
+                  console.log(`✅ 배열 형태 사용자별 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
                 } else {
-                  console.log(`❌ profileImages에서 ${imageId} 키를 찾을 수 없음`);
+                  // 객체인 경우
+                  if (profileImages[imageId]) {
+                    const updatedProfileImages = {
+                      ...profileImages,
+                      [imageId]: {
+                        ...profileImages[imageId],
+                        left: `${newPosition.x}px`,
+                        top: `${newPosition.y}px`,
+                        position: newPosition,
+                      }
+                    };
+                    
+                    localStorage.setItem(profileImagesKey, JSON.stringify(updatedProfileImages));
+                    console.log(`✅ 객체 형태 사용자별 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
+                  } else {
+                    console.log(`❌ 사용자별 profileImages에서 ${imageId} 키를 찾을 수 없음`);
+                  }
                 }
               }
             } catch (error) {
-              console.error('profileImages 업데이트 중 에러:', error);
+              console.error('사용자별 profileImages 업데이트 중 에러:', error);
             }
-          }
+          };
+          
+          updateLocalStorageWithUserKey();
+          
+          // 🆕 DB에도 위치 업데이트 (비동기, 실패해도 UI는 정상 작동)
+          updateImagePositionInDB(imageId, newPosition);
           
           return {
             ...image,
@@ -106,5 +115,46 @@ export function useDragEnd(
         return image;
       });
     });
+
+    // 🆕 DB 업데이트 헬퍼 함수
+    const updateImagePositionInDB = async (imageId: string, newPosition: {x: number, y: number}) => {
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('[드래그] 로그인되지 않음, DB 업데이트 스킵');
+          return;
+        }
+
+        // 🆕 사용자별 localStorage에서 전체 profileImages 데이터 가져와서 DB에 업데이트
+        const profileImagesKey = `profileImages_${userId}`;
+        const profileImagesData = localStorage.getItem(profileImagesKey);
+        if (profileImagesData) {
+          const profileImages = JSON.parse(profileImagesData);
+          
+          // ImageData 형식으로 변환
+          let imageDataArray: ImageData[] = [];
+          if (Array.isArray(profileImages)) {
+            imageDataArray = profileImages.map((item: any) => ({
+              ...item,
+              user_id: userId,
+              relatedVideos: item.relatedVideos || []
+            }));
+          } else {
+            imageDataArray = Object.values(profileImages).map((item: any) => ({
+              ...item,
+              user_id: userId,
+              relatedVideos: item.relatedVideos || []
+            }));
+          }
+
+          // cluster_images 테이블 전체 업데이트
+          await updateClusterImages(userId, imageDataArray);
+          console.log(`✅ [드래그] cluster_images DB 업데이트 완료 (${imageId})`);
+        }
+      } catch (error) {
+        console.error('[드래그] DB 업데이트 실패 (계속 진행):', error);
+        // DB 업데이트 실패해도 UI는 정상 작동하도록 함
+      }
+    };
   }, [isEditing, images, setImages, setPositions]);
 } 

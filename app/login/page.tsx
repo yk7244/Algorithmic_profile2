@@ -7,37 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import Link from 'next/link';
 import Image from 'next/image';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { signInWithProvider, isLoading } = useAuth();
+  const [currentProvider, setCurrentProvider] = useState<string | null>(null);
 
-  const handleGithubLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      login();
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
+  const handleProviderLogin = async (provider: 'google' | 'github' | 'apple') => {
+    try {
+      setCurrentProvider(provider);
+      await signInWithProvider(provider);
+      toast.success(`${provider} 로그인 중...`);
+      // 리다이렉션은 AuthContext에서 처리됨
+    } catch (error) {
+      console.error(`${provider} login error:`, error);
+      toast.error('로그인에 실패했습니다. 다시 시도해주세요.');
+      setCurrentProvider(null);
+    }
   };
 
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      login();
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const handleAppleLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      login();
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
+  const isProviderLoading = (provider: string) => {
+    return isLoading && currentProvider === provider;
   };
 
   return (
@@ -47,7 +38,7 @@ export default function LoginPage() {
         <p className="text-gray-400 mb-10 text-sm">소셜 계정으로 간편하게 시작하세요</p>
         <div className="flex flex-col gap-4 w-full">
           <button
-            onClick={handleGoogleLogin}
+            onClick={() => handleProviderLogin('google')}
             disabled={isLoading}
             className="flex items-center justify-center w-full h-12 rounded-lg bg-white text-gray-900 font-medium text-base shadow transition hover:bg-gray-100 disabled:opacity-60"
           >
@@ -55,7 +46,7 @@ export default function LoginPage() {
             Google 로 시작하기
           </button>
           <button
-            onClick={handleAppleLogin}
+            onClick={() => handleProviderLogin('apple')}
             disabled={isLoading}
             className="flex items-center justify-center w-full h-12 rounded-lg bg-black text-white font-medium text-base shadow transition hover:bg-gray-900 disabled:opacity-60"
           >
@@ -63,7 +54,7 @@ export default function LoginPage() {
             Apple 로 시작하기
           </button>
           <button
-            onClick={handleGithubLogin}
+            onClick={() => handleProviderLogin('github')}
             disabled={isLoading}
             className="flex items-center justify-center w-full h-12 rounded-lg bg-white text-gray-900 font-medium text-base shadow transition hover:bg-gray-100 disabled:opacity-60"
           >

@@ -4,6 +4,7 @@ import { useState, useRef, DragEvent, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import OpenAI from 'openai';
 import { HelpCircle, Upload, ArrowRight, Youtube, CalendarIcon } from "lucide-react";
 import {
@@ -23,6 +24,7 @@ import { parseWatchHistory } from './VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from './Handlers/fileHandlers';
 import { handleDownloadJSON, handleDownloadClusterJSON } from './Handlers/downloadHandlers';
 import { isOneWeekPassed } from './VideoParsing/dateUtils';
+import { getCurrentUserId } from '@/lib/database';
 
 //Refactoring
 import { searchClusterImage_pinterest, PinterestImageData } from './ImageSearch/GoogleImageSearch';
@@ -68,6 +70,7 @@ type ClusterImage = {
 
 
 export default function Home() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,7 +101,45 @@ export default function Home() {
   const [uploadFinished, setUploadFinished] = useState(false);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   
+
+  // 🆕 로그인 상태 확인
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        setIsAuthChecking(true);
+        const userId = await getCurrentUserId();
+        
+        if (!userId) {
+          console.log('[Upload] 로그인되지 않음, 로그인 페이지로 리다이렉트');
+          router.push('/login?redirect=/upload');
+          return;
+        }
+        
+        console.log('[Upload] 로그인 확인됨, 업로드 페이지 진입 허용');
+      } catch (error) {
+        console.error('[Upload] 인증 확인 실패:', error);
+        router.push('/login?redirect=/upload');
+      } finally {
+        setIsAuthChecking(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, [router]);
+
+  // 인증 확인 중이면 로딩 표시
+  if (isAuthChecking) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600">로그인 상태 확인 중...</p>
+        </div>
+      </main>
+    );
+  }
 
   // handleClusterClick 래퍼 함수 추가
   const handleClusterClick = () => {
@@ -416,12 +457,12 @@ export default function Home() {
                         )}
                       </span>
                     </div>
-                    
                   </div>
-                  
                 </div>                 
               )}
+              
               {/* 분석 시작하기 버튼, 다시 업로드 하기 버튼*/}
+              {watchHistory.length > 0 && (
               <div className="flex flex-col items-center gap-4 mt-8">
                   <p className="text-gray-500 text-sm mt-2">업로드가 완료되었습니다. 분석 날짜와 영상 개수를 확인하시고 분석을 시작하세요.</p>
 
@@ -453,6 +494,7 @@ export default function Home() {
                       </Button>
                     </div>
               </div>
+              )}
 
               {/* 분석된 시청 기록 목록 */}
               {watchHistory.length > 0 && (
@@ -765,19 +807,24 @@ export default function Home() {
                 {/* tell me who I am 버튼 */  }
                 <div className="flex justify-center gap-4 mt-8">
                 <Button 
-                  onClick={() => {
+                    onClick={async () => {
                     if (clusters.length > 0) {
-                      // [3]현재 선택된 분석 결과의 클러스터로 변환 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
+                        try {
+                          // [3]현재 선택된 분석 결과의 클러스터로 변환 
                       const profileImages = transformClustersToImageData(clusters, clusterImages);
                       localStorage.setItem('profileImages', JSON.stringify(profileImages));
                       
-                      // [2] ClusterHistory기존 배열에 새 데이터 ✅push
-                      const clusterHistoryResult = saveClusterHistory(profileImages);
+                          // [2] ClusterHistory DB에 저장
+                          const clusterHistoryResult = await saveClusterHistory(profileImages);
                       
-                      // [5] SliderHistory 저장
-                      const sliderResult = saveSliderHistory(profileImages);
+                          // [5] SliderHistory DB에 저장
+                          const sliderResult = await saveSliderHistory(profileImages);
 
                       alert('프로필 데이터가 성공적으로 저장되었습니다!');
+                        } catch (error) {
+                          console.error('프로필 데이터 저장 실패:', error);
+                          alert('프로필 데이터 저장 중 오류가 발생했습니다.');
+                        }
                     } else {
                       alert('분석 결과가 선택되어 있지 않습니다!');
                     }

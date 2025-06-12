@@ -26,7 +26,7 @@ export function useMoodboardHandlers(params: {
   histories: HistoryData[];
   setHistories: Dispatch<SetStateAction<HistoryData[]>>;
   }) {
-  const handleFrameStyleChange = useFrameStyleChange(params.setFrameStyles);
+  const handleFrameStyleChange = useFrameStyleChange(params.setFrameStyles, params.setImages);
 
   const handleSave = useHistorySave({
     positions: params.positions,

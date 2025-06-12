@@ -4,7 +4,9 @@ const nextConfig = {
     domains: [
       'images.unsplash.com',
       'search.pstatic.net',
-      'ssl.pstatic.net'
+      'ssl.pstatic.net',
+      'i.pinimg.com',
+      'pinterest.com'
     ],
   },
 };

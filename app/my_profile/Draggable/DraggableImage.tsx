@@ -36,6 +36,7 @@ export interface DraggableImageProps {
     onImageDelete: (id: string) => void;
     isOwner?: boolean;
     ownerId?: string;
+    isTransitioning?: boolean;
 }
 
 // 모양별 정보 배열
@@ -65,6 +66,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
     isOwner = true,
     ownerId,
     onImageDelete,
+    isTransitioning = false,
 }) => {
     const { attributes, listeners, setNodeRef, style } = useDraggableImage(
         image.id,
@@ -108,10 +110,24 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
         handleFrameStyleChange,
     } = useImageFrame(frameStyle, image, onFrameStyleChange);
 
-    // 버튼에서 직접 string 값을 넘길 수 있도록 래핑
+    // 🆕 프레임 스타일 디버깅
+    useEffect(() => {
+        console.log(`[DraggableImage] 프레임 스타일 상태 - ID: ${image.id}, frameStyle prop: ${frameStyle}, updatedFrameStyle: ${updatedFrameStyle}`);
+        console.log(`🖼️ getClipPath(): "${getClipPath()}"`);
+        console.log(`🖼️ getFrameStyle(): "${getFrameStyle()}"`);
+    }, [frameStyle, updatedFrameStyle, image.id]);
+
+    // 🆕 프레임 스타일 변경 핸들러 개선
     const handleFrameStyleChangeByValue = (value: string) => {
-        // select 이벤트 mock 객체 생성
+        console.log(`[DraggableImage] 프레임 스타일 변경 요청 - ID: ${image.id}, 현재: ${updatedFrameStyle} → 새로운: ${value}`);
+        
+        // 1. useImageFrame의 핸들러 호출 (내부 상태 업데이트)
         handleFrameStyleChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>);
+        
+        // 2. 상위 컴포넌트 핸들러 호출 (전역 상태 + DB 업데이트)
+        onFrameStyleChange(image.id, value);
+        
+        console.log(`[DraggableImage] 프레임 스타일 변경 완료 - ID: ${image.id}, 새 스타일: ${value}`);
     };
 
     return (
@@ -128,7 +144,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 height: (image.height + 80) * (image.desired_self ? image.sizeWeight: image.sizeWeight * 10),
                 touchAction: 'none',
                 zIndex: isSelected ? 30 : 10,
-                transition: isEditing ? 'none' : 'transform 0.8s ease-in-out',
+                transition: isEditing 
+                    ? 'none' 
+                    : isTransitioning 
+                        ? 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s ease-in-out' // 🆕 전환 중 더 부드러운 애니메이션
+                        : 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-in-out',
                 }}
                 className={`${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""}`}
             >
@@ -164,6 +184,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             className={`relative w-full h-full ${getFrameStyle()} overflow-hidden ${
                                 isSelected ? 'ring-4 ring-white ring-opacity-70 shadow-xl' : ''
                             }`}
+                            data-frame-style={updatedFrameStyle}
                         >
                             <img
                                 src={imageLoadError ? "/images/default_image.png" : image.src}
@@ -254,7 +275,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 )}
                 {/* 편집 모드-프레임 변경하기*/}
                 {isEditing && (
-                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-[60] pointer-events-auto flex gap-2">
                     {!image.desired_self && (
                         <>
                         {frameOptions
@@ -262,13 +283,19 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             .map(opt => (
                             <button
                                 key={opt.value}
-                                className={`rounded-full text-sm px-2 py-1  rounded-full hover:bg-white shadow-lg transition-all hover:scale-105 z-20 pointer-events-auto 
-                                    ${updatedFrameStyle === opt.value ? 'border-blue-400' : 'border-transparent'}`}
-                                onClick={() => {
+                                className={`rounded-full text-sm px-2 py-1 hover:bg-white shadow-lg transition-all hover:scale-105 z-[70] pointer-events-auto border-2
+                                    ${updatedFrameStyle === opt.value ? 'border-blue-400 bg-blue-50' : 'border-transparent bg-white'}`}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log(`🔘 [DraggableImage] 프레임 버튼 클릭! 옵션: ${opt.value}, 이미지 ID: ${image.id}`);
+                                    console.log(`🔘 현재 updatedFrameStyle: ${updatedFrameStyle}, frameStyle prop: ${frameStyle}`);
                                     handleFrameStyleChangeByValue(opt.value);
-                                    onFrameStyleChange(image.id, opt.value);
                                 }}
-                                onMouseDown={e => e.stopPropagation()}
+                                onMouseDown={e => {
+                                    e.stopPropagation();
+                                    console.log(`🔘 [DraggableImage] 마우스 다운! 옵션: ${opt.value}`);
+                                }}
                                 title={opt.label}
                                 type="button"
                             >
@@ -283,7 +310,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 {/* 편집 모드-드래그 가능한 영역*/}
                 {isEditing && (
                 <div
-                    className="absolute inset-0 z-50"
+                    className="absolute inset-0 z-30 pointer-events-auto"
+                    style={{
+                        // 프레임 버튼 영역 제외
+                        clipPath: 'polygon(0% 0%, 100% 0%, 100% 85%, 0% 85%)'
+                    }}
                     {...listeners}
                     {...attributes}
                 />

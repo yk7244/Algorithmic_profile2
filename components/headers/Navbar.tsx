@@ -21,14 +21,27 @@ import {
 export function Navbar() {
   const pathname = usePathname();
   const isMainPage = pathname === '/';
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, user } = useAuth();
   const [language, setLanguage] = useState("KO");
 
   const handleLanguageToggle = () => {
     setLanguage(prevLang => prevLang === "KO" ? "EN" : "KO");
   };
 
-  const userName = "daisy";
+  // 실제 사용자 정보 사용 (fallback으로 더미 데이터)
+  const getUserDisplayName = () => {
+    if (user) {
+      // GitHub의 경우 user_metadata.full_name 또는 user_metadata.name 사용
+      return user.user_metadata?.full_name || 
+             user.user_metadata?.name || 
+             user.email?.split('@')[0] || 
+             'User';
+    }
+    // 개발 중일 때만 더미 데이터 사용
+    return process.env.NODE_ENV === 'development' ? 'daisy' : 'User';
+  };
+
+  const userName = getUserDisplayName();
 
   return (
       <header

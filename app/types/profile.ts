@@ -21,8 +21,9 @@ export interface WatchHistory{
   videoId: string;
   title: string;
   description: string;
-  tags: string[];
-  keywords: string[];
+  tags?: string[]; // 🆕 nullable - explore 시청기록에는 없을 수 있음
+  keywords?: string[]; // 🆕 nullable - explore 시청기록에는 없을 수 있음
+  source?: 'upload' | 'explore'; // 🆕 시청 출처 구분
   timestamp: string;
 }
 
@@ -101,6 +102,7 @@ export interface ProfileData {
 
   profileImage?: string; //search_map에서 사용
   open_to_connect?: boolean; //search_map에서 사용
+  bg_color?: string; //배경색 설정
 }
 
 // [5] SliderHistory 테이블 -> utils/saveSliderHistory.ts 에서 저장함
@@ -116,7 +118,7 @@ export interface SliderHistory{
   created_at: string; // timestamp - 저장 시점
 }
 
-//[6] ExploreWatchHistory 테이블 
+//[6] ExploreWatchHistory 테이블 - 🆕 다시 활성화 (사이트 내 둘러보기 시청 기록)
 export interface ExploreWatchHistory{
   id: string;
   user_id: string;

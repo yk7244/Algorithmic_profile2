@@ -3,6 +3,7 @@ import { searchClusterImage_pinterest } from '../ImageSearch/GoogleImageSearch';
 import { saveClusterHistory } from '../../utils/saveClusterHistory';
 import { saveSliderHistory } from '../../utils/saveSliderHistory';
 import { ClusterHistory } from '../../types/profile';
+import { ensureUserExists, getCurrentUserId, saveClusterHistory as saveClusterHistoryDB, updateClusterImages } from '@/lib/database';
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
@@ -183,17 +184,57 @@ CLUSTER_END`;
           : [];
         console.log('관련영상', relatedVideos);
 
+        // 🆕 AI가 반환한 제목들을 원본 watchHistory와 매칭하여 올바른 VideoData 형태로 변환
+        const matchedVideos = relatedVideos
+          .map((titleOrUrl: string) => {
+            // URL에서 video ID 추출 시도
+            const videoIdMatch = titleOrUrl.match(/(?:v=|youtu\.be\/)([^&?]+)/);
+            if (videoIdMatch) {
+              const videoId = videoIdMatch[1];
+              const matchedItem = watchHistory.find(item => item.videoId === videoId);
+              if (matchedItem) {
+                return {
+                  title: matchedItem.title,
+                  embedId: matchedItem.videoId
+                };
+              }
+            }
+            
+            // 제목으로 매칭 시도 (부분 매칭 포함)
+            const matchedItem = watchHistory.find(item => 
+              item.title && (
+                item.title.toLowerCase().includes(titleOrUrl.toLowerCase()) ||
+                titleOrUrl.toLowerCase().includes(item.title.toLowerCase()) ||
+                item.title.toLowerCase() === titleOrUrl.toLowerCase()
+              )
+            );
+            
+            if (matchedItem) {
+              return {
+                title: matchedItem.title,
+                embedId: matchedItem.videoId
+              };
+            }
+            
+            console.warn(`관련영상 매칭 실패: ${titleOrUrl}`);
+            return null;
+          })
+          .filter(Boolean) // null 제거
+          .slice(0, 5); // 최대 5개로 제한
+
+        console.log('매칭된 관련영상:', matchedVideos);
+
         const clusterObj = {
           main_keyword: parsedData.main_keyword,
           category: parsedData.category || '기타',
           description: parsedData.description,
           keyword_list: relatedKeywords.join(', '),
           mood_keyword: parsedData.mood_keyword,
-          strength: relatedVideos.length,
-          related_videos: relatedVideos.map((url: string) => ({ url })),
+          strength: matchedVideos.length, // 🆕 매칭된 영상 수로 변경
+          related_videos: matchedVideos, // 🆕 올바른 형태로 저장
           metadata: {
             keywordCount: relatedKeywords.length,
-            videoCount: relatedVideos.length,
+            videoCount: matchedVideos.length, // 🆕 매칭된 영상 수로 변경
             moodKeywords,
           },
         };
@@ -286,10 +327,44 @@ export const handleCluster = async (
     });
     console.log('[handleCluster] 변환된 프로필 이미지 데이터:', profileImages);
 
-    // 프로필 이미지 데이터 저장 ✅ [3]나중에 DB로 확인하고 호출하는걸로 바꾸기
-    localStorageObj.setItem('profileImages', JSON.stringify(profileImages));
+    // 프로필 이미지 데이터 저장 (localStorage + DB)
+    // 🆕 사용자 ID 가져오기 (DB와 localStorage 공통 사용)
+    const userId = await getCurrentUserId();
+    const storageKey = userId ? `profileImages_${userId}` : 'profileImages';
     
+    // 🆕 기존 데이터 완전 교체 (겹침 방지)
+    localStorageObj.removeItem(storageKey);  // 기존 데이터 삭제
+    localStorageObj.setItem(storageKey, JSON.stringify(profileImages));  // 새 데이터 저장
+    console.log(`[handleCluster] localStorage 교체 완료: ${storageKey}`);
     
+    // 🆕 DB에도 자동 저장
+    try {
+      console.log('[handleCluster] DB 저장 시작...');
+      
+      // 사용자 확인 및 생성 (userId는 위에서 이미 가져옴)
+      await ensureUserExists();
+      
+      if (userId) {
+        // ClusterHistory로 변환 (타입 맞춤)
+        const clusterHistoryData = profileImages.map((item: any) => ({
+          ...item,
+          user_id: userId,
+          relatedVideos: item.relatedVideos || [],
+          created_at: new Date().toISOString()
+        }));
+        
+        // DB에 저장
+        await saveClusterHistoryDB(clusterHistoryData);
+        console.log('[handleCluster] 클러스터 데이터 DB 저장 완료');
+        
+        // 🆕 cluster_images 테이블에 기존 데이터 완전 교체 (겹침 방지)
+        await updateClusterImages(userId, clusterHistoryData);
+        console.log('[handleCluster] 클러스터 이미지 DB 교체 완료 (기존 삭제 + 새로운 저장)');
+      }
+    } catch (dbError) {
+      console.error('[handleCluster] DB 저장 실패 (계속 진행):', dbError);
+      // DB 저장 실패해도 UI는 정상 작동하도록 함
+    }
     
     setShowAnalysis(true);
     console.log('[handleCluster] setShowAnalysis(true) 호출');

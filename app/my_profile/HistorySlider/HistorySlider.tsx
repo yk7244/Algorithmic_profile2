@@ -7,6 +7,7 @@ interface HistorySliderProps {
     handlePlayHistory: () => void;
     handleHistoryClick: (index: number) => void;
     handleProfileImagesClick?: () => void;
+    isTransitioning?: boolean;
 }
 
 const HistorySlider: React.FC<HistorySliderProps> = ({
@@ -16,6 +17,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     handlePlayHistory,
     handleHistoryClick,
     handleProfileImagesClick,
+    isTransitioning = false,
 }) => {
     //console.log('[HistorySlider] Received histories prop:', histories, 'Length:', histories.length);
     if (histories.length === 0 && currentHistoryIndex === -1) {
@@ -46,11 +48,14 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                         return (
                             <div key={index} className="relative group flex flex-col items-center">
                                 <button
-                                    className="w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center"
+                                    className={`w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center
+                                        ${isTransitioning ? 'cursor-not-allowed opacity-50' : 'hover:opacity-100'}`}
                                     onClick={() => {
+                                        if (isTransitioning) return; // 🆕 전환 중이면 클릭 무시
                                         handleHistoryClick(index);
                                         console.log(history);
                                     }}
+                                    disabled={isTransitioning} // 🆕 전환 중 비활성화
                                 >
                                     {hasDesiredSelf ? (
                                         <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -74,8 +79,10 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                     {/* 원본 ProfileImages 점 */}
                     <div className="relative group flex flex-col items-center">
                         <button
-                            className="w-4 h-4 rounded-full bg-black transition-all opacity-80 hover:opacity-100"
+                            className={`w-4 h-4 rounded-full bg-black transition-all opacity-80 
+                                ${isTransitioning ? 'cursor-not-allowed opacity-50' : 'hover:opacity-100'}`}
                             onClick={() => {
+                                if (isTransitioning) return; // 🆕 전환 중이면 클릭 무시
                                 console.log('🔵 파란색 점 클릭 - ProfileImages 로드');
                                 if (handleProfileImagesClick) {
                                     handleProfileImagesClick();
@@ -83,6 +90,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                                 // 히스토리 상태를 원본으로 리셋
                                 handleHistoryClick(-1); // -1은 원본 상태를 의미
                             }}
+                            disabled={isTransitioning} // 🆕 전환 중 비활성화
                         />
                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
                             꾸민 Profile Images
@@ -92,11 +100,14 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
             </div>
             {/* 재생하기 텍스트 */}
             <button
-                className="mt-2 text-gray-500 text-base font-normal hover:underline"
+                className={`mt-2 text-base font-normal transition-all
+                    ${isPlaying || isTransitioning 
+                        ? 'text-gray-400 cursor-not-allowed' 
+                        : 'text-gray-500 hover:underline hover:text-gray-700'}`}
                 onClick={handlePlayHistory}
-                disabled={isPlaying}
+                disabled={isPlaying || isTransitioning}
             >
-                재생하기
+                {isPlaying ? '재생 중...' : isTransitioning ? '전환 중...' : '재생하기'}
             </button>
         </div>
     );

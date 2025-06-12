@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { ProfileData } from '../../../types/profile'; 
 
 interface UseInitialProfileLoadProps {
-loadProfileFromStorage: () => ProfileData | null;
+loadProfileFromStorage: () => Promise<ProfileData | null>;
 isProfileExpired: (profile: ProfileData) => boolean;
 generateProfile: () => Promise<void>;
 setProfile: React.Dispatch<React.SetStateAction<{ nickname: string; description: string }>>;
@@ -21,7 +21,7 @@ useEffect(() => {
     if (initialLoadCompleted.current) return;
     
     const loadInitialProfile = async () => {
-    const storedProfile = loadProfileFromStorage();
+    const storedProfile = await loadProfileFromStorage();
     if (storedProfile && !isProfileExpired(storedProfile)) {
         console.log('[useInitialProfileLoad] 저장된 프로필을 불러왔습니다:', storedProfile);
         setProfile({

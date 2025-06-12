@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { OpenAILogger } from '../../utils/init-logger';
+import { saveWatchHistoryItem, getCurrentUserId, ensureUserExists } from '@/lib/database';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -147,10 +148,68 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
       }
       console.log('받아왔음!!:', videoInfo);
 
+      // DB에 저장 시도 (fallback으로 localStorage)
+      try {
+        // 사용자가 users 테이블에 존재하는지 확인하고 없으면 생성
+        await ensureUserExists();
+        
+        const userId = await getCurrentUserId();
+        if (userId) {
+          // Supabase DB에 저장
+          await saveWatchHistoryItem({
+            user_id: userId,
+            videoId: videoInfo.videoId,
+            title: videoInfo.title,
+            description: videoInfo.description || '',
+            tags: videoInfo.tags,
+            keywords: videoInfo.keywords,
+            source: 'upload',
+            timestamp: videoInfo.timestamp
+          });
+          console.log('WatchHistory가 DB에 저장되었습니다');
+        } else {
+          throw new Error('로그인이 필요합니다');
+        }
+      } catch (dbError) {
+        console.error('DB 저장 실패, localStorage fallback:', dbError);
+        
+        // 🆕 인증 실패 시에도 안전한 localStorage fallback
+        try {
+          // 인증 상태와 관계없이 localStorage 저장 시도
+          let userId: string | null = null;
+          let watchHistoryKey = 'watchHistory'; // 기본 키
+          
+          try {
+            // 인증이 되어 있다면 사용자별 키 사용
+            userId = (await getCurrentUserId()) || null;
+            if (userId) {
+              watchHistoryKey = `watchHistory_${userId}`;
+            }
+          } catch (authError: any) {
+            console.log('[Fallback] 인증 실패, 게스트 모드로 localStorage 저장:', authError?.message || '인증 에러');
+            // 게스트 모드로 전역 키 사용
+            watchHistoryKey = 'watchHistory_guest';
+          }
+          
+          const watchHistory = JSON.parse(localStorage.getItem(watchHistoryKey) || '[]');
+          watchHistory.push(videoInfo);
+          localStorage.setItem(watchHistoryKey, JSON.stringify(watchHistory));
+          console.log(`WatchHistory가 localStorage에 저장되었습니다: ${watchHistoryKey}`);
+          
+        } catch (fallbackError) {
+          console.error('localStorage 저장도 실패:', fallbackError);
+          // 최후의 수단으로 전역 키 사용
+          try {
       const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
       watchHistory.push(videoInfo);
-      //✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
       localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+            console.log('WatchHistory가 전역 localStorage에 저장되었습니다 (최후 fallback)');
+          } catch (finalError) {
+            console.error('모든 저장 방법 실패:', finalError);
+          }
+        }
+      }
+
       return videoInfo;
     }
     return null;

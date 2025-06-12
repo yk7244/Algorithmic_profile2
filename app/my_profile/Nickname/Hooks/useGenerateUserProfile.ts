@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { useProfileStorage } from "./useProfileStorage";
 import { ProfileData } from '../../../types/profile';
+import { getCurrentUserId } from '@/lib/database';
 
 interface UseGenerateUserProfileParams {
     openai: any;
@@ -36,16 +37,17 @@ export function useGenerateUserProfile({
             await new Promise(resolve => setTimeout(resolve, 1500));
         }
             
-        // localStorage에서 profileImages 데이터 가져오기
-        const profileImagesData = localStorage.getItem('profileImages');
-        console.log('프로필 이미지 데이터:', profileImagesData);
+        // 🆕 사용자별 localStorage에서 profileImages 데이터 가져오기
+        const userId = await getCurrentUserId();
+        const profileImagesKey = userId ? `profileImages_${userId}` : 'profileImages';
+        const profileImagesData = localStorage.getItem(profileImagesKey);
+        console.log(`프로필 이미지 데이터 (${profileImagesKey}):`, profileImagesData);
             
         if (!profileImagesData) {
             const defaultProfile = {
             nickname: '알고리즘 탐험가',
             description: '아직 프로필 이미지가 없습니다. 메인 페이지에서 "Tell me who I am"을 클릭하여 프로필을 생성해보세요!'
             };
-            setProfile(defaultProfile);
                 
                 // 기본 프로필도 저장
                 const profileData: ProfileData = {
@@ -53,9 +55,15 @@ export function useGenerateUserProfile({
                     nickname: defaultProfile.nickname,
                     description: defaultProfile.description,
                     created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
+                    updated_at: new Date().toISOString(),
+                    // 🆕 검색 결과에 나타나도록 공개 설정
+                    open_to_connect: true
                 };
-                saveProfileToStorage(profileData);
+                await saveProfileToStorage(profileData);
+                
+                // 🆕 저장 후 상태 확실히 업데이트
+                setProfile(defaultProfile);
+                console.log('[generateProfile] 기본 프로필 상태 업데이트:', defaultProfile);
             return;
         }
 
@@ -111,7 +119,6 @@ export function useGenerateUserProfile({
             : '당신만의 독특한 콘텐츠 취향을 가지고 있습니다. 메인 페이지에서 더 많은 관심사를 추가해보세요!'
         };
         console.log('새로운 프로필:', newProfile);
-        setProfile(newProfile);
             
             // 새로운 프로필도 저장
             const profileData: ProfileData = {
@@ -121,14 +128,19 @@ export function useGenerateUserProfile({
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             };
-            saveProfileToStorage(profileData);
+            await saveProfileToStorage(profileData);
+            
+            // 🆕 저장 후 상태 확실히 업데이트
+            setProfile(newProfile);
+            console.log('[generateProfile] 프로필 상태 최종 업데이트:', newProfile);
             
         } catch (error) {
         console.error('프로필 생성 오류:', error);
-        setProfile({
+        const errorProfile = {
             nickname: '알고리즘 탐험가',
             description: '프로필 생성 중 오류가 발생했습니다. 나중에 다시 시도해주세요.'
-        });
+        };
+        setProfile(errorProfile);
         } finally {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setShowGeneratingDialog(false);

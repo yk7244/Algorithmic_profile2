@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
-import { dummyUsers } from '@/app/others_profile/dummy-data';
 import { ProfileData, ImageData } from '@/app/types/profile';
 import SearchCard from '@/components/searchCard/SearchCard';
+import { getAllPublicProfiles, getClusterImages, getClusterHistory, getPublicClusterHistory, getPublicClusterImages, getCurrentUserId, getProfileData, saveProfileData } from '@/lib/database';
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -25,48 +25,122 @@ export default function SearchPage() {
       // 여기서 검색 로직 구현
       performSearch(keywordArray);
     } else {
-      setIsLoading(false);
+      // 🆕 키워드가 없어도 모든 공개 프로필 표시
+      console.log('[Search] 키워드 없음, 모든 공개 프로필 표시');
+      performSearch([]);
     }
   }, [searchParams]);
 
-  // 검색 로직 수정 - 필터링 없이 모든 프로필 표시
+  // 검색 로직 수정 - DB에서 공개된 프로필들 가져오기
   const performSearch = async (searchKeywords: string[]) => {
     setIsLoading(true);
     try {
-      // 필터링 로직 주석 처리하고 모든 더미 프로필 표시
-      setTimeout(() => {
-        // dummyUsers를 ProfileData 배열로 변환
-        const profiles = Object.values(dummyUsers).map(user => ({
-          ...user.profile,
-          images: user.images
-        }));
-        setSearchResults(profiles);
-        setIsLoading(false);
-      }, 1500); // 로딩 효과를 위해 지연 시간 유지
+      // 🆕 현재 사용자 ID 가져오기 (본인 제외용)
+      const currentUserId = await getCurrentUserId();
       
-      /* 원래 필터링 로직 (주석 처리)
-      setTimeout(() => {
-        // 키워드와 일치하는 프로필 찾기
-        const results = dummyProfiles.filter(profile => {
+      // DB에서 공개된 프로필들 가져오기
+      const publicProfiles = await getAllPublicProfiles();
+      
+      if (publicProfiles && publicProfiles.length > 0) {
+        // 🆕 현재 사용자 제외 필터링
+        const otherUserProfiles = publicProfiles.filter(profile => 
+          profile.user_id !== currentUserId
+        );
+        
+        console.log(`[Search] 전체 공개 프로필: ${publicProfiles.length}, 본인 제외 후: ${otherUserProfiles.length}`);
+        
+        // 각 프로필에 대해 클러스터 이미지들도 가져오기
+        const profilesWithImages = await Promise.all(
+          otherUserProfiles.map(async (profile) => {
+            try {
+              console.log(`[Search] 🔍 사용자 ${profile.user_id} 클러스터 로드 시작`);
+              
+              // 🆕 cluster_images를 우선으로 시도 (현재 프로필 상태)
+              let clusterImages = await getPublicClusterImages(profile.user_id);
+              
+              if (clusterImages && clusterImages.length > 0) {
+                console.log(`[Search] ✅ 사용자 ${profile.user_id}의 공개 cluster_images에서 ${clusterImages.length}개 클러스터 로드`);
+              } else {
+                // fallback: 공개 cluster_history에서 시도 (저장된 상태)
+                clusterImages = await getPublicClusterHistory(profile.user_id);
+                console.log(`[Search] 사용자 ${profile.user_id}의 공개 cluster_history에서 ${clusterImages?.length || 0}개 클러스터 로드`);
+              }
+              
+              // DB 데이터를 ImageData 형식으로 변환
+              const formattedImages: ImageData[] = clusterImages?.map((item: any) => ({
+                id: item.id,
+                user_id: item.user_id,
+                main_keyword: item.main_keyword,
+                keywords: item.keywords || [],
+                mood_keyword: item.mood_keyword || '',
+                description: item.description || '',
+                category: item.category || '',
+                sizeWeight: item.size_weight || 1,
+                src: item.src,
+                relatedVideos: item.related_videos || [],
+                desired_self: false,
+                desired_self_profile: item.desired_self_profile,
+                metadata: item.metadata || {},
+                rotate: item.rotate || 0,
+                width: item.width || 300,
+                height: item.height || 200,
+                left: item.left_position || '0px',
+                top: item.top_position || '0px',
+                position: { x: item.position_x || 0, y: item.position_y || 0 },
+                frameStyle: item.frame_style || 'normal',
+                created_at: item.created_at || new Date().toISOString()
+              })) || [];
+
+              return {
+                id: profile.user_id,
+                nickname: profile.nickname,
+                description: profile.description,
+                created_at: profile.created_at,
+                updated_at: profile.updated_at,
+                images: formattedImages
+              };
+            } catch (error) {
+              console.error(`사용자 ${profile.user_id}의 이미지 로드 실패:`, error);
+              return {
+                id: profile.user_id,
+                nickname: profile.nickname,
+                description: profile.description,
+                created_at: profile.created_at,
+                updated_at: profile.updated_at,
+                images: []
+              };
+            }
+          })
+        );
+
+        // 키워드 필터링 (선택적)
+        const filteredProfiles = profilesWithImages.filter(profile => {
+          if (searchKeywords.length === 0) return true;
+          
           // 프로필의 모든 이미지에서 키워드 추출
           const profileKeywords = profile.images.flatMap(img => 
-            [img.main_keyword, ...img.keywords]
+            [img.main_keyword, ...img.keywords, img.category]
           );
           
           // 검색 키워드 중 하나라도 프로필 키워드에 포함되면 결과에 추가
           return searchKeywords.some(keyword => 
             profileKeywords.some(profileKeyword => 
-              profileKeyword.toLowerCase().includes(keyword.toLowerCase())
+              profileKeyword?.toLowerCase().includes(keyword.toLowerCase())
             )
           );
         });
-        
-        setSearchResults(results);
-        setIsLoading(false);
-      }, 1500);
-      */
+
+        setSearchResults(filteredProfiles);
+        console.log('[Search] DB에서 프로필 검색 완료:', filteredProfiles.length);
+        console.log('[Search] 검색 결과:', filteredProfiles.map(p => ({ id: p.id, nickname: p.nickname, imageCount: p.images.length })));
+      } else {
+        console.log('[Search] 공개된 프로필이 없습니다.');
+        setSearchResults([]);
+      }
     } catch (error) {
-      console.error('검색 오류:', error);
+      console.error('[Search] 검색 오류:', error);
+      setSearchResults([]);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -97,19 +171,30 @@ export default function SearchPage() {
         
         {/* 검색 키워드 표시 */}
         <div className="mb-8">
-          <h2 className="text-xl text-white/80 mb-4">다음 관심사를 가진 프로필을 찾고 있어요:</h2>
-          <div className="flex flex-wrap gap-3">
-            {keywords.map((keyword, index) => (
-              <div 
-                key={index}
-                className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30"
-              >
-                <span className="text-md font-bold text-white">
-                  #{keyword}
-                </span>
+          {keywords.length > 0 ? (
+            <>
+              <h2 className="text-xl text-white/80 mb-4">다음 관심사를 가진 프로필을 찾고 있어요:</h2>
+              <div className="flex flex-wrap gap-3">
+                {keywords.map((keyword, index) => (
+                  <div 
+                    key={index}
+                    className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30"
+                  >
+                    <span className="text-md font-bold text-white">
+                      #{keyword}
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl text-white/80 mb-4">연결 가능한 모든 프로필을 탐색해보세요:</h2>
+              <p className="text-white/60 text-sm">
+                공개 설정을 허용한 사용자들의 프로필을 확인할 수 있습니다.
+              </p>
+            </>
+          )}
         </div>
         
         {/* 검색 결과 */}

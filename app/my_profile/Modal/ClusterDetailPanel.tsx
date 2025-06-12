@@ -56,10 +56,58 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         };
 
         // 영상 클릭 핸들러 (시청 기록 관리)
-        const handleVideoClick = (video: VideoData) => {
-            saveWatchedVideoToLocalStorage(video, ownerId || 'guest');
+        const handleVideoClick = async (video: VideoData) => {
+            await saveWatchedVideoToLocalStorage(video, ownerId || 'guest');
             setWatchedVideos(prev => [...new Set([...prev, video.embedId])]);
         };
+
+        // 🆕 relatedVideos 데이터 정규화 (기존 잘못된 형태 호환)
+        const normalizeRelatedVideos = (relatedVideos: any[]): VideoData[] => {
+            if (!relatedVideos || !Array.isArray(relatedVideos)) {
+                return [];
+            }
+
+            return relatedVideos
+                .map((video: any): VideoData | null => {
+                    // 올바른 형태: { title: string, embedId: string }
+                    if (video.title && video.embedId) {
+                        return {
+                            title: video.title,
+                            embedId: video.embedId
+                        };
+                    }
+                    
+                    // 잘못된 형태: { url: string } - URL에서 정보 추출 시도
+                    if (video.url) {
+                        const videoIdMatch = video.url.match(/(?:v=|youtu\.be\/)([^&?]+)/);
+                        if (videoIdMatch) {
+                            return {
+                                title: `YouTube 영상 (${videoIdMatch[1]})`,
+                                embedId: videoIdMatch[1]
+                            };
+                        }
+                    }
+                    
+                    // 문자열인 경우 (제목으로 가정)
+                    if (typeof video === 'string') {
+                        // URL인지 확인
+                        const videoIdMatch = video.match(/(?:v=|youtu\.be\/)([^&?]+)/);
+                        if (videoIdMatch) {
+                            return {
+                                title: `YouTube 영상 (${videoIdMatch[1]})`,
+                                embedId: videoIdMatch[1]
+                            };
+                        }
+                        // 일반 제목으로 처리 (embedId가 없어서 재생 불가)
+                        return null;
+                    }
+                    
+                    return null;
+                })
+                .filter((video): video is VideoData => video !== null && video.embedId !== '');
+        };
+
+        const normalizedRelatedVideos = normalizeRelatedVideos(image.relatedVideos || []);
 
         // 프로필 방문 핸들러
         const handleVisitProfile = () => {
@@ -143,7 +191,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             {/* 관련 영상 탭 */}
                                             <TabsContent value="history" className="px-4 pb-4">
                                                 <VideoList
-                                                    videos={image.relatedVideos || []}
+                                                    videos={normalizedRelatedVideos}
                                                     watchedVideos={watchedVideos}
                                                     onVideoClick={handleVideoClick}
                                                 />
