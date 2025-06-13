@@ -2,15 +2,12 @@ import { ImageData } from '../types/profile';
 
 // 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
-  { left: '400px', top: '400px' },
-  { left: '420px', top: '380px' },
-  { left: '380px', top: '420px' },
-  { left: '410px', top: '410px' },
-  { left: '390px', top: '390px' },
+  { left: '300px', top: '200px' },
+  { left: '570px', top: '380px' },
+  { left: '210px', top: '420px' },
+  { left: '110px', top: '410px' },
+  { left: '790px', top: '290px' },
   { left: '430px', top: '400px' },
-  { left: '400px', top: '430px' },
-  { left: '370px', top: '400px' },
-  { left: '400px', top: '370px' }
 ];
 
 function getRandomCenterPosition() {
