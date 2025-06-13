@@ -159,7 +159,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         >
                         <div
                             style={{
-                            clipPath: getClipPath(),
+                            ...getClipPath(),
                             }}
                             className={`relative w-full h-full ${getFrameStyle()} overflow-hidden ${
                                 isSelected ? 'ring-4 ring-white ring-opacity-70 shadow-xl' : ''
