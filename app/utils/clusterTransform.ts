@@ -2,17 +2,33 @@ import { ImageData } from '../types/profile';
 
 // 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
-  { left: '300px', top: '200px' },
+  { left: '500px', top: '200px' },
   { left: '570px', top: '380px' },
-  { left: '210px', top: '420px' },
+  { left: '380px', top: '420px' },
   { left: '110px', top: '410px' },
   { left: '790px', top: '290px' },
-  { left: '430px', top: '400px' },
+  { left: '30px', top: '400px' },
+  { left: '300px', top: '430px' },
+  { left: '770px', top: '300px' },
+  { left: '200px', top: '170px' }
 ];
 
+// 이미 사용한 인덱스 추적
+let usedIndices: number[] = [];
+
 function getRandomCenterPosition() {
-  const randomIndex = Math.floor(Math.random() * centerPositions.length);
-  return centerPositions[randomIndex];
+  // 모든 위치를 다 썼으면 초기화
+  if (usedIndices.length >= centerPositions.length) {
+    usedIndices = [];
+  }
+  // 남은 인덱스만 추출
+  const availableIndices = centerPositions
+    .map((_, idx) => idx)
+    .filter(idx => !usedIndices.includes(idx));
+  // 랜덤 선택
+  const randomIdx = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+  usedIndices.push(randomIdx);
+  return centerPositions[randomIdx];
 }
 
 export const transformClusterToImageData = (
