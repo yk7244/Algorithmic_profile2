@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { OpenAILogger } from '../../utils/init-logger';
-import { saveWatchHistoryItem, getCurrentUserId, ensureUserExists } from '@/lib/database';
+import { saveWatchHistoryItem, getCurrentUserId, ensureUserExists, getCachedVideo, saveVideoCache, isCacheExpired } from '@/lib/database';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -23,6 +23,37 @@ type VideoInfo = {
   tags: string[];
   keywords: any[];
   timestamp: string; //없음
+};
+
+// VideoCache를 VideoInfo로 변환하는 함수
+const convertCacheToVideoInfo = (cache: any): VideoInfo => {
+  return {
+    videoId: cache.id,
+    title: cache.title || '',
+    description: cache.description || '',
+    tags: cache.tags || [],
+    keywords: cache.keywords || [],
+    timestamp: new Date().toISOString() // 캐시에서 가져올 때는 현재 시간 사용
+  };
+};
+
+// YouTube API 응답을 VideoCache 형식으로 변환하는 함수
+const convertAPIResponseToCache = (videoId: string, snippet: any): any => {
+  return {
+    id: videoId,
+    title: snippet.title || '',
+    description: snippet.description || '',
+    channel_id: snippet.channelId || '',
+    published_at: snippet.publishedAt || new Date().toISOString(),
+    thumbnail_url: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url || '',
+    view_count: 0, // YouTube API v3에서는 snippet에 없음, statistics 필요
+    like_count: 0,
+    comment_count: 0,
+    channel_name: snippet.channelTitle || '',
+    url: `https://www.youtube.com/watch?v=${videoId}`,
+    tags: snippet.tags || [],
+    keywords: [] // OpenAI로 생성할 예정
+  };
 };
 
 // STEP1-2.키워드 추출 함수
@@ -110,43 +141,68 @@ const extractVideoKeywords = async (videoInfo: any) => {
 };
 
 // STEP1.비디오 정보 가져오기 함수 -> STEP1-2키워드 추출 함수호출 
-export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null> {
+export async function fetchVideoInfo(videoId: string, forceRefresh: boolean = false): Promise<VideoInfo | null> {
+  console.log(`🔍 fetchVideoInfo 호출: ${videoId} (${forceRefresh ? '강제 새로고침' : '캐시 활용'} 모드)`);
+  
+  // forceRefresh가 false일 때만 캐시 확인
+  if (!forceRefresh) {
+    const cachedVideo = await getCachedVideo(videoId);
+    if (cachedVideo && !isCacheExpired(cachedVideo.last_fetched_at)) {
+      console.log(`📦 캐시에서 반환: ${videoId} (${cachedVideo.title?.slice(0, 30)}...)`);
+      return convertCacheToVideoInfo(cachedVideo);
+    } else if (cachedVideo) {
+      console.log(`⏰ 캐시 만료됨: ${videoId} - API 호출 진행`);
+    } else {
+      console.log(`❌ 캐시 없음: ${videoId} - API 호출 진행`);
+    }
+  } else {
+    console.log(`🔄 강제 새로고침: ${videoId} - 캐시 무시하고 API 호출`);
+  }
+
   try {
-    console.log('Fetching video info for:', videoId);
+    // 🆕 2단계: YouTube API 호출
     const response = await fetch(
       `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
     );
+
     if (!response.ok) {
-      throw new Error('YouTube API 요청 실패');
+      console.error(`YouTube API 오류: ${response.status} ${response.statusText}`);
+      return null;
     }
+
     const data = await response.json();
+    console.log('YouTube API 응답:', data);
+
     if (data.items && data.items.length > 0) {
       const snippet = data.items[0].snippet;
-      const videoInfo: VideoInfo = {
-        videoId,
+      
+      // 🆕 3단계: YouTube API 응답을 캐시 형식으로 변환
+      const cacheData = convertAPIResponseToCache(videoId, snippet);
+      
+      // 🆕 4단계: OpenAI로 키워드 추출 (VideoInfo 형식으로 변환하여 전달)
+      const tempVideoInfo = {
         title: snippet.title,
-        description: snippet.description,
+        description: snippet.description || '',
+        tags: snippet.tags || []
+      };
+      
+      console.log(`[fetchVideoInfo] 🤖 OpenAI 키워드 추출 시작 (${forceRefresh ? '강제 새로고침' : '일반'} 모드):`, tempVideoInfo.title);
+      const keywords = await extractVideoKeywords(tempVideoInfo);
+      cacheData.keywords = keywords;
+      
+      // 🆕 5단계: 캐시에 저장 (항상 최신 데이터로 업데이트)
+      await saveVideoCache(cacheData);
+      console.log(`💾 캐시에 저장 완료: ${videoId} (${snippet.title?.slice(0, 30)}...)`);
+      
+      // 🆕 6단계: VideoInfo 형식으로 변환하여 반환
+      const videoInfo: VideoInfo = {
+        videoId: videoId,
+        title: snippet.title,
+        description: snippet.description || '',
         tags: snippet.tags || [],
-        keywords: [] as any[],
+        keywords: keywords,
         timestamp: new Date().toISOString()
       };
-      console.log('유튜브 API로 받아온 tag:', {
-        title: videoInfo.title,
-        hasDescription: !!videoInfo.description,
-        tags: videoInfo.tags
-      });
-
-      // OpenAI로 키워드 추출 시도
-      const extractedKeywords = await extractVideoKeywords(videoInfo);
-      if (!extractedKeywords || extractedKeywords.length === 0) {
-        // 실패 시 기본 태그 저장
-        console.warn('No keywords extracted, using tags as fallback');
-        videoInfo.keywords = videoInfo.tags;
-      } else {
-        // 키워드 생성 잘 했으면 키워드 저장
-        videoInfo.keywords = extractedKeywords;
-      }
-      console.log('받아왔음!!:', videoInfo);
 
       // DB에 저장 시도 (fallback으로 localStorage)
       try {

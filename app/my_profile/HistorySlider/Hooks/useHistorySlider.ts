@@ -36,28 +36,74 @@ export function useHistorySlider({
                 const userId = await getCurrentUserId();
                 if (!userId) {
                     console.log('[useHistorySlider] 로그인되지 않음, 빈 상태로 초기화');
-                    setHistories([]);
+                setHistories([]);
                     setCurrentHistoryIndex(-1);
                     return;
-                }
+        }
 
                 // 🆕 사용자별 localStorage 키 사용
                 const userSliderHistoryKey = `SliderHistory_${userId}`;
 
-                // 🆕 DB-first: 먼저 DB에서 슬라이더 히스토리 로드 시도 ('self' 버전만)
+                // 🆕 DB-first: 먼저 DB에서 슬라이더 히스토리 로드 시도 (모든 타입)
                 try {
-                    const dbSliderHistory = await getSliderHistory(userId, 'self');
+                    console.log(`[useHistorySlider] DB에서 사용자 ${userId}의 슬라이더 히스토리 로드 시도...`);
+                    const dbSliderHistory = await getSliderHistory(userId); // 모든 타입 가져오기
+                    
+                    console.log(`[useHistorySlider] DB 로드 결과:`, {
+                        'userId': userId,
+                        'dbSliderHistory': dbSliderHistory,
+                        '개수': dbSliderHistory?.length || 0
+                    });
+                    
                     if (dbSliderHistory && dbSliderHistory.length > 0) {
                         // DB 데이터를 HistoryData 형식으로 변환
-                        const formattedHistories = dbSliderHistory.map((item: any) => ({
-                            timestamp: new Date(item.created_at).getTime(),
-                            positions: {},  // SliderHistory에는 positions가 없으므로 images에서 추출
-                            frameStyles: {}, // 마찬가지로 images에서 추출
-                            images: item.images || []
-                        }));
+                        const formattedHistories = dbSliderHistory.map((item: any, index: number) => {
+                            const images = item.images || [];
+                            
+                            console.log(`[useHistorySlider] 히스토리 [${index}] 변환:`, {
+                                'id': item.id,
+                                'version_type': item.version_type,
+                                'created_at': item.created_at,
+                                'nickname': item.nickname,
+                                'images_count': images.length,
+                                'images_sample': images.slice(0, 2)
+                            });
+                            
+                            // 이미지가 없는 히스토리는 경고 로그 출력
+                            if (images.length === 0) {
+                                console.warn(`⚠️ 히스토리 ID ${item.id}에 이미지가 없습니다 (${new Date(item.created_at).toLocaleString()})`);
+                            }
+                            
+                            // 🆕 이미지 ID 유효성 검사 및 수정
+                            const validatedImages = images.map((img: any, imgIndex: number) => {
+                                if (!img.id) {
+                                    console.warn(`⚠️ 히스토리 ${item.id}의 이미지 [${imgIndex}]에 ID가 없습니다. 생성합니다.`);
+                                    img.id = `${item.id}_img_${imgIndex}_${Date.now()}`;
+                                }
+                                return img;
+                            });
+                            
+                            return {
+                                timestamp: new Date(item.created_at).getTime(),
+                                positions: {},  // SliderHistory에는 positions가 없으므로 images에서 추출
+                                frameStyles: {}, // 마찬가지로 images에서 추출
+                                images: validatedImages,
+                                version_type: item.version_type // 🆕 타입 정보 보존
+                            };
+                        });
+
+                        // 🆕 시간순 정렬 (오래된 것부터)
+                        formattedHistories.sort((a, b) => a.timestamp - b.timestamp);
 
                         setHistories(formattedHistories);
-                        console.log('[useHistorySlider] DB에서 자체 저장 슬라이더 히스토리 로드 완료:', formattedHistories.length);
+                        console.log('[useHistorySlider] DB에서 모든 슬라이더 히스토리 로드 완료:', {
+                            '총 개수': formattedHistories.length,
+                            'upload 타입': formattedHistories.filter(h => h.version_type === 'upload').length,
+                            'self 타입': formattedHistories.filter(h => h.version_type === 'self').length,
+                            '별모양 히스토리': formattedHistories.filter(h => 
+                                h.images && h.images.some((img: any) => img.desired_self === true)
+                            ).length
+                        });
                         
                         // 사용자별 캐시용 localStorage에 저장
                         localStorage.setItem(userSliderHistoryKey, JSON.stringify(formattedHistories));
@@ -98,18 +144,32 @@ export function useHistorySlider({
 
     // 🆕 부드러운 히스토리 전환 함수
     const smoothTransitionToHistory = async (targetHistory: HistoryData, targetIndex: number) => {
+        console.log(`🔄 [smoothTransitionToHistory] 히스토리 ${targetIndex}로 전환 시작`);
+        console.log('전환할 히스토리 데이터:', {
+            timestamp: new Date(targetHistory.timestamp).toLocaleString(),
+            images_count: targetHistory.images?.length || 0,
+            images: targetHistory.images
+        });
+        
         setIsTransitioning(true);
         
         // 1단계: 기존 이미지들의 위치를 먼저 업데이트 (부드러운 이동)
         const newPositions: Record<string, {x: number, y: number}> = {};
         const newFrameStyles: Record<string, string> = {};
         
-        targetHistory.images.forEach((img: any) => {
-            if (img.id && img.position) {
-                newPositions[img.id] = img.position;
-                newFrameStyles[img.id] = img.frameStyle || 'normal';
-            }
-        });
+        if (targetHistory.images && targetHistory.images.length > 0) {
+            targetHistory.images.forEach((img: any) => {
+                if (img.id && img.position) {
+                    newPositions[img.id] = img.position;
+                    newFrameStyles[img.id] = img.frameStyle || 'normal';
+                }
+            });
+            
+            console.log('새로운 positions:', newPositions);
+            console.log('새로운 frameStyles:', newFrameStyles);
+        } else {
+            console.warn('⚠️ 히스토리에 이미지가 없습니다!');
+        }
         
         // 위치와 프레임 스타일을 먼저 업데이트 (기존 이미지들이 부드럽게 이동)
         setPositions(newPositions);
@@ -117,14 +177,26 @@ export function useHistorySlider({
         
         // 2단계: 300ms 대기 후 이미지 데이터 업데이트 (새로운 이미지 추가/제거)
         setTimeout(() => {
-            const targetImageIds = new Set<string>(targetHistory.images.map((img: any) => img.id).filter(id => id));
-            setVisibleImageIds(targetImageIds);
-            setImages(targetHistory.images);
-            setCurrentHistoryIndex(targetIndex);
+            if (targetHistory.images && targetHistory.images.length > 0) {
+                const targetImageIds = new Set<string>(targetHistory.images.map((img: any) => img.id).filter(id => id));
+                console.log('설정할 visible 이미지 IDs:', Array.from(targetImageIds));
+                
+                setVisibleImageIds(targetImageIds);
+                setImages(targetHistory.images);
+                setCurrentHistoryIndex(targetIndex);
+                
+                console.log('✅ 이미지 데이터 업데이트 완료');
+            } else {
+                console.warn('⚠️ 히스토리에 표시할 이미지가 없습니다');
+                setVisibleImageIds(new Set());
+                setImages([]);
+                setCurrentHistoryIndex(targetIndex);
+            }
             
             // 3단계: 추가 300ms 대기 후 전환 완료
             setTimeout(() => {
                 setIsTransitioning(false);
+                console.log('✅ 히스토리 전환 완료');
             }, 300);
         }, 400);
     };
@@ -170,7 +242,7 @@ export function useHistorySlider({
                 // 🆕 부드러운 전환으로 현재 상태로 복귀
                 smoothTransitionToCurrent();
                 return -1;
-            }
+                            }
             // 🆕 부드러운 전환으로 다음 히스토리로 이동
             smoothTransitionToHistory(histories[nextIndex], nextIndex);
             return nextIndex;
@@ -206,7 +278,7 @@ export function useHistorySlider({
         if (histories.length > 0 && !isTransitioning) {
             console.log('▶️ 히스토리 재생 시작 (부드러운 전환)');
             await smoothTransitionToHistory(histories[0], 0);
-            setIsPlaying(true);
+        setIsPlaying(true);
         }
     };
 

@@ -23,6 +23,7 @@ import { useImageDelete } from "./Draggable/Hooks/Image/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
 import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
 import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
+import { getCurrentUserId } from '@/lib/database';
 import { 
   ImageData,
   HistoryData,
@@ -50,7 +51,7 @@ export default function MyProfilePage() {
   const placeholderImage = "../../../public/images/default_image.png"
   
   // [새로고침시] ProfileImages 로드 훅 사용
-  useProfileImagesLoad({
+  const { reloadFromDB } = useProfileImagesLoad({
     setImages: setImages as Dispatch<SetStateAction<ImageData[]>>,
     setVisibleImageIds,
     setFrameStyles,
@@ -185,7 +186,394 @@ export default function MyProfilePage() {
       console.log('새로고침하여 확인하세요.');
     };
     
-    console.log('💡 개발용: window.clearAllTubeLensData() 함수가 등록되었습니다.');
+    // 🆕 DB 상태 확인 함수 추가
+    // @ts-ignore - 개발용 전역 함수
+    window.checkDBStatus = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        console.log('🔍 DB 상태 확인:', {
+          'userId': userId,
+          'DB 연결 상태': '확인 중...'
+        });
+
+        if (!userId) {
+          console.log('❌ 로그인되지 않음');
+          return;
+        }
+
+        const { getClusterImages, getSliderHistory, getProfileData } = await import('@/lib/database');
+        
+        const clusterImages = await getClusterImages(userId);
+        const sliderHistory = await getSliderHistory(userId);
+        const profileData = await getProfileData(userId);
+
+        // 🆕 SliderHistory 상세 분석
+        const sliderAnalysis = sliderHistory?.map((item: any, index: number) => ({
+          index,
+          id: item.id,
+          version_type: item.version_type,
+          created_at: item.created_at,
+          nickname: item.nickname,
+          images_count: item.images?.length || 0,
+          has_desired_self: item.images?.some((img: any) => img.desired_self === true),
+          desired_self_count: item.images?.filter((img: any) => img.desired_self === true).length || 0
+        })) || [];
+
+        console.log('🔍 DB 상태 확인 결과:', {
+          'userId': userId,
+          'ClusterImages 개수': clusterImages?.length || 0,
+          'SliderHistory 개수': sliderHistory?.length || 0,
+          'ProfileData 존재': !!profileData,
+          'SliderHistory 상세 분석': sliderAnalysis,
+          '별모양 슬라이더 개수': sliderAnalysis.filter(s => s.has_desired_self).length,
+          'ClusterImages 샘플': clusterImages?.slice(0, 2),
+          'ProfileData': profileData
+        });
+
+      } catch (error) {
+        console.error('❌ DB 상태 확인 실패:', error);
+      }
+    };
+
+    // 🆕 슬라이더 히스토리 디버깅 함수
+    // @ts-ignore - 개발용 전역 함수
+    window.debugSliderHistory = async (historyIndex = -1) => {
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('❌ 로그인되지 않음');
+          return;
+        }
+
+        console.log('🎚️ === 슬라이더 히스토리 디버깅 ===');
+        
+        // localStorage에서 히스토리 확인
+        const localStorageKey = `SliderHistory_${userId}`;
+        const localHistories = JSON.parse(localStorage.getItem(localStorageKey) || '[]');
+        console.log(`📦 localStorage 히스토리 개수: ${localHistories.length}`);
+        
+        // DB에서 히스토리 확인
+        const { getSliderHistory } = await import('@/lib/database');
+        const dbHistories = await getSliderHistory(userId);
+        console.log(`🗄️ DB 히스토리 개수: ${dbHistories?.length || 0}`);
+        
+        if (historyIndex === -1) {
+          // 모든 히스토리 요약
+          console.log('=== 모든 히스토리 요약 ===');
+          localHistories.forEach((history: any, index: number) => {
+            console.log(`[${index}] 타임스탬프: ${new Date(history.timestamp).toLocaleString()}`);
+            console.log(`     이미지 개수: ${history.images?.length || 0}`);
+            console.log(`     버전 타입: ${history.version_type || 'unknown'}`);
+            console.log(`     별모양 이미지: ${history.images?.filter((img: any) => img.desired_self).length || 0}개`);
+          });
+        } else if (historyIndex >= 0 && historyIndex < localHistories.length) {
+          // 특정 히스토리 상세
+          const target = localHistories[historyIndex];
+          console.log(`=== 히스토리 [${historyIndex}] 상세 ===`);
+          console.log('타임스탬프:', new Date(target.timestamp).toLocaleString());
+          console.log('버전 타입:', target.version_type);
+          console.log('이미지 개수:', target.images?.length || 0);
+          console.log('이미지 데이터:', target.images);
+          console.log('포지션 개수:', Object.keys(target.positions || {}).length);
+          console.log('프레임스타일 개수:', Object.keys(target.frameStyles || {}).length);
+          
+          // 이미지 상세 분석
+          if (target.images && target.images.length > 0) {
+            target.images.forEach((img: any, idx: number) => {
+              console.log(`  이미지[${idx}]:`, {
+                id: img.id,
+                src: img.src?.substring(0, 50) + '...',
+                desired_self: img.desired_self,
+                position: img.position,
+                frameStyle: img.frameStyle
+              });
+            });
+          }
+        }
+        
+        // 현재 상태와 비교
+        console.log('=== 현재 상태 ===');
+        console.log('현재 이미지 개수:', images.length);
+        console.log('현재 visible 이미지 개수:', visibleImageIds.size);
+        console.log('현재 positions 개수:', Object.keys(positions).length);
+        console.log('현재 frameStyles 개수:', Object.keys(frameStyles).length);
+        
+      } catch (error) {
+        console.error('❌ 슬라이더 히스토리 디버깅 실패:', error);
+      }
+    };
+    
+    // 🆕 MyPage 시청기록 디버깅 함수
+    // @ts-ignore - 개발용 전역 함수
+    window.debugMyPageWatchHistory = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('❌ 로그인되지 않음');
+          return;
+        }
+
+        console.log('📺 === MyPage 시청기록 디버깅 ===');
+        
+        // localStorage 확인
+        const exploreKey = `exploreWatchHistory_${userId}`;
+        const exploreHistory = JSON.parse(localStorage.getItem(exploreKey) || '[]');
+        console.log(`📦 localStorage 탐색 시청기록: ${exploreHistory.length}개`);
+        
+        // DB 확인
+        const { getExploreWatchHistory } = await import('@/lib/database');
+        const dbHistory = await getExploreWatchHistory(userId);
+        console.log(`🗄️ DB 탐색 시청기록: ${dbHistory?.length || 0}개`);
+        
+        if (exploreHistory.length > 0) {
+          console.log('최근 localStorage 기록:', exploreHistory.slice(0, 3));
+        }
+        if (dbHistory && dbHistory.length > 0) {
+          console.log('최근 DB 기록:', dbHistory.slice(0, 3));
+        }
+        
+      } catch (error) {
+        console.error('❌ MyPage 시청기록 디버깅 실패:', error);
+      }
+    };
+
+    // 🆕 업로드 슬라이더 문제 임시 해결 스크립트
+    // @ts-ignore - 개발용 전역 함수
+    window.fixUploadSliderIssue = async () => {
+      try {
+        console.log('🔧 업로드 슬라이더 문제 해결 시도...');
+        
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('❌ 로그인되지 않음');
+          return;
+        }
+
+        const { getSliderHistory, updateClusterImages } = await import('@/lib/database');
+        
+        // 1. SliderHistory에서 최신 upload 타입 데이터 가져오기
+        const sliderHistory = await getSliderHistory(userId, 'upload');
+        console.log('🎚️ SliderHistory 조회 결과:', sliderHistory?.length || 0);
+        
+        if (!sliderHistory || sliderHistory.length === 0) {
+          console.log('❌ SliderHistory에 upload 타입 데이터가 없음');
+          return;
+        }
+        
+        // 가장 최신 히스토리 사용
+        const latestHistory = sliderHistory[0];
+        console.log('📋 최신 히스토리 선택:', {
+          'id': latestHistory.id,
+          'created_at': latestHistory.created_at,
+          'images 개수': latestHistory.images?.length || 0,
+          'version_type': latestHistory.version_type
+        });
+        
+        if (!latestHistory.images || latestHistory.images.length === 0) {
+          console.log('❌ 최신 히스토리에 이미지 데이터가 없음');
+          return;
+        }
+        
+        // 🆕 데이터 구조 안전성 검사 및 변환
+        console.log('🔍 원본 데이터 구조 확인:', {
+          '첫 번째 이미지': latestHistory.images[0],
+          'position 필드 존재': !!latestHistory.images[0]?.position,
+          'left 필드 존재': !!latestHistory.images[0]?.left,
+          'top 필드 존재': !!latestHistory.images[0]?.top
+        });
+        
+        // 🆕 안전한 데이터 변환
+        const safeImages = latestHistory.images.map((img: any, index: number) => {
+          // position 필드가 없는 경우 기본값 생성
+          let position = img.position;
+          if (!position || typeof position.x === 'undefined' || typeof position.y === 'undefined') {
+            // left, top에서 추출 시도
+            if (img.left && img.top) {
+              position = {
+                x: Number(img.left.replace('px', '')) || 0,
+                y: Number(img.top.replace('px', '')) || 0
+              };
+            } else {
+              // 완전히 없으면 랜덤 중앙 위치 생성
+              position = {
+                x: 400 + (Math.random() - 0.5) * 200,
+                y: 300 + (Math.random() - 0.5) * 200
+              };
+            }
+            console.log(`🔧 이미지 [${index}] position 보정:`, position);
+          }
+          
+          return {
+            ...img,
+            // 필수 필드들 보장
+            id: img.id || `img_${index}_${Date.now()}`,
+            user_id: img.user_id || userId,
+            position: position,
+            left: img.left || `${position.x}px`,
+            top: img.top || `${position.y}px`,
+            frameStyle: img.frameStyle || 'normal',
+            sizeWeight: img.sizeWeight || 0.5,
+            width: img.width || 300,
+            height: img.height || 200,
+            rotate: img.rotate || 0,
+            created_at: img.created_at || new Date().toISOString()
+          };
+        });
+        
+        console.log('✅ 안전한 데이터 변환 완료:', {
+          '원본 개수': latestHistory.images.length,
+          '변환 후 개수': safeImages.length,
+          '변환된 샘플': safeImages.slice(0, 2)
+        });
+        
+        // 2. 히스토리 데이터를 현재 상태(ClusterImages)로 복사
+        console.log('🔄 히스토리 데이터를 현재 상태로 복사 중...');
+        const result = await updateClusterImages(userId, safeImages);
+        console.log('✅ ClusterImages 업데이트 완료:', result?.length || 0);
+        
+        // 3. localStorage도 업데이트
+        const storageKey = `profileImages_${userId}`;
+        localStorage.setItem(storageKey, JSON.stringify(safeImages));
+        console.log('✅ localStorage 업데이트 완료');
+        
+        // 4. 새로고침 권장
+        console.log('🔄 페이지를 새로고침하여 변경사항을 확인하세요.');
+        if (confirm('업로드 슬라이더 문제 해결 완료!\n페이지를 새로고침하시겠습니까?')) {
+          window.location.reload();
+        }
+        
+      } catch (error) {
+        console.error('❌ 업로드 슬라이더 문제 해결 실패:', error);
+      }
+    };
+
+    // 🆕 Videos 캐시 관리 도구들
+    // @ts-ignore - 개발용 전역 함수
+    window.checkVideosCache = async () => {
+      try {
+        console.log('📹 === Videos 캐시 상태 확인 ===');
+        
+        const { getCacheStats } = await import('@/lib/database');
+        const stats = await getCacheStats();
+        
+        console.log('📊 캐시 통계:', {
+          '총 캐시된 영상': stats.total,
+          '유효한 캐시': stats.recent,
+          '만료된 캐시': stats.expired,
+          '유효율': `${stats.total > 0 ? ((stats.recent / stats.total) * 100).toFixed(1) : 0}%`
+        });
+        
+        return stats;
+      } catch (error) {
+        console.error('❌ Videos 캐시 상태 확인 실패:', error);
+      }
+    };
+
+    // @ts-ignore - 개발용 전역 함수
+    window.cleanVideosCache = async (maxAgeInDays = 30) => {
+      try {
+        console.log(`🧹 ${maxAgeInDays}일 이상 된 Videos 캐시 정리 중...`);
+        
+        const { cleanExpiredCache } = await import('@/lib/database');
+        const deletedCount = await cleanExpiredCache(maxAgeInDays);
+        
+        console.log(`✅ ${deletedCount}개의 만료된 캐시 삭제 완료`);
+        return deletedCount;
+      } catch (error) {
+        console.error('❌ Videos 캐시 정리 실패:', error);
+      }
+    };
+
+    // @ts-ignore - 개발용 전역 함수
+    window.prefetchRelatedVideos = async () => {
+      try {
+        console.log('🎬 현재 프로필의 관련 영상들 사전 캐싱 시작...');
+        
+        // 현재 이미지들의 관련 영상 ID 수집
+        const allVideoIds: string[] = [];
+        images.forEach(img => {
+          if (img.relatedVideos && Array.isArray(img.relatedVideos)) {
+            img.relatedVideos.forEach((video: any) => {
+              if (video.embedId) {
+                allVideoIds.push(video.embedId);
+              }
+            });
+          }
+        });
+
+        if (allVideoIds.length === 0) {
+          console.log('⚠️ 사전 캐싱할 관련 영상이 없습니다');
+          return;
+        }
+
+        const uniqueVideoIds = [...new Set(allVideoIds)];
+        console.log(`🔍 총 ${uniqueVideoIds.length}개의 고유 영상 ID 발견`);
+
+        const { prefetchVideos } = await import('@/lib/database');
+        const result = await prefetchVideos(uniqueVideoIds);
+        
+        console.log('✅ 사전 캐싱 완료:', {
+          '성공': result.success.length,
+          '실패': result.failed.length,
+          '총 처리': uniqueVideoIds.length
+        });
+        
+        return result;
+      } catch (error) {
+        console.error('❌ 관련 영상 사전 캐싱 실패:', error);
+      }
+    };
+
+    // @ts-ignore - 개발용 전역 함수
+    window.testVideoCache = async (videoId = 'dQw4w9WgXcQ') => {
+      try {
+        console.log(`🧪 비디오 캐시 테스트 시작: ${videoId}`);
+        
+        const { getCachedVideo, isCacheExpired } = await import('@/lib/database');
+        
+        // 캐시 확인
+        const cached = await getCachedVideo(videoId);
+        if (cached) {
+          const isExpired = isCacheExpired(cached.last_fetched_at);
+          console.log('📄 캐시 상태:', {
+            '캐시 존재': true,
+            '제목': cached.title,
+            '캐시 일시': new Date(cached.last_fetched_at).toLocaleString(),
+            '만료 여부': isExpired
+          });
+        } else {
+          console.log('📄 캐시 상태: 캐시 없음');
+        }
+        
+        // fetchVideoInfo로 테스트 (캐시 로직 포함)
+        const { fetchVideoInfo } = await import('@/app/upload/VideoAnalysis/videoKeyword');
+        const startTime = Date.now();
+        const result = await fetchVideoInfo(videoId);
+        const endTime = Date.now();
+        
+        console.log('⏱️ 성능 테스트:', {
+          '처리 시간': `${endTime - startTime}ms`,
+          '결과': result ? '성공' : '실패',
+          '제목': result?.title
+        });
+        
+        return result;
+      } catch (error) {
+        console.error('❌ 비디오 캐시 테스트 실패:', error);
+      }
+    };
+    
+    console.log('💡 개발용 함수들이 등록되었습니다:');
+    console.log('   - window.clearAllTubeLensData() : 모든 데이터 정리');
+    console.log('   - window.checkDBStatus() : DB 상태 확인');
+    console.log('   - window.debugSliderHistory(index) : 슬라이더 히스토리 디버깅');
+    console.log('   - window.debugMyPageWatchHistory() : MyPage 시청기록 디버깅');
+    console.log('   - window.fixUploadSliderIssue() : 업로드 슬라이더 문제 해결');
+    console.log('   🆕 Videos 캐시 관리:');
+    console.log('   - window.checkVideosCache() : Videos 캐시 상태 확인');
+    console.log('   - window.cleanVideosCache(maxDays) : 만료된 캐시 정리');
+    console.log('   - window.prefetchRelatedVideos() : 관련 영상 사전 캐싱');
+    console.log('   - window.testVideoCache(videoId) : 캐시 시스템 테스트');
   }, []);
 
   //새로고침시 별명 생성/로드 훅 사용
@@ -334,6 +722,18 @@ export default function MyProfilePage() {
               isPlaying={sliderIsPlaying}
               handlePlayHistory={handlePlayHistory}
               handleHistoryClick={handleHistoryClick}
+              handleProfileImagesClick={async () => {
+                // 🆕 파란 점 클릭 시 DB에서 최신 상태 로드
+                console.log('🔵 현재 꾸민 상태로 돌아가기 - DB에서 최신 데이터 로드');
+                try {
+                  await reloadFromDB();
+                  console.log('✅ DB에서 최신 상태 로드 완료');
+                } catch (error) {
+                  console.error('❌ DB 로드 실패:', error);
+                  // 실패 시 새로고침으로 fallback
+                  window.location.reload();
+                }
+              }}
               isTransitioning={sliderIsTransitioning}
             />
           )}

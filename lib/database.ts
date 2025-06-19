@@ -482,6 +482,17 @@ export const getSliderHistory = async (userId: string, versionType?: 'upload' | 
   return data;
 };
 
+// SliderHistory 삭제 함수
+export const deleteSliderHistory = async (historyId: string) => {
+  const { data, error } = await supabase
+    .from('slider_history')
+    .delete()
+    .eq('id', historyId);
+
+  if (error) throw error;
+  return data;
+};
+
 // ==================== 유틸리티 함수 ====================
 export const getCurrentUser = async () => {
   const { data: { user }, error } = await supabase.auth.getUser();
@@ -551,6 +562,598 @@ export const ensureUserExists = async () => {
     return existingUser;
   } catch (error) {
     console.error('ensureUserExists 실패:', error);
+    throw error;
+  }
+};
+
+// ==================== Videos Cache System ====================
+
+interface VideoCache {
+  id: string;
+  title: string;
+  description: string;
+  channel_id: string;
+  published_at: string;
+  thumbnail_url: string;
+  view_count: number;
+  like_count: number;
+  comment_count: number;
+  last_fetched_at: string;
+  channel_name: string;
+  url: string;
+  tags: string[];
+  keywords: string[];
+}
+
+// 캐시에서 비디오 정보 조회
+export const getCachedVideo = async (videoId: string): Promise<VideoCache | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('videos')
+      .select('*')
+      .eq('id', videoId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // 데이터 없음 - 정상적인 경우
+        return null;
+      }
+      throw error;
+    }
+
+    console.log(`[getCachedVideo] 캐시에서 비디오 발견: ${videoId}`);
+    return data;
+  } catch (error) {
+    console.error(`[getCachedVideo] 캐시 조회 실패 (${videoId}):`, error);
+    return null;
+  }
+};
+
+// 캐시가 만료되었는지 확인 (기본 7일)
+export const isCacheExpired = (lastFetchedAt: string, maxAgeInDays: number = 7): boolean => {
+  const lastFetched = new Date(lastFetchedAt);
+  const now = new Date();
+  const diffInDays = (now.getTime() - lastFetched.getTime()) / (1000 * 60 * 60 * 24);
+  
+  return diffInDays > maxAgeInDays;
+};
+
+// 비디오 정보를 캐시에 저장/업데이트
+export const saveVideoCache = async (videoData: Omit<VideoCache, 'last_fetched_at'>): Promise<VideoCache | null> => {
+  try {
+    const cacheData = {
+      ...videoData,
+      last_fetched_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('videos')
+      .upsert(cacheData, {
+        onConflict: 'id',
+        ignoreDuplicates: false
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    console.log(`[saveVideoCache] 비디오 캐시 저장 완료: ${videoData.id}`);
+    return data;
+  } catch (error) {
+    console.error(`[saveVideoCache] 캐시 저장 실패 (${videoData.id}):`, error);
+    return null;
+  }
+};
+
+// 여러 비디오의 캐시 상태 확인
+export const checkMultipleVideosCache = async (videoIds: string[]): Promise<{
+  cached: VideoCache[];
+  missing: string[];
+  expired: VideoCache[];
+}> => {
+  try {
+    const { data: cachedVideos, error } = await supabase
+      .from('videos')
+      .select('*')
+      .in('id', videoIds);
+
+    if (error) throw error;
+
+    const cached: VideoCache[] = [];
+    const expired: VideoCache[] = [];
+    const foundIds = new Set<string>();
+
+    (cachedVideos || []).forEach(video => {
+      foundIds.add(video.id);
+      
+      if (isCacheExpired(video.last_fetched_at)) {
+        expired.push(video);
+      } else {
+        cached.push(video);
+      }
+    });
+
+    const missing = videoIds.filter(id => !foundIds.has(id));
+
+    console.log(`[checkMultipleVideosCache] 캐시 상태 분석:`, {
+      '요청': videoIds.length,
+      '캐시됨': cached.length,
+      '누락': missing.length,
+      '만료': expired.length
+    });
+
+    return { cached, missing, expired };
+  } catch (error) {
+    console.error('[checkMultipleVideosCache] 캐시 상태 확인 실패:', error);
+    return {
+      cached: [],
+      missing: videoIds,
+      expired: []
+    };
+  }
+};
+
+// 캐시 통계 조회
+export const getCacheStats = async (): Promise<{
+  total: number;
+  recent: number;
+  expired: number;
+}> => {
+  try {
+    const { data: allVideos, error } = await supabase
+      .from('videos')
+      .select('last_fetched_at');
+
+    if (error) throw error;
+
+    const now = new Date();
+    const total = allVideos?.length || 0;
+    let recent = 0;
+    let expired = 0;
+
+    (allVideos || []).forEach(video => {
+      if (isCacheExpired(video.last_fetched_at)) {
+        expired++;
+      } else {
+        recent++;
+      }
+    });
+
+    return { total, recent, expired };
+  } catch (error) {
+    console.error('[getCacheStats] 캐시 통계 조회 실패:', error);
+    return { total: 0, recent: 0, expired: 0 };
+  }
+};
+
+// 만료된 캐시 정리
+export const cleanExpiredCache = async (maxAgeInDays: number = 30): Promise<number> => {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - maxAgeInDays);
+
+    const { data, error } = await supabase
+      .from('videos')
+      .delete()
+      .lt('last_fetched_at', cutoffDate.toISOString())
+      .select('id');
+
+    if (error) throw error;
+
+    const deletedCount = data?.length || 0;
+    console.log(`[cleanExpiredCache] ${deletedCount}개의 만료된 캐시 삭제 완료`);
+    
+    return deletedCount;
+  } catch (error) {
+    console.error('[cleanExpiredCache] 만료된 캐시 정리 실패:', error);
+    return 0;
+  }
+};
+
+// 🆕 대량 비디오 캐시 확인 및 분석 함수
+export const batchCheckVideoCache = async (videoIds: string[]): Promise<{
+  cacheHit: string[];
+  cacheMiss: string[];
+  cacheExpired: string[];
+  hitRate: number;
+}> => {
+  if (!videoIds.length) {
+    return { cacheHit: [], cacheMiss: [], cacheExpired: [], hitRate: 0 };
+  }
+
+  try {
+    const { cached, missing, expired } = await checkMultipleVideosCache(videoIds);
+    
+    const cacheHit = cached.map(v => v.id);
+    const cacheMiss = missing;
+    const cacheExpired = expired.map(v => v.id);
+    const hitRate = (cacheHit.length / videoIds.length) * 100;
+
+    console.log(`[batchCheckVideoCache] 캐시 분석 완료:`, {
+      '총 요청': videoIds.length,
+      '캐시 히트': cacheHit.length,
+      '캐시 미스': cacheMiss.length,
+      '캐시 만료': cacheExpired.length,
+      '히트율': `${hitRate.toFixed(1)}%`
+    });
+
+    return { cacheHit, cacheMiss, cacheExpired, hitRate };
+  } catch (error) {
+    console.error('[batchCheckVideoCache] 배치 캐시 확인 실패:', error);
+    return { cacheHit: [], cacheMiss: videoIds, cacheExpired: [], hitRate: 0 };
+  }
+};
+
+// 🆕 캐시 프리워밍 (사전 캐싱) 함수
+export const prefetchVideos = async (videoIds: string[]): Promise<{
+  success: string[];
+  failed: string[];
+}> => {
+  const success: string[] = [];
+  const failed: string[] = [];
+
+  console.log(`[prefetchVideos] ${videoIds.length}개 비디오 사전 캐싱 시작`);
+
+  // 현재 캐시 상태 확인
+  const { cacheMiss, cacheExpired } = await batchCheckVideoCache(videoIds);
+  const videosToFetch = [...cacheMiss, ...cacheExpired];
+
+  if (videosToFetch.length === 0) {
+    console.log('[prefetchVideos] 모든 비디오가 이미 캐시됨');
+    return { success: videoIds, failed: [] };
+  }
+
+  // YouTube API에서 여러 비디오 한 번에 가져오기 (최대 50개)
+  const chunkSize = 50;
+  for (let i = 0; i < videosToFetch.length; i += chunkSize) {
+    const chunk = videosToFetch.slice(i, i + chunkSize);
+    
+    try {
+      const videoIdsParam = chunk.join(',');
+      const response = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoIdsParam}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
+      );
+
+      if (!response.ok) {
+        console.error(`YouTube API 오류: ${response.status}`);
+        failed.push(...chunk);
+        continue;
+      }
+
+      const data = await response.json();
+      
+      if (data.items) {
+        for (const item of data.items) {
+          try {
+            const cacheData = {
+              id: item.id,
+              title: item.snippet.title || '',
+              description: item.snippet.description || '',
+              channel_id: item.snippet.channelId || '',
+              published_at: item.snippet.publishedAt || new Date().toISOString(),
+              thumbnail_url: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.default?.url || '',
+              view_count: 0,
+              like_count: 0,
+              comment_count: 0,
+              channel_name: item.snippet.channelTitle || '',
+              url: `https://www.youtube.com/watch?v=${item.id}`,
+              tags: item.snippet.tags || [],
+              keywords: [] // 프리페치에서는 키워드 생성 생략
+            };
+
+            await saveVideoCache(cacheData);
+            success.push(item.id);
+          } catch (saveError) {
+            console.error(`비디오 ${item.id} 캐시 저장 실패:`, saveError);
+            failed.push(item.id);
+          }
+        }
+      }
+
+      // API 레이트 리밋 방지를 위한 지연
+      if (i + chunkSize < videosToFetch.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+    } catch (error) {
+      console.error(`청크 ${i}-${i + chunkSize} 처리 실패:`, error);
+      failed.push(...chunk);
+    }
+  }
+
+  console.log(`[prefetchVideos] 완료: 성공 ${success.length}개, 실패 ${failed.length}개`);
+  return { success, failed };
+};
+
+// 🆕 캐시 워밍업 상태 확인
+export const getCacheWarmupStatus = async (videoIds: string[]): Promise<{
+  total: number;
+  cached: number;
+  missing: number;
+  expired: number;
+  percentage: number;
+}> => {
+  const { cacheHit, cacheMiss, cacheExpired } = await batchCheckVideoCache(videoIds);
+  
+  const total = videoIds.length;
+  const cached = cacheHit.length;
+  const missing = cacheMiss.length;
+  const expired = cacheExpired.length;
+  const percentage = total > 0 ? (cached / total) * 100 : 0;
+
+  return { total, cached, missing, expired, percentage };
+};
+
+// 🔧 잘못된 SliderHistory 수정 함수
+export const fixCorruptedSliderHistory = async () => {
+  const { data: userResponse } = await supabase.auth.getUser();
+  if (!userResponse.user) {
+    throw new Error('로그인이 필요합니다');
+  }
+
+  const userId = userResponse.user.id;
+  console.log('🔧 [fixCorruptedSliderHistory] 사용자 ID:', userId);
+
+  try {
+    // 1️⃣ 모든 SliderHistory 조회
+    const { data: allHistory, error: fetchError } = await supabase
+      .from('slider_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      console.error('❌ SliderHistory 조회 실패:', fetchError);
+      throw fetchError;
+    }
+
+    console.log('📊 [fixCorruptedSliderHistory] 전체 SliderHistory:', {
+      '전체 개수': allHistory?.length || 0,
+      '데이터': allHistory
+    });
+
+    if (!allHistory || allHistory.length === 0) {
+      console.log('✅ SliderHistory가 없어 수정할 데이터가 없습니다.');
+      return { message: 'SliderHistory가 없음', deleted: 0, kept: 0 };
+    }
+
+    // 2️⃣ 원시 클러스터 데이터 vs 올바른 ImageData 구분
+    const corruptedData = [];
+    const validData = [];
+
+    for (const history of allHistory) {
+      if (!history.image_data || !Array.isArray(history.image_data)) {
+        console.warn('⚠️ image_data가 배열이 아님:', history.id);
+        corruptedData.push(history);
+        continue;
+      }
+
+      const firstImage = history.image_data[0];
+      
+      // 원시 클러스터 데이터인지 확인 (main_keyword가 있고 id/src가 없음)
+      if (firstImage && firstImage.main_keyword && !firstImage.id && !firstImage.src) {
+        console.log('🗑️ 원시 클러스터 데이터 발견:', {
+          'history_id': history.id,
+          'version_type': history.version_type,
+          'created_at': history.created_at,
+          'image_count': history.image_data.length,
+          'first_image': firstImage
+        });
+        corruptedData.push(history);
+      } 
+      // 올바른 ImageData인지 확인 (id, src, position이 있음)
+      else if (firstImage && firstImage.id && firstImage.src && firstImage.position) {
+        console.log('✅ 올바른 ImageData 발견:', {
+          'history_id': history.id,
+          'version_type': history.version_type,
+          'created_at': history.created_at,
+          'image_count': history.image_data.length
+        });
+        validData.push(history);
+      } 
+      // 알 수 없는 형식
+      else {
+        console.warn('❓ 알 수 없는 형식:', {
+          'history_id': history.id,
+          'first_image': firstImage
+        });
+        corruptedData.push(history);
+      }
+    }
+
+    console.log('📊 [fixCorruptedSliderHistory] 분류 결과:', {
+      '손상된 데이터': corruptedData.length,
+      '올바른 데이터': validData.length
+    });
+
+    // 3️⃣ 손상된 데이터만 삭제
+    let deletedCount = 0;
+    if (corruptedData.length > 0) {
+      const corruptedIds = corruptedData.map(item => item.id);
+      
+      const { data: deleteResult, error: deleteError } = await supabase
+        .from('slider_history')
+        .delete()
+        .in('id', corruptedIds);
+
+      if (deleteError) {
+        console.error('❌ 손상된 데이터 삭제 실패:', deleteError);
+        throw deleteError;
+      }
+
+      deletedCount = corruptedIds.length;
+      console.log(`🗑️ 손상된 SliderHistory ${deletedCount}개 삭제 완료`);
+    }
+
+    const result = {
+      message: 'SliderHistory 수정 완료',
+      deleted: deletedCount,
+      kept: validData.length,
+      details: {
+        deletedData: corruptedData.map(item => ({
+          id: item.id,
+          version_type: item.version_type,
+          created_at: item.created_at,
+          image_count: item.image_data?.length || 0
+        })),
+        validData: validData.map(item => ({
+          id: item.id,
+          version_type: item.version_type,
+          created_at: item.created_at,
+          image_count: item.image_data?.length || 0
+        }))
+      }
+    };
+
+    console.log('✅ [fixCorruptedSliderHistory] 수정 완료:', result);
+    return result;
+
+  } catch (error) {
+    console.error('❌ [fixCorruptedSliderHistory] 실패:', error);
+    throw error;
+  }
+};
+
+// 🧹 중복된 SliderHistory 정리 함수
+export const removeDuplicateSliderHistory = async () => {
+  const { data: userResponse } = await supabase.auth.getUser();
+  if (!userResponse.user) {
+    throw new Error('로그인이 필요합니다');
+  }
+
+  const userId = userResponse.user.id;
+  console.log('🧹 [removeDuplicateSliderHistory] 사용자 ID:', userId);
+
+  try {
+    // 1️⃣ 모든 SliderHistory 조회 (최신순)
+    const { data: allHistory, error: fetchError } = await supabase
+      .from('slider_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      console.error('❌ SliderHistory 조회 실패:', fetchError);
+      throw fetchError;
+    }
+
+    console.log('📊 [removeDuplicateSliderHistory] 전체 SliderHistory:', {
+      '전체 개수': allHistory?.length || 0,
+      '데이터': allHistory
+    });
+
+    if (!allHistory || allHistory.length <= 1) {
+      console.log('✅ 중복 제거할 SliderHistory가 없습니다.');
+      return { message: '중복 없음', deleted: 0, kept: allHistory?.length || 0 };
+    }
+
+    // 2️⃣ version_type별로 그룹화
+    const groupedByType: { [key: string]: any[] } = {};
+    allHistory.forEach(history => {
+      const versionType = history.version_type || 'unknown';
+      if (!groupedByType[versionType]) {
+        groupedByType[versionType] = [];
+      }
+      groupedByType[versionType].push(history);
+    });
+
+    console.log('📊 [removeDuplicateSliderHistory] 타입별 그룹화:', 
+      Object.keys(groupedByType).map(type => ({
+        type,
+        count: groupedByType[type].length
+      }))
+    );
+
+    // 3️⃣ 각 타입별로 최신 것만 남기고 나머지 삭제
+    const toDelete = [];
+    const toKeep = [];
+
+    for (const [versionType, histories] of Object.entries(groupedByType)) {
+      if (histories.length > 1) {
+        // 최신 것 1개만 남기고 나머지는 삭제 대상
+        const [latest, ...duplicates] = histories; // 이미 created_at 내림차순 정렬됨
+        
+        toKeep.push(latest);
+        toDelete.push(...duplicates);
+        
+        console.log(`🔍 [${versionType}] 중복 발견:`, {
+          '전체': histories.length,
+          '유지': 1,
+          '삭제 예정': duplicates.length,
+          '최신 데이터': {
+            id: latest.id,
+            created_at: latest.created_at,
+            image_count: latest.image_data?.length || 0
+          },
+          '삭제 대상': duplicates.map(d => ({
+            id: d.id,
+            created_at: d.created_at,
+            image_count: d.image_data?.length || 0
+          }))
+        });
+      } else {
+        // 중복 없음
+        toKeep.push(...histories);
+        console.log(`✅ [${versionType}] 중복 없음:`, histories.length);
+      }
+    }
+
+    console.log('📊 [removeDuplicateSliderHistory] 정리 계획:', {
+      '유지할 데이터': toKeep.length,
+      '삭제할 데이터': toDelete.length
+    });
+
+    // 4️⃣ 중복 데이터 삭제 실행
+    let deletedCount = 0;
+    if (toDelete.length > 0) {
+      const deleteIds = toDelete.map(item => item.id);
+      
+      const { data: deleteResult, error: deleteError } = await supabase
+        .from('slider_history')
+        .delete()
+        .in('id', deleteIds);
+
+      if (deleteError) {
+        console.error('❌ 중복 데이터 삭제 실패:', deleteError);
+        throw deleteError;
+      }
+
+      deletedCount = deleteIds.length;
+      console.log(`🗑️ 중복 SliderHistory ${deletedCount}개 삭제 완료`);
+    }
+
+    const result = {
+      message: '중복 SliderHistory 정리 완료',
+      deleted: deletedCount,
+      kept: toKeep.length,
+      details: {
+        byType: Object.keys(groupedByType).map(type => ({
+          version_type: type,
+          original_count: groupedByType[type].length,
+          after_cleanup: groupedByType[type].length > 1 ? 1 : groupedByType[type].length,
+          deleted_count: Math.max(0, groupedByType[type].length - 1)
+        })),
+        deletedData: toDelete.map(item => ({
+          id: item.id,
+          version_type: item.version_type,
+          created_at: item.created_at,
+          image_count: item.image_data?.length || 0
+        })),
+        keptData: toKeep.map(item => ({
+          id: item.id,
+          version_type: item.version_type,
+          created_at: item.created_at,
+          image_count: item.image_data?.length || 0
+        }))
+      }
+    };
+
+    console.log('✅ [removeDuplicateSliderHistory] 정리 완료:', result);
+    return result;
+
+  } catch (error) {
+    console.error('❌ [removeDuplicateSliderHistory] 실패:', error);
     throw error;
   }
 }; 

@@ -189,9 +189,9 @@ export default function WatchHistoryPage() {
                   </div>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-green-500">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span className="text-sm font-medium">시청함</span>
+                    <div className="flex items-center gap-1.5 text-green-500">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="text-sm font-medium">시청함</span>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                         video.source === 'explore' 

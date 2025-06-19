@@ -1,5 +1,6 @@
 import { useRouter } from 'next/navigation';
-import { getCurrentUserId, updateClusterImages, getClusterImages, saveSliderHistory as saveSliderHistoryDB, getProfileData } from '@/lib/database';
+import { getCurrentUserId, updateClusterImages, getClusterImages, getProfileData } from '@/lib/database';
+import { saveSliderHistory } from '../../utils/saveSliderHistory';
 
 export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
     const router = useRouter();
@@ -45,60 +46,60 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
             // 🆕 사용자별 localStorage 키 사용
             const storageKey = `profileImages_${currentUserId}`;
             const profileImagesRaw = localStorage.getItem(storageKey);
-            let profileImages = profileImagesRaw ? JSON.parse(profileImagesRaw) : [];
+        let profileImages = profileImagesRaw ? JSON.parse(profileImagesRaw) : [];
 
-            // 데이터를 항상 배열 형태로 일관성 있게 처리합니다.
-            let imageList: any[] = [];
-            if (Array.isArray(profileImages)) {
-                imageList = profileImages;
-            } else if (typeof profileImages === 'object' && profileImages !== null) {
-                // 데이터가 객체 형태일 경우, 배열로 변환하여 기존 데이터를 보존합니다.
-                imageList = Object.values(profileImages);
-            }
+        // 데이터를 항상 배열 형태로 일관성 있게 처리합니다.
+        let imageList: any[] = [];
+        if (Array.isArray(profileImages)) {
+            imageList = profileImages;
+        } else if (typeof profileImages === 'object' && profileImages !== null) {
+            // 데이터가 객체 형태일 경우, 배열로 변환하여 기존 데이터를 보존합니다.
+            imageList = Object.values(profileImages);
+        }
 
-            // 랜덤 위치 생성
-            const randomPosition = generateRandomCenterPosition();
+        // 랜덤 위치 생성
+        const randomPosition = generateRandomCenterPosition();
 
-            const newInterestImage = {
-                ...image,
-                id: `desired_${image.id}_${Date.now()}`,
+        const newInterestImage = {
+            ...image,
+            id: `desired_${image.id}_${Date.now()}`,
                 user_id: currentUserId, // 🆕 현재 사용자 ID 설정
-                desired_self: true,
-                desired_self_profile: ownerId,
-                frameStyle: 'cokie',
-                left: `${randomPosition.x}px`,
-                top: `${randomPosition.y}px`,
-                position: { x: randomPosition.x, y: randomPosition.y },
-                sizeWeight: 0.7,
-                rotate: 0,
-                created_at: new Date().toISOString(),
-                metadata: image.metadata || {}
-            };
-            
-            // 현재 desired_self가 true인 이미지 개수 확인
-            const currentDesiredSelfCount = imageList.filter(img => img.desired_self === true).length;
-            
-            if (currentDesiredSelfCount >= 3) {
-                alert('관심사는 최대 3개까지만 추가할 수 있습니다. 기존 관심사를 삭제한 후 다시 시도해주세요.');
-                return; // 3개 제한
-            }
-            
-            // 이미 추가된 관심사인지 확인 (원본 이미지 src와 프로필 주인을 기준)
-            const isAlreadyAdded = imageList.some(
-                img => img.desired_self && img.src === newInterestImage.src && img.desired_self_profile === ownerId
-            );
+            desired_self: true,
+            desired_self_profile: ownerId,
+            frameStyle: 'cokie',
+            left: `${randomPosition.x}px`,
+            top: `${randomPosition.y}px`,
+            position: { x: randomPosition.x, y: randomPosition.y },
+            sizeWeight: 0.5, // 🆕 더 작은 값으로 조정하여 크기 균형 맞추기
+            rotate: 0,
+            created_at: new Date().toISOString(),
+            metadata: image.metadata || {}
+        };
+        
+        // 현재 desired_self가 true인 이미지 개수 확인
+        const currentDesiredSelfCount = imageList.filter(img => img.desired_self === true).length;
+        
+        if (currentDesiredSelfCount >= 3) {
+            alert('관심사는 최대 3개까지만 추가할 수 있습니다. 기존 관심사를 삭제한 후 다시 시도해주세요.');
+            return; // 3개 제한
+        }
+        
+        // 이미 추가된 관심사인지 확인 (원본 이미지 src와 프로필 주인을 기준)
+        const isAlreadyAdded = imageList.some(
+            img => img.desired_self && img.src === newInterestImage.src && img.desired_self_profile === ownerId
+        );
 
-            if (isAlreadyAdded) {
-                alert('이미 내 프로필에 추가된 관심사입니다.');
-                return; // 중복 추가 방지
-            }
+        if (isAlreadyAdded) {
+            alert('이미 내 프로필에 추가된 관심사입니다.');
+            return; // 중복 추가 방지
+        }
 
             // 새 관심사를 배열에 추가
-            imageList.push(newInterestImage);
+        imageList.push(newInterestImage);
             
             // 🆕 사용자별 localStorage에 저장
             localStorage.setItem(storageKey, JSON.stringify(imageList));
-            
+        
             // 🆕 DB에도 저장 (cluster_images 테이블 업데이트)
             try {
                 await updateClusterImages(currentUserId, imageList);
@@ -110,49 +111,65 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
             
             // 🎯 desired_self 추가 시에만 SliderHistory 생성 (version_type: 'self')
             try {
-                // 현재 사용자의 프로필 정보 가져오기
-                let currentNickname = '새로운 사용자';
-                let currentDescription = '프로필 설명이 없습니다';
+                // 🆕 self 타입 저장 데이터 상세 디버깅
+                console.log('🔍 [self 타입 SliderHistory 저장] 상세 데이터 분석:', {
+                    'imageList 개수': imageList.length,
+                    'imageList 타입': typeof imageList,
+                    'imageList[0] 구조 샘플': imageList[0] ? {
+                        id: imageList[0].id,
+                        src: imageList[0].src?.substring(0, 50),
+                        main_keyword: imageList[0].main_keyword,
+                        keywords: imageList[0].keywords,
+                        category: imageList[0].category,
+                        sizeWeight: imageList[0].sizeWeight,
+                        desired_self: imageList[0].desired_self,
+                        frameStyle: imageList[0].frameStyle
+                    } : 'imageList 비어있음',
+                    'desired_self 이미지들': imageList.filter(img => img.desired_self).map(img => ({
+                        id: img.id,
+                        main_keyword: img.main_keyword,
+                        desired_self_profile: img.desired_self_profile,
+                        src: img.src?.substring(0, 50)
+                    })),
+                    '일반 이미지들': imageList.filter(img => !img.desired_self).map(img => ({
+                        id: img.id,
+                        main_keyword: img.main_keyword,
+                        category: img.category,
+                        src: img.src?.substring(0, 50)
+                    }))
+                });
 
-                try {
-                    const profileData = await getProfileData(currentUserId);
-                    if (profileData) {
-                        currentNickname = profileData.nickname || currentNickname;
-                        currentDescription = profileData.description || currentDescription;
-                    }
-                } catch (profileError) {
-                    console.log('[desired_self] DB에서 프로필 로드 실패, localStorage fallback');
+                // 🆕 saveSliderHistory 함수 사용 (검증 및 fallback 포함)
+                const result = await saveSliderHistory(imageList, 'self');
+                
+                if (result.success) {
+                    console.log('✅ SliderHistory 저장 완료 (version_type: self):', result);
+                    
+                    // 🆕 저장 후 실제 DB에서 조회해서 비교
                     try {
-                        const profileDataKey = `ProfileData_${currentUserId}`;
-                        const savedProfileData = JSON.parse(localStorage.getItem(profileDataKey) || '{}');
-                        currentNickname = savedProfileData.nickname || currentNickname;
-                        currentDescription = savedProfileData.description || currentDescription;
-                    } catch (localError) {
-                        console.log('[desired_self] localStorage 프로필 로드도 실패, 기본값 사용');
+                        const { getSliderHistory } = await import('@/lib/database');
+                        const savedHistory = await getSliderHistory(currentUserId, 'self');
+                        console.log('🔍 [저장 후 확인] DB에서 조회된 self 타입 데이터:', {
+                            '총 개수': savedHistory?.length || 0,
+                            '최신 데이터 images 개수': savedHistory?.[0]?.images?.length || 0,
+                            '최신 데이터 images 샘플': savedHistory?.[0]?.images?.slice(0, 2)
+                        });
+                    } catch (verifyError) {
+                        console.error('❌ 저장 후 확인 실패:', verifyError);
                     }
+                } else {
+                    console.error('❌ SliderHistory 저장 실패:', result.error);
                 }
-
-                // 🎯 SliderHistory 데이터 생성 (version_type: 'self')
-                const sliderHistoryData = {
-                    user_id: currentUserId,
-                    version_type: 'self' as const, // 🎯 desired_self 추가 시에는 'self' 타입
-                    nickname: currentNickname,
-                    description: `${currentDescription} (+관심사 추가: ${newInterestImage.main_keyword})`,
-                    images: imageList
-                };
-
-                await saveSliderHistoryDB(sliderHistoryData);
-                console.log('✅ SliderHistory DB 저장 완료 (version_type: self)');
                 
             } catch (sliderError) {
                 console.error('❌ SliderHistory 저장 중 오류:', sliderError);
                 // SliderHistory 저장 실패해도 관심사 추가는 성공으로 처리
-            }
-            
-            console.log('✅ 새로운 관심사 이미지 추가됨:', newInterestImage);
-            alert('새로운 관심사가 내 프로필에 추가되었습니다.');
-            setShowDetails(false);
-            router.push('/my_profile');
+        }
+        
+        console.log('✅ 새로운 관심사 이미지 추가됨:', newInterestImage);
+        alert('새로운 관심사가 내 프로필에 추가되었습니다.');
+        setShowDetails(false);
+        router.push('/my_profile');
             
         } catch (error) {
             console.error('❌ 관심사 추가 중 오류:', error);

@@ -75,25 +75,25 @@ const VideoList: React.FC<VideoListProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <div
-                            className="relative w-full max-h-[100px] max-w-[450px] pt-[56.25%] bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
-                            onClick={() => onVideoClick(video)}
-                        >
-                            <iframe
-                                id={`player-${video.embedId}-${idx}`}
-                                className="absolute inset-0 w-full h-full"
-                                src={`https://www.youtube.com/embed/${video.embedId}?enablejsapi=1`}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                title={video.title}
-                            />
-                            <div className={`absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
-                                <CheckCircle2 className={`h-3 w-3 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
-                                <span className="text-xs font-medium">
-                                    {watchedVideos.includes(video.embedId) ? "시청함" : "시청안함"}
-                                </span>
-                            </div>
+                    <div
+                        className="relative w-full max-h-[100px] max-w-[450px] pt-[56.25%] bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
+                        onClick={() => onVideoClick(video)}
+                    >
+                        <iframe
+                            id={`player-${video.embedId}-${idx}`}
+                            className="absolute inset-0 w-full h-full"
+                            src={`https://www.youtube.com/embed/${video.embedId}?enablejsapi=1`}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title={video.title}
+                        />
+                        <div className={`absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
+                            <CheckCircle2 className={`h-3 w-3 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
+                            <span className="text-xs font-medium">
+                                {watchedVideos.includes(video.embedId) ? "시청함" : "시청안함"}
+                            </span>
                         </div>
+                    </div>
                     )}
                 </div>
             ))}

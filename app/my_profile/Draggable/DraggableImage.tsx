@@ -140,8 +140,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 style={{
                 ...style,
                 position: 'absolute',
-                width: image.width * (image.desired_self ? image.sizeWeight : image.sizeWeight * 10),
-                height: (image.height + 80) * (image.desired_self ? image.sizeWeight: image.sizeWeight * 10),
+                width: image.width * (image.desired_self ? Math.min(image.sizeWeight * 0.6, 0.4) : image.sizeWeight * 10),
+                height: (image.height + 80) * (image.desired_self ? Math.min(image.sizeWeight * 0.6, 0.4) : image.sizeWeight * 10),
                 touchAction: 'none',
                 zIndex: isSelected ? 30 : 10,
                 transition: isEditing 

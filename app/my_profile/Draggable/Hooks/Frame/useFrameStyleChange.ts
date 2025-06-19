@@ -80,12 +80,12 @@ export function useFrameStyleChange(
       const storageKey = userId ? `profileImages_${userId}` : 'profileImages';
       
       const profileImagesData = localStorage.getItem(storageKey);
-      if (profileImagesData) {
+    if (profileImagesData) {
         const profileImages = JSON.parse(profileImagesData);
         let updated = false;
 
         if (Array.isArray(profileImages)) {
-          const updatedProfileImagesArray = profileImages.map((img: ImageData) => {
+            const updatedProfileImagesArray = profileImages.map((img: ImageData) => {
             if (img.id === id) {
               console.log(`📝 사용자별 localStorage (배열) - 이미지 ${id}의 frameStyle을 ${style}(으)로 업데이트합니다.`);
               updated = true;

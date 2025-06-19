@@ -117,52 +117,62 @@ export default function MyPage() {
     const loadProfileFromLocalStorage = (userId?: string) => {
       if (typeof window !== 'undefined' && userId) {
         const raw = localStorage.getItem(`ProfileData_${userId}`);
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw);
-            setProfile(parsed);
-          } catch {
-            setProfile(null);
-          }
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          setProfile(parsed);
+        } catch {
+          setProfile(null);
         }
+      }
       }
     };
 
     const loadImagesFromLocalStorage = (userId?: string) => {
       if (typeof window !== 'undefined' && userId) {
         const imgRaw = localStorage.getItem(`profileImages_${userId}`);
-        if (imgRaw) {
-          try {
-            const parsedImgs = JSON.parse(imgRaw);
-            if (Array.isArray(parsedImgs) && parsedImgs.length > 0) {
-              setProfileImages(parsedImgs);
-              // strength가 가장 큰 이미지 찾기
-              const maxImg = parsedImgs.reduce((prev, curr) =>
-                curr.strength > prev.strength ? curr : prev
-              );
-              if (maxImg.url) setProfileImageUrl(maxImg.url);
-              else setProfileImageUrl('images/default.png');
-            } else {
-              setProfileImageUrl('images/default.png');
-            }
-          } catch {
+      if (imgRaw) {
+        try {
+          const parsedImgs = JSON.parse(imgRaw);
+          if (Array.isArray(parsedImgs) && parsedImgs.length > 0) {
+            setProfileImages(parsedImgs);
+            // strength가 가장 큰 이미지 찾기
+            const maxImg = parsedImgs.reduce((prev, curr) =>
+              curr.strength > prev.strength ? curr : prev
+            );
+            if (maxImg.url) setProfileImageUrl(maxImg.url);
+            else setProfileImageUrl('images/default.png');
+          } else {
             setProfileImageUrl('images/default.png');
           }
-        } else {
+        } catch {
           setProfileImageUrl('images/default.png');
         }
+      } else {
+        setProfileImageUrl('images/default.png');
       }
+    }
     };
 
     loadProfileData();
   }, []);
 
-  // 🆕 기존 전역 localStorage 키 정리 함수
-  const cleanupOldWatchHistoryKeys = () => {
-    const keysToRemove = ['watchHistory', 'watchHistory_guest'];
+  // 🆕 기존 전역 localStorage 키 정리 함수 (업로드 시청기록 키 포함)
+  const cleanupOldWatchHistoryKeys = async () => {
+    const userId = await getCurrentUserId();
+    const keysToRemove: string[] = [
+      'watchHistory', 
+      'watchHistory_guest'
+    ];
+    
+    // 🆕 업로드 시청기록 키도 정리 (MyPage에서는 탐색 기록만 표시)
+    if (userId) {
+      keysToRemove.push(`watchHistory_${userId}`);
+    }
+    
     keysToRemove.forEach(key => {
       if (localStorage.getItem(key)) {
-        console.log(`[MyPage] 기존키 삭제: ${key}`);
+        console.log(`[MyPage] 업로드 시청기록 키 정리: ${key}`);
         localStorage.removeItem(key);
       }
     });
@@ -191,26 +201,26 @@ export default function MyPage() {
     });
   };
 
-  // 🆕 사용자별 localStorage에서 시청기록 로드하는 fallback 함수
+  // 🆕 사용자별 localStorage에서 탐색 시청기록만 로드하는 fallback 함수
   const loadWatchHistoryFromLocalStorage = async (userId: string) => {
     try {
-      const cacheKey = `watchHistory_${userId}`;
-      const savedHistory = localStorage.getItem(cacheKey);
+      const exploreCacheKey = `exploreWatchHistory_${userId}`;
+      const savedExploreHistory = localStorage.getItem(exploreCacheKey);
       
-      if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
+      if (savedExploreHistory) {
+        const parsedHistory = JSON.parse(savedExploreHistory);
         if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
           setWatchHistory(parsedHistory);
-          console.log('[MyPage] 사용자별 localStorage에서 시청기록 로드 완료:', parsedHistory.length);
+          console.log('[MyPage] 사용자별 localStorage에서 탐색 시청기록 로드 완료:', parsedHistory.length);
         } else {
           setWatchHistory([]);
         }
       } else {
-        console.log('[MyPage] 사용자별 localStorage에 시청기록 없음');
+        console.log('[MyPage] 사용자별 localStorage에 탐색 시청기록 없음');
         setWatchHistory([]);
       }
     } catch (fallbackError) {
-      console.error('[MyPage] localStorage 시청기록 로드 실패:', fallbackError);
+      console.error('[MyPage] localStorage 탐색 시청기록 로드 실패:', fallbackError);
       setWatchHistory([]);
     }
   };
@@ -219,7 +229,7 @@ export default function MyPage() {
     const loadWatchHistory = async () => {
       try {
         // 🆕 기존 전역 localStorage 키 정리
-        cleanupOldWatchHistoryKeys();
+        await cleanupOldWatchHistoryKeys();
         
         // 🆕 localStorage 디버깅
         debugLocalStorageWatchHistory();
@@ -231,41 +241,13 @@ export default function MyPage() {
           return;
         }
 
-        // 🆕 DB-first: 통합된 WatchHistory에서 모든 시청기록 가져오기
+        // 🆕 DB와 localStorage 모두에서 데이터 로드 (DB 실패 시 localStorage 사용)
         try {
-          const dbWatchHistory = await getWatchHistory(userId, 50); // 전체 시청기록 50개
-          const exploreWatchHistory = await getExploreWatchHistory(userId, 50); // 🆕 탐색 시청기록 50개
-
-          // 🆕 디버깅용 로깅 추가
-          console.log('🔍 [MyPage] DB 시청기록 로드 결과:', {
-            'userId': userId,
-            'Upload DB에서 가져온 개수': dbWatchHistory?.length || 0,
-            'Explore DB에서 가져온 개수': exploreWatchHistory?.length || 0,
-            'DB 데이터 샘플': dbWatchHistory?.slice(0, 3) || [],
-            'Explore 데이터 샘플': exploreWatchHistory?.slice(0, 3) || [],
-            'source 분포': dbWatchHistory?.reduce((acc: any, item: any) => {
-              acc[item.source || 'unknown'] = (acc[item.source || 'unknown'] || 0) + 1;
-              return acc;
-            }, {}) || {}
-          });
+          const exploreWatchHistory = await getExploreWatchHistory(userId, 50); // 🆕 탐색 시청기록 50개만
 
           let allHistory: any[] = [];
 
-          // watch_history 데이터 변환
-          if (dbWatchHistory && dbWatchHistory.length > 0) {
-            const formattedHistory = dbWatchHistory.map((item: any) => ({
-              id: item.id,
-              user_id: item.user_id,
-              videoId: item.video_id,
-              title: item.title,
-              description: item.description,
-              source: item.source || 'upload',
-              timestamp: item.timestamp
-            }));
-            allHistory = [...allHistory, ...formattedHistory];
-          }
-
-          // 🆕 explore_watch_history 데이터 변환
+          // 🆕 explore_watch_history 데이터만 변환 (다른 사람 프로필에서 시청한 기록만)
           if (exploreWatchHistory && exploreWatchHistory.length > 0) {
             const exploreFormatted = exploreWatchHistory.map((item: any) => ({
               id: item.id,
@@ -277,6 +259,35 @@ export default function MyPage() {
               timestamp: item.timestamp
             }));
             allHistory = [...allHistory, ...exploreFormatted];
+            
+            console.log(`[MyPage] ✅ DB에서 탐색 시청기록 ${allHistory.length}개 로드 완료`);
+          }
+
+          // 🆕 localStorage에서 explore_watch_history만 가져오기 (다른 사람 프로필에서 시청한 기록만)
+          const exploreCacheKey = `exploreWatchHistory_${userId}`;
+          const savedExploreHistory = localStorage.getItem(exploreCacheKey);
+          let localStorageHistory: any[] = [];
+          
+          if (savedExploreHistory) {
+            try {
+              localStorageHistory = JSON.parse(savedExploreHistory);
+              if (Array.isArray(localStorageHistory) && localStorageHistory.length > 0) {
+                console.log(`[MyPage] 📦 localStorage에서 탐색 시청기록 ${localStorageHistory.length}개 로드`);
+                // localStorage의 explore 기록을 통일된 형식으로 변환
+                const exploreFormatted = localStorageHistory.map((item: any) => ({
+                  id: item.id,
+                  user_id: item.user_id,
+                  videoId: item.videoId,
+                  title: item.title,
+                  description: item.description,
+                  source: 'explore', // localStorage의 explore 기록도 source를 explore로 설정
+                  timestamp: item.timestamp
+                }));
+                allHistory = [...allHistory, ...exploreFormatted];
+              }
+            } catch (e) {
+              console.warn('[MyPage] localStorage explore 히스토리 파싱 실패:', e);
+            }
           }
 
           if (allHistory.length > 0) {
@@ -288,43 +299,34 @@ export default function MyPage() {
               index === self.findIndex((t) => t.videoId === item.videoId)
             );
 
-            // 🆕 디버깅용 로깅 추가
-            console.log('🔍 [MyPage] 시청기록 처리 결과:', {
-              '전체 통합 개수': allHistory.length,
+            console.log('🔍 [MyPage] 최종 시청기록 통합 결과:', {
+              'DB 개수': exploreWatchHistory?.length || 0,
+              'localStorage 개수': localStorageHistory?.length || 0,
+              '통합 전 총 개수': allHistory.length,
               '중복 제거 후 개수': uniqueHistory.length,
-              '중복 제거된 항목들': allHistory.filter((item, index, self) => 
-                index !== self.findIndex((t) => t.videoId === item.videoId)
-              ).map(item => item.title),
-              'source별 개수': uniqueHistory.reduce((acc: any, item: any) => {
+              'source별 분석': uniqueHistory.reduce((acc: any, item: any) => {
                 acc[item.source || 'unknown'] = (acc[item.source || 'unknown'] || 0) + 1;
                 return acc;
-              }, {}),
-              '최종 시청기록 첫 5개': uniqueHistory.slice(0, 5).map(item => ({
-                title: item.title,
-                source: item.source,
-                timestamp: item.timestamp
-              }))
+              }, {})
             });
 
             setWatchHistory(uniqueHistory);
-            console.log('[MyPage] DB에서 통합 시청 기록 로드 완료:', uniqueHistory.length);
-            console.log(`- Upload 기록: ${dbWatchHistory?.length || 0}개`);
-            console.log(`- Explore 기록: ${exploreWatchHistory?.length || 0}개`);
 
-            // 🆕 사용자별 localStorage에 캐시 저장
-            const cacheKey = `watchHistory_${userId}`;
-            localStorage.setItem(cacheKey, JSON.stringify(uniqueHistory));
-            console.log('[MyPage] 시청기록 localStorage 캐시 저장 완료');
+            // 🆕 탐색 시청기록만 localStorage에 캐시 저장 (explore 전용)
+            const exploreCacheKey = `exploreWatchHistory_${userId}`;
+            localStorage.setItem(exploreCacheKey, JSON.stringify(uniqueHistory));
+            console.log('[MyPage] ✅ 탐색 시청기록 localStorage 캐시 저장 완료');
 
           } else {
-            console.log('[MyPage] DB에 시청기록 없음, localStorage fallback');
-            await loadWatchHistoryFromLocalStorage(userId);
+            console.log('[MyPage] ℹ️ DB와 localStorage 모두에 시청기록이 없습니다. 빈 상태로 표시합니다.');
+            setWatchHistory([]);
           }
 
         } catch (dbError) {
-          console.error('[MyPage] DB 시청기록 로드 실패, localStorage fallback:', dbError);
+          console.warn('[MyPage] ⚠️ DB 시청기록 로드 실패, localStorage만 사용:', dbError);
+          // DB 실패 시 localStorage만 사용
           await loadWatchHistoryFromLocalStorage(userId);
-        }
+    }
 
       } catch (error) {
         console.error('[MyPage] 시청 기록 로드 전체 실패:', error);
@@ -370,6 +372,92 @@ export default function MyPage() {
       setIsSavingPublicSetting(false);
     }
   };
+
+  // 🆕 개발용 디버깅 함수 등록
+  useEffect(() => {
+    // @ts-ignore
+    window.debugMyPageWatchHistory = async () => {
+      try {
+        const userId = await getCurrentUserId();
+        if (!userId) {
+          console.log('❌ 로그인되지 않음');
+          return;
+        }
+
+        console.log('🔍 === MyPage 시청기록 디버깅 ===');
+        console.log('👤 현재 사용자 ID:', userId);
+
+        // localStorage 체크 (explore 전용 키 중심으로)
+        const allKeys = Object.keys(localStorage);
+        const watchKeys = allKeys.filter(key => 
+          key.includes('watchHistory') || key.includes('exploreWatch')
+        );
+        
+        console.log('📦 localStorage 관련 키들:', watchKeys);
+        
+        // exploreWatchHistory 키 우선 확인
+        const exploreKey = `exploreWatchHistory_${userId}`;
+        const generalKey = `watchHistory_${userId}`;
+        
+        console.log(`🎯 탐색 키 (${exploreKey}):`, localStorage.getItem(exploreKey) ? '존재' : '없음');
+        console.log(`📝 일반 키 (${generalKey}):`, localStorage.getItem(generalKey) ? '존재' : '없음');
+        
+        watchKeys.forEach(key => {
+          try {
+            const data = JSON.parse(localStorage.getItem(key) || '[]');
+            console.log(`${key}: ${Array.isArray(data) ? data.length : 'not array'}개 항목`);
+            if (Array.isArray(data) && data.length > 0) {
+              console.log(`${key} 첫 번째 항목:`, data[0]);
+            }
+          } catch (e) {
+            console.log(`${key}: 파싱 오류`);
+          }
+        });
+
+        // DB 체크
+        const watchHistory = await getWatchHistory(userId, 10);
+        const exploreWatchHistory = await getExploreWatchHistory(userId, 10);
+
+        console.log('🗄️ DB 시청기록:');
+        console.log(`   일반 시청기록: ${watchHistory?.length || 0}개`);
+        console.log(`   탐색 시청기록: ${exploreWatchHistory?.length || 0}개`);
+        
+        if (watchHistory && watchHistory.length > 0) {
+          console.log('   일반 시청기록 샘플:', watchHistory.slice(0, 2));
+        }
+        
+        if (exploreWatchHistory && exploreWatchHistory.length > 0) {
+          console.log('   탐색 시청기록 샘플:', exploreWatchHistory.slice(0, 2));
+        }
+
+        // 현재 화면에 표시되는 시청기록 체크
+        console.log('📺 현재 화면 시청기록:');
+        console.log(`   개수: ${watchHistory.length}`);
+        console.log(`   source별 분석:`, watchHistory.reduce((acc: any, item: any) => {
+          acc[item.source || 'unknown'] = (acc[item.source || 'unknown'] || 0) + 1;
+          return acc;
+        }, {}));
+
+        // 실제로 어떤 테이블에서 온 데이터인지 확인
+        if (watchHistory.length > 0) {
+          console.log('📊 시청기록 상세 분석:');
+          watchHistory.forEach((item, index) => {
+            if (index < 3) { // 처음 3개만 상세 분석
+              console.log(`  [${index}] 제목: ${item.title}`);
+              console.log(`       출처: ${item.source || 'unknown'}`);
+              console.log(`       날짜: ${new Date(item.timestamp).toLocaleString()}`);
+            }
+          });
+        }
+
+      } catch (error) {
+        console.error('❌ MyPage 시청기록 디버깅 실패:', error);
+      }
+    };
+
+    console.log('💡 MyPage 디버깅 함수 등록 완료:');
+    console.log('   - window.debugMyPageWatchHistory() : MyPage 시청기록 디버깅');
+  }, []);
 
   return (
     <div className="min-h-screen h-screen bg-gray-50 flex flex-row overflow-hidden">
@@ -469,7 +557,8 @@ export default function MyPage() {
         {activeTab === 'history' && (
           <div className="w-full max-w-none bg-white rounded-2xl shadow-sm border border-gray-200 p-0 flex flex-col items-center justify-start min-h-[400px] relative">
             <div className="w-full max-w-3xl mx-auto px-4 py-8">
-              <h1 className="text-2xl font-bold mb-6 text-gray-900">시청 기록</h1>
+              <h1 className="text-2xl font-bold mb-2 text-gray-900">탐색 시청 기록</h1>
+              <p className="text-sm text-gray-500 mb-6">다른 사람의 프로필에서 시청한 영상들</p>
               <div className="overflow-y-auto" style={{ maxHeight: '70vh' }}>
                 <div className="grid gap-4">
                   {watchHistory.length === 0 ? (

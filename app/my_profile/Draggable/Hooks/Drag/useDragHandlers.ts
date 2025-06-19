@@ -56,41 +56,41 @@ export function useDragEnd(
               const profileImagesKey = userId ? `profileImages_${userId}` : 'profileImages';
               
               const profileImagesData = localStorage.getItem(profileImagesKey);
-              if (profileImagesData) {
-                const profileImages = JSON.parse(profileImagesData);
+          if (profileImagesData) {
+              const profileImages = JSON.parse(profileImagesData);
                 console.log('🔄 드래그 시 사용자별 profileImages 즉시 업데이트 시작');
-                
-                if (Array.isArray(profileImages)) {
-                  // 배열인 경우
-                  const updatedProfileImages = profileImages.map((img: any) => {
-                    if (img.id === imageId) {
-                      return {
-                        ...img,
-                        left: `${newPosition.x}px`,
-                        top: `${newPosition.y}px`,
-                        position: newPosition,
-                      };
-                    }
-                    return img;
-                  });
+              
+              if (Array.isArray(profileImages)) {
+                // 배열인 경우
+                const updatedProfileImages = profileImages.map((img: any) => {
+                  if (img.id === imageId) {
+                    return {
+                      ...img,
+                      left: `${newPosition.x}px`,
+                      top: `${newPosition.y}px`,
+                      position: newPosition,
+                    };
+                  }
+                  return img;
+                });
                   localStorage.setItem(profileImagesKey, JSON.stringify(updatedProfileImages));
                   console.log(`✅ 배열 형태 사용자별 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
-                } else {
-                  // 객체인 경우
-                  if (profileImages[imageId]) {
-                    const updatedProfileImages = {
-                      ...profileImages,
-                      [imageId]: {
-                        ...profileImages[imageId],
-                        left: `${newPosition.x}px`,
-                        top: `${newPosition.y}px`,
-                        position: newPosition,
-                      }
-                    };
-                    
+              } else {
+                // 객체인 경우
+                if (profileImages[imageId]) {
+                  const updatedProfileImages = {
+                    ...profileImages,
+                    [imageId]: {
+                      ...profileImages[imageId],
+                      left: `${newPosition.x}px`,
+                      top: `${newPosition.y}px`,
+                      position: newPosition,
+                    }
+                  };
+                  
                     localStorage.setItem(profileImagesKey, JSON.stringify(updatedProfileImages));
                     console.log(`✅ 객체 형태 사용자별 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
-                  } else {
+                } else {
                     console.log(`❌ 사용자별 profileImages에서 ${imageId} 키를 찾을 수 없음`);
                   }
                 }

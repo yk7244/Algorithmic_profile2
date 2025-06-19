@@ -360,6 +360,35 @@ export const handleCluster = async (
         // 🆕 cluster_images 테이블에 기존 데이터 완전 교체 (겹침 방지)
         await updateClusterImages(userId, clusterHistoryData);
         console.log('[handleCluster] 클러스터 이미지 DB 교체 완료 (기존 삭제 + 새로운 저장)');
+        
+        // 🎯 SliderHistory 자동 저장 (upload 타입, 누적 추가)
+        try {
+          console.log('[handleCluster] SliderHistory 저장 시작 (upload 타입):', {
+            'profileImages 개수': profileImages.length,
+            'profileImages는 ImageData 형식': true,
+            'profileImages[0] 구조': profileImages[0]
+          });
+          
+          // 🆕 기존 upload 타입 Sl�라이더 개수 확인 (삭제하지 않고 누적)
+          const { getSliderHistory } = await import('@/lib/database');  
+          const existingUploadHistory = await getSliderHistory(userId, 'upload');
+          
+          if (existingUploadHistory && existingUploadHistory.length > 0) {
+            console.log(`📊 기존 upload 타입 Sl�라이더 ${existingUploadHistory.length}개 발견, 새로운 슬라이더 추가 예정`);
+          } else {
+            console.log('📊 기존 upload 타입 슬라이더 없음, 첫 번째 슬라이더 생성 예정');
+          }
+          
+          // saveSliderHistory 함수 import (기존 데이터 삭제 없이 새로 추가)
+          const { saveSliderHistory } = await import('../../utils/saveSliderHistory');
+          const sliderResult = await saveSliderHistory(profileImages, 'upload');
+          
+          const totalSliders = (existingUploadHistory?.length || 0) + 1;
+          console.log(`[handleCluster] ✅ SliberHistory 저장 완료 (upload 타입 누적): 총 ${totalSliders}개 슬라이더`, sliderResult);
+        } catch (sliderError) {
+          console.error('[handleCluster] ❌ SliderHistory 저장 실패:', sliderError);
+          // SliderHistory 저장 실패해도 다른 저장은 계속 진행
+        }
       }
     } catch (dbError) {
       console.error('[handleCluster] DB 저장 실패 (계속 진행):', dbError);

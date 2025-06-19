@@ -36,18 +36,18 @@ export function useImageDelete({
                 
                 const profileImagesData = localStorage.getItem(profileImagesKey);
                 if (profileImagesData) {
-                    const profileImages = JSON.parse(profileImagesData);
-                    let updatedProfileImages;
-                    
-                    if (Array.isArray(profileImages)) {
-                        // 배열인 경우
-                        updatedProfileImages = profileImages.filter((img: any) => img.id !== id);
-                    } else {
-                        // 객체인 경우
-                        updatedProfileImages = { ...profileImages };
-                        delete updatedProfileImages[id];
-                    }
-                    
+                const profileImages = JSON.parse(profileImagesData);
+                let updatedProfileImages;
+                
+                if (Array.isArray(profileImages)) {
+                    // 배열인 경우
+                    updatedProfileImages = profileImages.filter((img: any) => img.id !== id);
+                } else {
+                    // 객체인 경우
+                    updatedProfileImages = { ...profileImages };
+                    delete updatedProfileImages[id];
+                }
+                
                     localStorage.setItem(profileImagesKey, JSON.stringify(updatedProfileImages));
                     console.log(`✅ 사용자별 profileImages에서 이미지 ${id} 삭제 완료`);
                 }

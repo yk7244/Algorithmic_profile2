@@ -99,15 +99,71 @@ export function transformClustersToImageData(
   clusters: any[],
   clusterImages: Record<number, any>
 ): ImageData[] {
+  // 🆕 입력 데이터 검증 및 디버깅
+  console.log('🔧 [transformClustersToImageData] 입력 데이터 검증:', {
+    'clusters 개수': clusters?.length || 0,
+    'clusters 타입': typeof clusters,
+    'clusters 샘플': clusters?.slice(0, 2),
+    'clusterImages 개수': Object.keys(clusterImages || {}).length,
+    'clusterImages 타입': typeof clusterImages,
+    'clusterImages 구조': clusterImages,
+    'clusterImages 키들': Object.keys(clusterImages || {}),
+    'clusterImages 값들': Object.values(clusterImages || {})
+  });
+
+  if (!clusters || clusters.length === 0) {
+    console.warn('⚠️ [transformClustersToImageData] clusters가 비어있음');
+    return [];
+  }
+
+  if (!clusterImages || Object.keys(clusterImages).length === 0) {
+    console.warn('⚠️ [transformClustersToImageData] clusterImages가 비어있음, placeholder 이미지 사용');
+  }
+
   const strengths = clusters.map(c => c.strength || c.metadata?.videoCount || 1);
   const minStrength = Math.min(...strengths);
   const maxStrength = Math.max(...strengths);
 
-  return clusters.map((cluster, index) => {
+  console.log('🔧 [transformClustersToImageData] strength 계산:', {
+    'strengths 배열': strengths,
+    'minStrength': minStrength,
+    'maxStrength': maxStrength
+  });
+
+  const result = clusters.map((cluster, index) => {
     // Step6. 이미지 데이터 변환
     const imageUrl = clusterImages[index]?.url || placeholderImage;
-    return transformClusterToImageData(cluster, index, imageUrl, minStrength, maxStrength);
+    
+    console.log(`🔧 [transformClustersToImageData] 클러스터 ${index} 변환:`, {
+      'cluster.main_keyword': cluster.main_keyword,
+      'clusterImages[index]': clusterImages[index],
+      'imageUrl': imageUrl,
+      'strength': cluster.strength || cluster.metadata?.videoCount || 1
+    });
+    
+    const transformedData = transformClusterToImageData(cluster, index, imageUrl, minStrength, maxStrength);
+    
+    console.log(`🔧 [transformClustersToImageData] 클러스터 ${index} 변환 결과:`, {
+      'id': transformedData.id,
+      'main_keyword': transformedData.main_keyword,
+      'src': transformedData.src,
+      'sizeWeight': transformedData.sizeWeight,
+      'position': transformedData.position,
+      'frameStyle': transformedData.frameStyle
+    });
+    
+    return transformedData;
   });
+
+  console.log('✅ [transformClustersToImageData] 최종 변환 결과:', {
+    '변환된 이미지 개수': result.length,
+    '변환 성공 여부': result.length === clusters.length,
+    '결과 샘플': result.slice(0, 2),
+    '모든 ID들': result.map(r => r.id),
+    '모든 키워드들': result.map(r => r.main_keyword)
+  });
+
+  return result;
 }
 
 

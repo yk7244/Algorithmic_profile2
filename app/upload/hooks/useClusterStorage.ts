@@ -25,46 +25,47 @@ export function useClusterStorage({
     searchClusterImage: (cluster: any) => Promise<any>
     }) {
     
-    // 🆕 DB에서 시청기록 로드 (fallback으로 localStorage)
-    useEffect(() => {
-        const loadWatchHistory = async () => {
-            try {
-                const userId = await getCurrentUserId();
-                if (userId) {
-                    // DB에서 로드
-                    const dbWatchHistory = await getWatchHistory(userId, 100); // 최근 100개
-                    if (dbWatchHistory && dbWatchHistory.length > 0) {
-                        // DB 데이터를 클라이언트 형식으로 변환
-                        const formattedHistory = dbWatchHistory.map((item: any) => ({
-                            title: item.title,
-                            videoId: item.video_id,
-                            keywords: item.keywords || [],
-                            tags: item.tags || [],
-                            timestamp: item.timestamp,
-                            description: item.description
-                        }));
-                        setWatchHistory(formattedHistory);
-                        // 🆕 사용자별 캐시용으로 localStorage에도 저장
-                        localStorage.setItem(`watchHistory_${userId}`, JSON.stringify(formattedHistory));
-                        console.log('[useClusterStorage] DB에서 시청기록 로드 완료:', formattedHistory.length);
-                        return;
-                    }
-                }
+    // 🚫 업로드 페이지에서는 기존 시청기록 자동 로드 비활성화
+    // 새로운 JSON 파일 업로드 시 기존 데이터가 덮어쓰는 문제 방지
+    // useEffect(() => {
+    //     const loadWatchHistory = async () => {
+    //         try {
+    //             const userId = await getCurrentUserId();
+    //             if (userId) {
+    //                 // DB에서 로드
+    //                 const dbWatchHistory = await getWatchHistory(userId, 100); // 최근 100개
+    //                 if (dbWatchHistory && dbWatchHistory.length > 0) {
+    //                     // DB 데이터를 클라이언트 형식으로 변환
+    //                     const formattedHistory = dbWatchHistory.map((item: any) => ({
+    //                         title: item.title,
+    //                         videoId: item.video_id,
+    //                         keywords: item.keywords || [],
+    //                         tags: item.tags || [],
+    //                         timestamp: item.timestamp,
+    //                         description: item.description
+    //                     }));
+    //                     setWatchHistory(formattedHistory);
+    //                     // 🆕 사용자별 캐시용으로 localStorage에도 저장
+    //                     localStorage.setItem(`watchHistory_${userId}`, JSON.stringify(formattedHistory));
+    //                     console.log('[useClusterStorage] DB에서 시청기록 로드 완료:', formattedHistory.length);
+    //                     return;
+    //                 }
+    //             }
                 
-                // 🆕 사용자별 fallback: localStorage에서 로드
-                const savedHistory = JSON.parse(localStorage.getItem(`watchHistory_${userId}`) || '[]');
-        setWatchHistory(savedHistory);
-                console.log('[useClusterStorage] 사용자별 localStorage에서 시청기록 로드:', savedHistory.length);
-            } catch (error) {
-                console.error('[useClusterStorage] 시청기록 로드 실패, localStorage fallback:', error);
-                // 🔥 에러 시에는 사용자별 localStorage 사용하지 않고 빈 배열
-                setWatchHistory([]);
-            }
-        };
+    //             // 🆕 사용자별 fallback: localStorage에서 로드
+    //             const savedHistory = JSON.parse(localStorage.getItem(`watchHistory_${userId}`) || '[]');
+    //     setWatchHistory(savedHistory);
+    //             console.log('[useClusterStorage] 사용자별 localStorage에서 시청기록 로드:', savedHistory.length);
+    //         } catch (error) {
+    //             console.error('[useClusterStorage] 시청기록 로드 실패, localStorage fallback:', error);
+    //             // 🔥 에러 시에는 사용자별 localStorage 사용하지 않고 빈 배열
+    //             setWatchHistory([]);
+    //         }
+    //     };
         
-        loadWatchHistory();
-        // eslint-disable-next-line
-    }, []);
+    //     loadWatchHistory();
+    //     // eslint-disable-next-line
+    // }, []);
 
     // 🆕 DB에서 클러스터 기록 로드 (fallback으로 localStorage)
     useEffect(() => {

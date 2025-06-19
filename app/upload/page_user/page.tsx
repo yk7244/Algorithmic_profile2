@@ -101,8 +101,8 @@ const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
 }>({
-    from: new Date('Tue Apr 14 2025 14:00:00 GMT+0900'),
-    to: new Date('Tue Apr 16 2025 14:00:00 GMT+0900'),
+    from: new Date('Tue Apr 14 2023 14:00:00 GMT+0900'),
+    to: new Date('Tue Apr 16 2023 14:00:00 GMT+0900'),
     ////✅나중에 이걸로 바꾸기
     //from: new Date(new Date().setDate(new Date().getDate() - 7)),
     //to: new Date()
@@ -111,6 +111,8 @@ const [dateRange, setDateRange] = useState<{
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
 const [profile, setProfile] = useState({ nickname: '', description: '' });
+
+// 🔄 캐시 활용 모드: 이미 videos 테이블에 있는 것은 캐시 사용, 없는 것만 API 호출
 
 // useClusterStorage 커스텀 훅 사용
 useClusterStorage({
@@ -222,7 +224,7 @@ return (
                                 setGeneratingStep(1);
                                 const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
                                     console.log(`${current}/${total} 처리 중`);
-                                });
+                                }, false); // 🔄 캐시 활용 모드로 변경 (있는 것은 캐시, 없는 것만 API 호출)
                                 setWatchHistory(result);
                                 console.log('키워드 추출 결과:', result);
                                 
@@ -257,14 +259,9 @@ return (
                                 // 6단계: 별명만들기
                                 await generateProfile();
 
-                                // 7단계: clusterHistory, sliderHistory 저장하기
-                                const clusterHistoryResult = saveClusterHistory(clusters);
-                                const sliderResult = saveSliderHistory(clusters);
-
-                                if (clusterHistoryResult.success && sliderResult.success) {
-                                    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
-                                    alert('프로필 데이터가 성공적으로 저장되었습니다!');
-                                } 
+                                // 🚫 SliderHistory 저장 제거 (중복 방지)
+                                // handleCluster에서 ImageData 형식으로 이미 저장됨
+                                console.log('⏭️ SliderHistory 저장 건너뜀 (handleCluster에서 이미 저장됨)'); 
                             } catch (error) {
                                 console.error('분석 중 오류:', error);
                                 setError('분석 중 오류가 발생했습니다.');
@@ -420,7 +417,7 @@ return (
             setSuccessCount,
             dateRange,
             maxVideosPerDay,
-            fetchVideoInfo,
+            fetchVideoInfo, // 🔄 캐시 활용 (있는 것은 캐시, 없는 것만 API 호출)
             openai,
             OpenAILogger,
             parseWatchHistory
@@ -439,7 +436,7 @@ return (
                 setWatchHistory,
                         dateRange, // 영상 분석 기간 고정값 (현재 날짜로 부터 최근 일주일)
                         maxVideosPerDay, // 하루 당 분석될 영상 개수 고정값 20으로 설정
-                fetchVideoInfo,
+                fetchVideoInfo, // 🔄 캐시 활용 (있는 것은 캐시, 없는 것만 API 호출)
                 openai,
                 OpenAILogger,
                 parseJSONWatchHistory,

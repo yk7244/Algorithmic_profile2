@@ -39,10 +39,20 @@ export async function saveWatchedVideoToLocalStorage(video: VideoData, userId?: 
     // 성공 시 localStorage에도 캐시
     saveToLocalStorageOnly(video, currentUserId);
 
-  } catch (error) {
-    console.error('[ExploreWatchHistory] DB 저장 실패, localStorage fallback:', error);
+  } catch (error: any) {
+    // RLS 정책 에러인지 확인
+    if (error?.code === '42501' || error?.message?.includes('row-level security policy')) {
+      console.warn('[ExploreWatchHistory] RLS 정책으로 인한 DB 저장 실패, localStorage로 저장:', {
+        code: error.code,
+        message: error.message,
+        video_title: video.title
+      });
+    } else {
+      console.error('[ExploreWatchHistory] DB 저장 실패 (기타 오류), localStorage fallback:', error);
+    }
+    
     // DB 저장 실패 시 localStorage로 fallback
-    const fallbackUserId = userId || 'guest';
+    const fallbackUserId = userId || await getCurrentUserId() || 'guest';
     saveToLocalStorageOnly(video, fallbackUserId);
   }
 }
@@ -54,19 +64,19 @@ function saveToLocalStorageOnly(video: VideoData, userId: string) {
     const cacheKey = userId === 'guest' ? 'exploreWatchHistory' : `exploreWatchHistory_${userId}`;
     const prev: ExploreWatchHistory[] = JSON.parse(localStorage.getItem(cacheKey) || '[]');
     
-    const newRecord: ExploreWatchHistory = {
-      id: `${userId}-${video.embedId}`,
-      user_id: userId,
-      videoId: video.embedId,
-      title: video.title,
-      description: video.description || '',
-      timestamp: new Date().toISOString(),
-    };
+const newRecord: ExploreWatchHistory = {
+    id: `${userId}-${video.embedId}`,
+    user_id: userId,
+    videoId: video.embedId,
+    title: video.title,
+    description: video.description || '',
+    timestamp: new Date().toISOString(),
+};
     
-    const merged = [
-      newRecord,
-      ...prev.filter((old: ExploreWatchHistory) => !(old.user_id === userId && old.videoId === video.embedId)),
-    ];
+const merged = [
+    newRecord,
+    ...prev.filter((old: ExploreWatchHistory) => !(old.user_id === userId && old.videoId === video.embedId)),
+];
     
     localStorage.setItem(cacheKey, JSON.stringify(merged));
     console.log(`[ExploreWatchHistory] 사용자별 localStorage 저장 완료: ${cacheKey}`);

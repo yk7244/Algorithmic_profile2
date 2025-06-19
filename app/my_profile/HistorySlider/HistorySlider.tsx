@@ -76,10 +76,11 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                             </div>
                         );
                     })}
-                    {/* 원본 ProfileImages 점 */}
+                    {/* 원본 ProfileImages 점 (현재 꾸민 상태 - 파란색) */}
                     <div className="relative group flex flex-col items-center">
                         <button
-                            className={`w-4 h-4 rounded-full bg-black transition-all opacity-80 
+                            className={`w-4 h-4 rounded-full transition-all opacity-80 
+                                ${currentHistoryIndex === -1 ? 'bg-blue-500' : 'bg-blue-400'}
                                 ${isTransitioning ? 'cursor-not-allowed opacity-50' : 'hover:opacity-100'}`}
                             onClick={() => {
                                 if (isTransitioning) return; // 🆕 전환 중이면 클릭 무시
@@ -93,7 +94,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                             disabled={isTransitioning} // 🆕 전환 중 비활성화
                         />
                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                            꾸민 Profile Images
+                            현재 꾸민 상태
                         </span>
                     </div>
                 </div>

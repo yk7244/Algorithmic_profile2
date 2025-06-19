@@ -101,14 +101,14 @@ useEffect(() => {
           setFrameStyles(frameStyles);
         } else {
           console.log(`[OthersProfile] 클러스터 데이터 없음 (사용자: ${userId})`);
-        }
+    }
 
         console.log('[OthersProfile] 사용자 프로필 로드 완료:', userId);
       } catch (error) {
         console.error('[OthersProfile] 프로필 로드 실패:', error);
       } finally {
-        setIsLoading(false);
-      }
+    setIsLoading(false);
+    }
     };
 
     loadUserProfile();

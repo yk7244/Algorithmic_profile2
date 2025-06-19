@@ -1,7 +1,7 @@
 import { saveSliderHistory as saveSliderHistoryDB, getCurrentUserId, getProfileData, ensureUserExists } from '@/lib/database';
 
 // [5] SliderHistory 저장 함수 - DB 저장으로 교체
-export const saveSliderHistory = async (profileImages: any[]) => {
+export const saveSliderHistory = async (profileImages: any[], versionType: 'upload' | 'self' = 'upload') => {
   try {
     // 사용자가 users 테이블에 존재하는지 확인하고 없으면 생성
     await ensureUserExists();
@@ -38,7 +38,7 @@ export const saveSliderHistory = async (profileImages: any[]) => {
     // SliderHistory 데이터 생성
     const sliderHistoryData = {
       user_id: userId,
-      version_type: 'upload' as const,
+      version_type: versionType,
       nickname: currentNickname,
       description: currentDescription,
       images: profileImages
@@ -72,7 +72,7 @@ export const saveSliderHistory = async (profileImages: any[]) => {
         const newSliderHistoryItem = {
         id: new Date().getTime().toString(),
         user_id: userId || 'current_user',
-        version_type: 'upload' as const,
+        version_type: versionType,
         nickname: currentNickname,
         description: currentDescription,
         images: profileImages,

@@ -103,6 +103,7 @@ export default function Home() {
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   
+  const [profile, setProfile] = useState({ nickname: '', description: '' });
 
   // 🆕 로그인 상태 확인
   useEffect(() => {
@@ -157,6 +158,8 @@ export default function Home() {
       setError,
     );
   };
+
+  // 🔄 캐시 활용 모드: 이미 videos 테이블에 있는 것은 캐시 사용, 없는 것만 API 호출
 
   // useClusterStorage 커스텀 훅 사용
   useClusterStorage({
@@ -217,7 +220,7 @@ export default function Home() {
                       setSuccessCount,
                       dateRange,
                       maxVideosPerDay,
-                      fetchVideoInfo,
+                                              fetchVideoInfo, // 🔄 캐시 활용
                       openai,
                       OpenAILogger,
                       parseWatchHistory
@@ -236,7 +239,7 @@ export default function Home() {
                           setWatchHistory,
                           dateRange,
                           maxVideosPerDay,
-                          fetchVideoInfo,
+                          fetchVideoInfo, // 🔄 캐시 활용 (있는 것은 캐시, 없는 것만 API 호출)
                           openai,
                           OpenAILogger,
                           parseJSONWatchHistory,
@@ -470,12 +473,28 @@ export default function Home() {
                       {/* keyword 추출하기 버튼 */}
                       <Button
                         onClick={async () => {
-                          const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
-                            console.log(`${current}/${total} 처리 중`);
-                          });
+                                                      const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
+                              console.log(`${current}/${total} 처리 중`);
+                            }, false); // 🔄 캐시 활용 모드로 변경 (있는 것은 캐시, 없는 것만 API 호출)
                           setWatchHistory(result);
                           console.log('키워드 추출 결과:', result);
                           alert('키워드 추출 완료! 콘솔을 확인하세요.');
+
+                          // 2단계: 클러스터 분석
+                          setIsGeneratingProfile(true);
+                          await handleCluster(
+                              result,
+                              openai,
+                              OpenAILogger,
+                              searchClusterImage,
+                              transformClusterToImageData,
+                              placeholderImage,
+                              setClusters,
+                              setAnalysisHistory,
+                              setShowAnalysis,
+                              setIsLoading,
+                              setError,
+                          );
                         }}
                         className="border-blue-600 text-white font-bold px-6 py-3 rounded-lg shadow hover:bg-blue-500 transition-all"
                       >
@@ -810,15 +829,88 @@ export default function Home() {
                     onClick={async () => {
                     if (clusters.length > 0) {
                         try {
-                          // [3]현재 선택된 분석 결과의 클러스터로 변환 
-                      const profileImages = transformClustersToImageData(clusters, clusterImages);
-                      localStorage.setItem('profileImages', JSON.stringify(profileImages));
+                          // 🔍 clusters 데이터 구조 검증
+                          console.log('🔍 [clusters 데이터 검증]:', {
+                            'clusters 개수': clusters.length,
+                            'clusters[0] 타입': typeof clusters[0],
+                            'clusters[0] 구조': clusters[0],
+                            'clusters[0]에 id 필드 있는지': !!clusters[0]?.id,
+                            'clusters[0]에 src 필드 있는지': !!clusters[0]?.src,
+                            'clusters[0]에 position 필드 있는지': !!clusters[0]?.position,
+                            '원시 클러스터 데이터인지 확인': !clusters[0]?.id && !!clusters[0]?.main_keyword
+                          });
+
+                          // 🆕 원시 클러스터 데이터인 경우 ImageData로 변환
+                          let profileImages;
+                          if (!clusters[0]?.id && clusters[0]?.main_keyword) {
+                            console.log('🔧 원시 클러스터 데이터 감지, ImageData로 변환 시작...');
+                            profileImages = transformClustersToImageData(clusters, clusterImages);
+                            console.log('✅ 원시 → ImageData 변환 완료:', profileImages.length);
+                          } else if (clusters[0]?.id && clusters[0]?.src) {
+                            console.log('✅ 이미 ImageData 형식, 그대로 사용');
+                            profileImages = clusters;
+                          } else {
+                            console.warn('⚠️ 알 수 없는 데이터 형식, 강제 변환 시도');
+                            profileImages = transformClustersToImageData(clusters, clusterImages);
+                          }
+
+                          // 🔍 변환된 데이터 검증
+                          console.log('🔍 [변환된 profileImages 검증]:', {
+                            'profileImages 개수': profileImages.length,
+                            'profileImages[0] 구조': profileImages[0],
+                            'profileImages[0]에 id 있는지': !!profileImages[0]?.id,
+                            'profileImages[0]에 src 있는지': !!profileImages[0]?.src,
+                            'profileImages[0]에 position 있는지': !!profileImages[0]?.position,
+                            'ImageData 형식 확인': !!profileImages[0]?.id && !!profileImages[0]?.src && !!profileImages[0]?.position
+                          });
+
+                          // 🚨 ImageData 형식이 아니면 저장 중단
+                          if (!profileImages[0]?.id || !profileImages[0]?.src || !profileImages[0]?.position) {
+                            console.error('❌ profileImages가 올바른 ImageData 형식이 아님, 저장 중단');
+                            alert('데이터 형식이 올바르지 않습니다. 클러스터 분석을 다시 진행해주세요.');
+                            return;
+                          }
                       
-                          // [2] ClusterHistory DB에 저장
-                          const clusterHistoryResult = await saveClusterHistory(profileImages);
+                          // 🆕 사용자별 localStorage 키 사용 (getCurrentUserId 가져와서)
+                          const userId = await getCurrentUserId();
+                          if (userId) {
+                            localStorage.setItem(`profileImages_${userId}`, JSON.stringify(profileImages));
+                            console.log(`✅ 사용자 ${userId}의 profileImages localStorage에 저장 완료`);
+                          } else {
+                            console.warn('⚠️ 로그인된 사용자 ID를 찾을 수 없음, 전역 키 사용');
+                            localStorage.setItem('profileImages', JSON.stringify(profileImages));
+                          }
                       
-                          // [5] SliderHistory DB에 저장
-                          const sliderResult = await saveSliderHistory(profileImages);
+                          // [2] ClusterImages DB에 저장 (현재 프로필 상태)
+                          if (userId) {
+                            try {
+                              const { updateClusterImages } = await import('@/lib/database');
+                              const clusterImagesResult = await updateClusterImages(userId, profileImages);
+                              console.log('✅ ClusterImages DB 저장 성공 (현재 프로필):', {
+                                'profileImages 개수': profileImages.length,
+                                'DB 저장 결과': clusterImagesResult,
+                                'DB 저장 결과 개수': clusterImagesResult?.length
+                              });
+                            } catch (clusterImagesError) {
+                              console.error('❌ ClusterImages DB 저장 실패:', clusterImagesError);
+                              throw clusterImagesError;
+                            }
+                          } else {
+                            console.warn('⚠️ userId가 없어서 ClusterImages DB 저장 건너뜀');
+                          }
+
+                          // [3] ClusterHistory DB에 저장 (히스토리 기록)
+                          try {
+                            const clusterHistoryResult = await saveClusterHistory(profileImages);
+                            console.log('✅ ClusterHistory DB 저장 성공:', clusterHistoryResult);
+                          } catch (clusterError) {
+                            console.error('❌ ClusterHistory DB 저장 실패:', clusterError);
+                            throw clusterError;
+                          }
+                      
+                          // 🚫 SliderHistory 저장 제거 (중복 방지)
+                          // handleCluster에서 이미 upload 타입으로 저장됨
+                          console.log('⏭️ SliderHistory 저장 건너뜀 (handleCluster에서 이미 저장됨)');
 
                       alert('프로필 데이터가 성공적으로 저장되었습니다!');
                         } catch (error) {

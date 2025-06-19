@@ -24,8 +24,8 @@ try {
     );
     
     if (!response.ok) {
-        const errorData = await response.json();
-        console.error('YouTube API 오류:', errorData);
+    const errorData = await response.json();
+    console.error('YouTube API 오류:', errorData);
         
         // 🆕 403 에러 (할당량 초과) 전용 처리
         if (response.status === 403) {
@@ -48,11 +48,11 @@ try {
     const data = await response.json();
     if (data.items && data.items.length > 0) {
         console.log(`✅ YouTube API 성공: ${data.items.length}개 영상 발견`);
-        return data.items.map((item: any) => ({
-            title: item.snippet.title,
-            embedId: item.id.videoId,
-            description: item.snippet.description,
-        }));
+    return data.items.map((item: any) => ({
+        title: item.snippet.title,
+        embedId: item.id.videoId,
+        description: item.snippet.description,
+    }));
     } else {
         console.log(`⚠️ YouTube API 응답 없음: "${searchQuery}"`);
         return [{
@@ -65,7 +65,7 @@ try {
     console.error('AI 추천 비디오 가져오기 오류:', error);
     return [{
         title: '🌐 네트워크 연결 오류',
-        embedId: '',
+    embedId: '',
         description: '인터넷 연결을 확인하고 다시 시도해주세요.'
     }];
 }
@@ -87,17 +87,17 @@ const fetchAndSet = useCallback(async () => {
     
     setIsLoading(true);
     try {
-        const videoList = await fetchAiRecommendedVideos(image.main_keyword, image.keywords);
-        setVideos(videoList);
+    const videoList = await fetchAiRecommendedVideos(image.main_keyword, image.keywords);
+    setVideos(videoList);
     } catch (error) {
-        console.error('AI 추천 비디오 가져오기 오류:', error);
+    console.error('AI 추천 비디오 가져오기 오류:', error);
         setVideos([{ 
             title: '💥 예상치 못한 오류가 발생했습니다', 
             embedId: '', 
             description: '잠시 후 다시 시도해주세요.' 
         }]);
     } finally {
-        setIsLoading(false);
+    setIsLoading(false);
     }
 }, [image.main_keyword, image.keywords]);
 

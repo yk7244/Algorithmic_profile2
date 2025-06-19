@@ -30,7 +30,7 @@ export function useBgColor(defaultColor: string = 'bg-[#F2F2F2]') {
     };
 
     const loadFromLocalStorage = () => {
-      const savedBgColor = localStorage.getItem('moodboard-bg-color');
+    const savedBgColor = localStorage.getItem('moodboard-bg-color');
       if (savedBgColor) {
         setBgColor(savedBgColor);
         console.log('[useBgColor] localStorage에서 배경색 로드:', savedBgColor);
@@ -66,7 +66,7 @@ export function useBgColor(defaultColor: string = 'bg-[#F2F2F2]') {
       
     } catch (error) {
       console.error('[useBgColor] DB 저장 실패, localStorage fallback:', error);
-      localStorage.setItem('moodboard-bg-color', colorClass);
+    localStorage.setItem('moodboard-bg-color', colorClass);
     }
   };
 

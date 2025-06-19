@@ -55,9 +55,10 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
             }
         };
 
-        // 영상 클릭 핸들러 (시청 기록 관리)
+        // 영상 클릭 핸들러 (시청 기록 관리) - 🆕 현재 로그인된 사용자 ID로 저장
         const handleVideoClick = async (video: VideoData) => {
-            await saveWatchedVideoToLocalStorage(video, ownerId || 'guest');
+            // userId 파라미터를 전달하지 않으면 getCurrentUserId()를 호출해서 현재 로그인된 사용자 ID 사용
+            await saveWatchedVideoToLocalStorage(video);
             setWatchedVideos(prev => [...new Set([...prev, video.embedId])]);
         };
 
