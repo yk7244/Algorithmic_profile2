@@ -101,11 +101,11 @@ const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
 }>({
-    from: new Date('Tue Apr 14 2023 14:00:00 GMT+0900'),
-    to: new Date('Tue Apr 16 2023 14:00:00 GMT+0900'),
+    //from: new Date('Tue Apr 14 2023 14:00:00 GMT+0900'),
+    //to: new Date('Tue Apr 16 2023 14:00:00 GMT+0900'),
     ////✅나중에 이걸로 바꾸기
-    //from: new Date(new Date().setDate(new Date().getDate() - 7)),
-    //to: new Date()
+    from: new Date(new Date().setDate(new Date().getDate() - 7)),
+    to: new Date(),
 
 });
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);

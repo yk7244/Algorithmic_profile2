@@ -43,7 +43,7 @@ export default function LoginPage() {
             className="flex items-center justify-center w-full h-12 rounded-lg bg-white text-gray-900 font-medium text-base shadow transition hover:bg-gray-100 disabled:opacity-60"
           >
             <Image src="/images/google.png" alt="Google" width={22} height={22} className="mr-2" />
-            Google 로 시작하기
+            {isProviderLoading('google') ? '로그인 중...' : 'Google로 시작하기'}
           </button>
           <button
             onClick={() => handleProviderLogin('apple')}
@@ -51,15 +51,15 @@ export default function LoginPage() {
             className="flex items-center justify-center w-full h-12 rounded-lg bg-black text-white font-medium text-base shadow transition hover:bg-gray-900 disabled:opacity-60"
           >
             <Image src="/images/apple.png" alt="Apple" width={22} height={22} className="mr-2" />
-            Apple 로 시작하기
+            {isProviderLoading('apple') ? '로그인 중...' : 'Apple로 시작하기'}
           </button>
           <button
             onClick={() => handleProviderLogin('github')}
             disabled={isLoading}
-            className="flex items-center justify-center w-full h-12 rounded-lg bg-white text-gray-900 font-medium text-base shadow transition hover:bg-gray-100 disabled:opacity-60"
+            className="flex items-center justify-center w-full h-12 rounded-lg bg-gray-900 text-white font-medium text-base shadow transition hover:bg-gray-800 disabled:opacity-60"
           >
-            <Image src="/images/github.png" alt="GitHub" width={22} height={22} className="mr-2" />
-            GitHub로 시작하기
+            <Github className="w-5 h-5 mr-2" />
+            {isProviderLoading('github') ? '로그인 중...' : 'GitHub로 시작하기'}
           </button>
         </div>
       </div>
