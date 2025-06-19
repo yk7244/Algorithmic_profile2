@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
@@ -15,7 +15,8 @@ interface ProfileWithSimilarity extends ProfileData {
   similarity: number;
 }
 
-export default function SearchPage() {
+// 🆕 SearchParams를 사용하는 내부 컴포넌트
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -390,5 +391,13 @@ export default function SearchPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
