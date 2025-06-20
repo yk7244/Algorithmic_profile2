@@ -23,6 +23,7 @@ import { useImageDelete } from "./Draggable/Hooks/Image/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
 import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
 import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
+import { arrangeImagesInCenter } from '../utils/autoArrange';
 import { 
   ImageData,
   HistoryData,
@@ -137,6 +138,14 @@ export default function MyProfilePage() {
     setProfile,
   });
 
+  const handleAutoArrange = () => {
+    const containerWidth = 1000;
+    const containerHeight = 680;
+    const topMargin = 100; // 제목 영역을 위한 상단 여백
+    const newPositions = arrangeImagesInCenter(images, containerWidth, containerHeight, topMargin);
+    setPositions(newPositions);
+  };
+
   useEffect(() => {
     setPositions(prevPositions => {
       const newPositions = { ...prevPositions };
@@ -231,6 +240,19 @@ export default function MyProfilePage() {
               ))}
             </DndContext>
           </div>
+
+          {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
+          {isEditing && (
+            <div className="absolute top-[160px] right-[calc(50%-600px)] z-30">
+              <button
+                onClick={handleAutoArrange}
+                className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-full shadow-md hover:bg-white transition-all"
+                title="자동 정렬"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              </button>
+            </div>
+          )}
 
           {/* 플로팅 검색 버튼 분리 */}
           {!isEditing && !isSearchMode &&(

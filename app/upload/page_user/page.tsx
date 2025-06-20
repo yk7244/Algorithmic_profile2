@@ -5,12 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import OpenAI from 'openai';
-import { HelpCircle, Upload, ArrowRight, Youtube, CalendarIcon, Loader2, CheckCircle } from "lucide-react";
-import {
-HoverCard,
-HoverCardContent,
-HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { HelpCircle, Upload, ArrowRight, Youtube, CalendarIcon, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { transformClustersToImageData, transformClusterToImageData } from '../../utils/clusterTransform';    
 
 import { OpenAILogger } from '../../utils/init-logger';
@@ -29,9 +24,13 @@ import { useRouter } from 'next/navigation';
 import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
 import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
+import Image from 'next/image';
+import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
+const defaultImageUri = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNlNWU4IiAvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNhMGEwYTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOb3QgTG9hZGVkPC90ZXh0Pgo8L3N2Zz4=";
 
 // OpenAI 클라이언트 초기화 수정
 const openai = new OpenAI({
@@ -503,24 +502,22 @@ return (
                 {/* 날짜, 영상 개수 설정-삭제*/}
         {/* 호버시 설명 란*/}
         <div className="mt-4 flex justify-center">
-            <HoverCard>
-            <HoverCardTrigger>
-                <Button
-                variant="ghost"
-                className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
-                >
-                <HelpCircle className="w-5 h-5" />
-                <span>Google Takeout 가이드 보기</span>
-                </Button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-[600px] p-6 rounded-xl shadow-lg" side="bottom" align="center">
-                <div className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
-                    <Youtube className="w-5 h-5 text-blue-500" />
-                    Google Takeout에서 Youtube 시청기록 내보내기
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
+            <Dialog>
+            <DialogTrigger asChild>
+            <button className="flex items-center gap-2 text-sm text-blue-500 hover:underline">
+                <HelpCircle className="w-4 h-4" />
+                어떻게 시청기록을 다운로드 받나요?
+            </button>
+            </DialogTrigger>
+
+            <DialogContent className="w-[80vw] justify-center max-w-4xl p-6 rounded-xl shadow-lg" >
+            <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
+                <Youtube className="w-5 h-5 text-blue-500" />
+                Google Takeout에서 Youtube 시청기록 내보내기
+            </h3>
+            <div className="grid grid-cols-2 gap-6">
+                <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
                     <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
                     <a 
                         href="https://takeout.google.com/" 
@@ -530,24 +527,73 @@ return (
                     >
                         takeout.google.com
                     </a>
-                    </div>
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">2.'포함할 데이터 선택'에서
-                            YouTube 선택</div>
-                            <p className="text-sm text-gray-500">제일 하단에 위치한 YouTube 및 YouTube Music 선택</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">3. 버튼 '모든 Youtube 데이터 포함됨'에서 시청기록 선택</div>
-                            <p className="text-sm text-gray-500">모든 선택해제 후, 시청기록만 선택</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
-                            <div className="font-medium text-gray-700 mb-2">4. 버튼 '여러형식'에서 하단 기록에서 JSON 형식 선택</div>
-                            <p className="text-sm text-gray-500">JSON 형식 선택 후 내보내기</p>
-                    </div>
+                    <p className="text-sm text-gray-500">'모두 선택해제' 버튼 클릭</p>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                <Image src="/images/takeout1.png" alt="Takeout Step 1" layout="fill" objectFit="contain" />
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                            <DialogClose asChild>
+                                <Image src="/images/takeout1.png" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
+                        </DialogContent>
+                    </Dialog>
                 </div>
+                <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                    <div className="font-medium text-gray-700 mb-2">2.'포함할 데이터 선택'에서
+                    YouTube 선택</div>
+                    <p className="text-sm text-gray-500">제일 하단에 위치한 YouTube 및 YouTube Music 선택</p>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                <Image src="/images/takeout2.png" alt="Takeout Step 2" layout="fill" objectFit="contain" />
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                           <DialogClose asChild>
+                                <Image src="/images/takeout2.png" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
+                        </DialogContent>
+                    </Dialog>
                 </div>
-            </HoverCardContent>
-            </HoverCard>
+                <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                    <div className="font-medium text-gray-700 mb-2">3. 버튼 '모든 Youtube 데이터 포함됨'에서 시청기록 선택</div>
+                    <p className="text-sm text-gray-500">모든 선택해제 후, 시청기록만 선택</p>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                <Image src="/images/takeout3.png" alt="Takeout Step 3" layout="fill" objectFit="contain" />
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                            <DialogClose asChild>
+                                <Image src="/images/takeout3.png" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+                <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                    <div className="font-medium text-gray-700 mb-2">4. 버튼 '여러형식'에서 하단 '기록'에 JSON 형식 선택</div>
+                    <p className="text-sm text-gray-500">JSON 형식 선택 후 내보내기</p>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                <Image src="/images/takeout4.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                            <DialogClose asChild>
+                                <Image src="/images/takeout4.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
+                        </DialogContent>
+                    </Dialog>
+                </div>
+            </div>
+            </div>
+            </DialogContent>
+            </Dialog>
         </div>
             </>
             )

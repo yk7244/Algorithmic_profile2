@@ -1,4 +1,5 @@
 import { ImageData } from '../types/profile';
+import { arrangeImagesInCenter } from './autoArrange';
 
 // 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
@@ -39,16 +40,31 @@ export const transformClusterToImageData = (
   maxStrength: number
 ): ImageData => {
 
-  // Step1. 랜덤 위치 및 회전 생성
+  // Step1. 랜덤 회전 생성
   const randomRotate = Math.floor(Math.random() * 12) - 6; // -6 ~ 6도
-  // 중앙 위주 랜덤 위치
-  const { left, top } = getRandomCenterPosition();
 
   // Step2. 영상 데이터 변환
-  const relatedVideos = cluster.related_videos?.map((video: any) => ({
-    title: video.title,
-    embedId: video.videoId || video.url?.split('v=')[1] || ''
-  })) || [];
+  console.log(`[VideoTransform] Processing cluster "${cluster.main_keyword}". Raw related_videos:`, cluster.related_videos);
+  
+  const relatedVideos = (Array.isArray(cluster.related_videos) ? cluster.related_videos : []).map((video: any, index: number) => {
+    console.log(`[VideoTransform]   - Mapping video #${index}:`, video);
+    
+    let embedId = video?.videoId || '';
+    if (!embedId && typeof video?.url === 'string') {
+      if (video.url.includes('v=')) {
+        embedId = video.url.split('v=')[1]?.split('&')[0] || '';
+      } else {
+        // 'v='가 없으면 url 자체가 ID라고 간주
+        embedId = video.url;
+      }
+    }
+
+    console.log(`[VideoTransform]     -> Extracted embedId: "${embedId}"`);
+    return {
+      title: video?.title || 'Untitled',
+      embedId: embedId,
+    };
+  });
 
   // Step4. 키워드 리스트 변환
   const keywords = cluster.keyword_list?.split(',').map((k: string) => k.trim()) || [];
@@ -82,15 +98,13 @@ export const transformClusterToImageData = (
     width: 800,
     height: 800,
     rotate: 0,
-    left,
-    top,
+    // 위치는 최종 단계에서 할당됨
+    left: '0px',
+    top: '0px',
     metadata: cluster.metadata || {},
 
     //추가 
-    position: {
-      x: Number(left.replace('px', '')),
-      y: Number(top.replace('px', ''))
-    },
+    position: { x: 0, y: 0 },
     frameStyle: 'normal',
     created_at: cluster.created_at || new Date().toISOString()
   };
@@ -103,15 +117,39 @@ export function transformClustersToImageData(
   clusters: any[],
   clusterImages: Record<number, any>
 ): ImageData[] {
+  console.log('➡️ [transform] 1. Received original clusters:', JSON.parse(JSON.stringify(clusters)));
+  console.log('➡️ [transform] 2. Received cluster images:', JSON.parse(JSON.stringify(clusterImages)));
+
   const strengths = clusters.map(c => c.strength || c.metadata?.videoCount || 1);
   const minStrength = Math.min(...strengths);
   const maxStrength = Math.max(...strengths);
 
-  return clusters.map((cluster, index) => {
-    // Step6. 이미지 데이터 변환
+  // 1. 이미지 기본 데이터 생성 (위치는 임시)
+  const initialImageData = clusters.map((cluster, index) => {
     const imageUrl = clusterImages[index]?.url || placeholderImage;
     return transformClusterToImageData(cluster, index, imageUrl, minStrength, maxStrength);
   });
+
+  // 2. 자동 정렬 로직으로 위치 계산
+  const containerWidth = 1000;
+  const containerHeight = 680;
+  const topMargin = 100;
+  const newPositions = arrangeImagesInCenter(initialImageData, containerWidth, containerHeight, topMargin);
+
+  // 3. 계산된 위치를 각 이미지에 할당
+  const finalImageData = initialImageData.map(image => {
+    const position = newPositions[image.id] || { x: 0, y: 0 };
+    return {
+      ...image,
+      position,
+      left: `${position.x}px`,
+      top: `${position.y}px`,
+    };
+  });
+
+  console.log('✅ [transform] 3. Final transformed image data:', JSON.parse(JSON.stringify(finalImageData)));
+
+  return finalImageData;
 }
 
 

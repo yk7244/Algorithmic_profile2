@@ -52,7 +52,7 @@ export function useImageFrame(frameStyleProp: string, image: any, onFrameStyleCh
         case 'interest':
             return '';
         case 'pill':
-            return 'rounded-[40px] h-[80px]';
+            return 'absolute top-1/2 -translate-y-1/2 w-full h-[60px] rounded-[50px]';
         case 'heart':
             return '';
         default:
