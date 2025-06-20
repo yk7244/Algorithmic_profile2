@@ -25,7 +25,7 @@ import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
 import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 
 // 기본 이미지를 데이터 URI로 정의
@@ -534,8 +534,10 @@ return (
                                 <Image src="/images/takeout1.png" alt="Takeout Step 1" layout="fill" objectFit="contain" />
                             </div>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl p-2">
-                            <Image src="/images/takeout1.png" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg"/>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                            <DialogClose asChild>
+                                <Image src="/images/takeout1.png" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -549,8 +551,10 @@ return (
                                 <Image src="/images/takeout2.png" alt="Takeout Step 2" layout="fill" objectFit="contain" />
                             </div>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl p-2">
-                            <Image src="/images/takeout2.png" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg"/>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                           <DialogClose asChild>
+                                <Image src="/images/takeout2.png" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -563,8 +567,10 @@ return (
                                 <Image src="/images/takeout3.png" alt="Takeout Step 3" layout="fill" objectFit="contain" />
                             </div>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl p-2">
-                            <Image src="/images/takeout3.png" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg"/>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                            <DialogClose asChild>
+                                <Image src="/images/takeout3.png" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -577,8 +583,10 @@ return (
                                 <Image src="/images/takeout4.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
                             </div>
                         </DialogTrigger>
-                        <DialogContent className="max-w-5xl p-2">
-                            <Image src="/images/takeout4.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg"/>
+                        <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                            <DialogClose asChild>
+                                <Image src="/images/takeout4.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                            </DialogClose>
                         </DialogContent>
                     </Dialog>
                 </div>
