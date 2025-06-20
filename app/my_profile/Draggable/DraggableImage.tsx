@@ -80,6 +80,27 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
     const [activeTab, setActiveTab] = useState<string>('search');
     const [showDeleteTooltip, setShowDeleteTooltip] = useState(false);
 
+    // desired_self 여부에 따라 실제 크기 조절에 사용될 가중치 계산
+    const effectiveSizeWeight = image.desired_self ? image.sizeWeight : (image.sizeWeight || 0.1) * 10;
+
+    // effectiveSizeWeight를 기반으로 폰트 크기 계산
+    const minFontSize = 10;
+    const maxFontSize = 30;
+    // effectiveSizeWeight의 예상 범위
+    const minWeight = 0.15;
+    const maxWeight = 1.5;
+
+    const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
+    
+    // 가중치를 제한하고 0-1 범위로 정규화
+    const clampedWeight = clamp(effectiveSizeWeight, minWeight, maxWeight);
+    const normalizedRatio = (clampedWeight - minWeight) / (maxWeight - minWeight);
+
+    // 제곱근을 사용하여 작은 값의 차이를 증폭
+    const curvedRatio = Math.sqrt(normalizedRatio);
+    
+    const fontSize = minFontSize + curvedRatio * (maxFontSize - minFontSize);
+
     useEffect(() => {
         // src가 없거나 logo.png를 포함하는 경우, 유효하지 않은 것으로 간주합니다.
         const isInvalid = !image.src || image.src.includes('/images/logo.png');
@@ -139,7 +160,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     <div 
                         className="absolute -top-10 z-20 whitespace-nowrap"
                         style={{
-                        fontSize: '14px',
+                        fontSize: `${fontSize}px`,
                         }}
                     >
                         <div 
