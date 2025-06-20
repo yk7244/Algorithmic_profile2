@@ -167,7 +167,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         className="px-8 py-4"
                         >
                         
-                        <span className="font-bold text-gray-800">
+                        <span className={`font-bold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
                             #{image.main_keyword}
                         </span>
                         </div>
