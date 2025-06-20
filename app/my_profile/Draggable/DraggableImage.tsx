@@ -40,16 +40,16 @@ export interface DraggableImageProps {
 
 // 모양별 정보 배열
 const frameOptions = [
-  { value: 'normal', icon: '⬛️', label: '나에게 힐링이 되는 영상' },
+  { value: 'normal', icon: '⬛️', label: '나의 기본 관심사' },
   //{ value: 'inspiration', icon: '⬡', label: '영감을 주는 영상' },
-  { value: 'people', icon: '⚪️', label: '내가 좋아하는 사람' },
+  //{ value: 'people', icon: '⚪️', label: '내가 좋아하는 사람' },
     //{ value: 'interest', icon: '🔶', label: '나만의 관심사' },
   //{ value: 'cloud', icon: '🌥️', label: '클라우드' },
-  { value: 'heart', icon: '💖', label: '하트' },
+  //{ value: 'heart', icon: '💖', label: '하트' },
   //{ value: 'pentagon', icon: '🔺', label: '펜타곤' },
   //{ value: 'star', icon: '⭐️', label: '별' },
-  { value: 'pill', icon: '💊', label: '알약' },
-  { value: 'cokie', icon: '🍪', label: '쿠키' },
+  { value: 'pill', icon: '💊', label: '나에게 힐링이 되는 영상' },
+  //{ value: 'cokie', icon: '🍪', label: '쿠키' },
 ];
 
 const DraggableImage: React.FC<DraggableImageProps> = ({ 
@@ -130,10 +130,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 zIndex: isSelected ? 30 : 10,
                 transition: isEditing ? 'none' : 'transform 0.8s ease-in-out',
                 }}
-                className={`${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""}`}
+                className={`group ${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""}`}
             >
                 {/* 이미지 */}
-                <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 group hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
+                <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                 >
                     {/* 메인키워드 */}
                     <div 
@@ -254,7 +254,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 )}
                 {/* 편집 모드-프레임 변경하기*/}
                 {isEditing && (
-                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2">
+                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {!image.desired_self && (
                         <>
                         {frameOptions
