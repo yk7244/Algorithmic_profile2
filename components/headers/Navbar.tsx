@@ -48,45 +48,15 @@ export function Navbar() {
                 TubeLens
               </span>
             </Link>
-            {isMainPage && (
-              <HoverCard openDelay={100} closeDelay={200}>
-                <HoverCardTrigger className="hidden md:flex items-center gap-1 text-gray-300 hover:text-white transition-colors ml-3">
-                  <span className="text-xs font-medium">TubeReframe이 궁금하신가요?</span>
+            <HoverCard openDelay={100} closeDelay={200}>
+              <HoverCardTrigger asChild>
+                <Link href="/introduction" className="hidden md:flex items-center gap-1 text-gray-300 hover:text-white transition-colors ml-3">
+                  <span className="text-xs font-medium">TubeLens가 궁금하신가요?</span>
                   <HelpCircle className="w-4 h-4" />
-                </HoverCardTrigger>
-                <HoverCardContent 
-                  className="w-[500px] p-6 bg-black border border-gray-700 shadow-2xl text-white"
-                  style={{
-                    position: 'fixed',
-                    top: '20px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    borderRadius: '10px',
-                  }}
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-b border-gray-700 pb-3">
-                      <Image src="/images/logo.png" alt="TubeLens Info" width={24} height={24} />
-                      <h4 className="text-xl font-bold text-white">
-                        TubeReframe이란?
-                      </h4>
-                    </div>
-                    <div className="space-y-4 px-1">
-                      <p className="text-base leading-relaxed text-gray-300">
-                        유튜브 시청 기록을 기반으로 사용자의 관심사와 성향을 분석하여 
-                        새로운 관점의 프로필을 제공하는 서비스입니다.
-                      </p>
-                      <div className="flex items-center gap-2 bg-gray-800 p-3 rounded-lg border border-gray-700">
-                        <Sparkles className="w-5 h-5 text-white" />
-                        <p className="text-base font-medium text-white">
-                          당신의 시청 기록이 말해주는 숨겨진 이야기를 발견해보세요.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            )}
+                </Link>
+              </HoverCardTrigger>
+              
+            </HoverCard>
           </div>
 
           <nav className="hidden md:flex items-center gap-x-4 md:pr-0">
@@ -94,10 +64,10 @@ export function Navbar() {
               <>
                 
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/my_profile">나의 튜브렌즈</Link>
+                  <Link href="/my_profile">나의 알고리즘</Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/search">관심사 탐색</Link>
+                  <Link href="/search">알고리즘 탐색</Link>
                 </Button>
                 
                 {/* 언어 선택 버튼 

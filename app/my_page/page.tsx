@@ -99,13 +99,13 @@ export default function MyPage() {
             className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'profile' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
             onClick={() => setActiveTab('profile')}
           >
-            내 프로필 설정
+            나의 알고리즘 설정
           </button>
           <button
             className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'history' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
             onClick={() => setActiveTab('history')}
           >
-            시청기록
+            나의 시청기록
           </button>
         </nav>
         <div className="w-full px-8 pb-20 mb-10">
@@ -113,7 +113,7 @@ export default function MyPage() {
             onClick={logout}
             className="w-full text-lg font-medium rounded-lg px-4 py-3 bg-gray-900 text-white hover:bg-gray-800 transition-colors rounded-[10px]"
           >
-            로그아웃
+            로그아웃 하기
           </button>
         </div>
       </aside>

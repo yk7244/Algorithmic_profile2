@@ -13,6 +13,8 @@ export function useHistorySlider({
     setVisibleImageIds,
     setImages,
     placeholderImage,
+    handleBgColorChange,
+    originalBgColor,
 }: {
     images: ImageData[];   
     positions: Record<string, {x: number, y: number}>;
@@ -22,6 +24,8 @@ export function useHistorySlider({
     setVisibleImageIds: (ids: Set<string>) => void;
     setImages: (images: ImageData[]) => void;
     placeholderImage: string;
+    handleBgColorChange: (color: string) => void;
+    originalBgColor: string;
 }) {
     const [histories, setHistories] = useState<HistoryData[]>([]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
@@ -210,6 +214,7 @@ export function useHistorySlider({
         
         // -1은 원본 ProfileImages 상태를 의미
         if (index === -1) {
+            handleBgColorChange(originalBgColor); // 원래 배경색으로 복원
             //console.log('🔵 원본 ProfileImages 상태로 전환');
             setCurrentHistoryIndex(-1);
             
@@ -264,6 +269,7 @@ export function useHistorySlider({
             return;
         }
         
+        handleBgColorChange('bg-gray-100'); // 히스토리 선택 시 배경색 변경
         const selectedHistory = histories[index];
         //console.log('선택된 히스토리:', selectedHistory);
         //console.log('히스토리의 이미지 개수:', selectedHistory.images.length);

@@ -68,6 +68,8 @@ export default function MyProfilePage() {
     setVisibleImageIds,
     setImages,
     placeholderImage,
+    handleBgColorChange,
+    originalBgColor: bgColor,
   });
   const {
     histories: sliderHistories,

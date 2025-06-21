@@ -14,7 +14,7 @@ export const restrictToContainer = ({ transform, draggingNodeRect, overlayNodeRe
   // 제한된 위치 계산
   const minX = 0;
   const maxX = containerWidth - imageWidth;
-  const minY = 0;
+  const minY = 180;
   const maxY = containerHeight - imageHeight;
   
   return {

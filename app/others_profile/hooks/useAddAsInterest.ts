@@ -79,7 +79,7 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
         );
 
         if (isAlreadyAdded) {
-            alert('이미 내 프로필에 추가된 관심사입니다.');
+            alert('이미 선택하신 관심사예요.');
             return; // 중복 추가 방지
         }
 

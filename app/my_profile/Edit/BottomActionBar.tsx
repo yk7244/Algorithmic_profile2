@@ -54,7 +54,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                     className="h-12 px-8 bg-white text-black border border-gray-200 hover:bg-black hover:text-white flex items-center gap-2 rounded-full shadow-md"
                 >
                     <RefreshCw className="h-4 w-4" />
-                    업로드하기
+                    알고리즘 분석 업데이트 하기
                 </Button>
             </Link>
         </div>
