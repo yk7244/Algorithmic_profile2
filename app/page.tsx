@@ -130,8 +130,8 @@ export default function Home() {
             fontWeight: 400,
           }}
         >
-          <span style={{ color: "#fff", fontWeight: 600 }}>TubeLens</span>
-          로 나의 디지털 자아를 직접 확인하고, 알고리즘 경험을 재구성해보세요.
+          <span style={{ color: "#fff", fontWeight: 600 }}></span>
+          끌려다녔던 알고리즘의 흐름 속에서 벗어나, 나의 알고리즘의 흔적을 이해하고 정리해보세요.
         </p>
         <button
           onClick={handleButtonClick}
@@ -148,7 +148,7 @@ export default function Home() {
             transition: "background 0.2s",
           }}
         >
-          나의 튜브 렌즈 생성하기
+          나의 알고리즘 분석하기
         </button>
       </div>
     </main>

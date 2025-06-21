@@ -43,8 +43,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#181818]">
       <div className="w-full max-w-sm flex flex-col items-center">
-        <h1 className="text-3xl font-bold text-white mb-2">로그인</h1>
-        <p className="text-gray-400 mb-10 text-sm">소셜 계정으로 간편하게 시작하세요</p>
+        <h1 className="text-3xl font-bold text-white mb-2">로그인 하기</h1>
+        <p className="text-gray-400 mb-10 text-sm">소셜 계정으로 가볍게 연결하고 시작해보세요</p>
         <div className="flex flex-col gap-4 w-full">
           <button
             onClick={handleGoogleLogin}
