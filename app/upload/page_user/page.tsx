@@ -65,7 +65,7 @@ const steps = [
     { id: 1, title: "키워드 추출", description: "시청 기록에서 관심사들을 발견하고 있어요..." },
     { id: 2, title: "클러스터 분석", description: "알고리즘의 연결고리를 살펴보는 중이에요..." },
     { id: 3, title: "이미지 생성", description: "흥미로운 패턴을 발견했어요! 당신의 알고리즘들을 사진으로 표현 중이예요" },
-    { id: 4, title: "분석 완료", description: "별명을 만들고 있어요."}
+    { id: 4, title: "분석 완료", description: "곧, 별명과 나만의 알고리즘 무드보드를 만나보실 수 있어요."}
 ];
 
 
@@ -262,7 +262,7 @@ return (
 
                                 if (clusterHistoryResult.success && sliderResult.success) {
                                     console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
-                                    alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 프로필로 이동할게요. ');
+                                    alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 무드보드로 이동할게요. ');
                                 } 
                             } catch (error) {
                                 console.error('분석 중 오류:', error);
@@ -290,13 +290,13 @@ return (
                     <div className="text-center">
                         <div className="space-y-4">
                             <h1 className="text-xl font-bold text-white">
-                                별명과 알고리즘 프로필이 완성되었습니다!
+                                별명과 나만의 알고리즘 무드보드가 완성되었습니다!
                             </h1>
                         </div>
                         
                         <div className="space-y-3 mt-5">
                             <p className="text-lg text-gray-300">
-                                {countdown}초 뒤에 profile 페이지로 이동할게요.
+                                {countdown}초 뒤에 나의 알고리즘 페이지로 이동할게요.
                             </p>
                             <div className="flex justify-center space-x-4 mt-5">
                                 <Button
@@ -597,19 +597,19 @@ return (
                 </div>
             </>
             )
-        ) : 
+        ) : (
             <>
             
                 <div className="text-center text-gray-500 text-sm"> 
                 아직은 알고리즘의 변화가 드러나기엔 이른 시점이에요.
-                     시간이 조금 더 지나면, 알고리즘의 변화를 살펴볼 수 있어요.
-                     
+                    시간이 조금 더 지나면, 알고리즘의 변화를 살펴볼 수 있어요.
                 </div>
             </>
             
-        }
+        )}
         </div>
     </div>
     </main>
 );
-} 
+
+}
