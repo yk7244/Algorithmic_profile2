@@ -1,44 +1,13 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
-import Link from 'next/link';
+
 import Image from 'next/image';
+import { useLoginHandlers } from "./hooks/useLoginHandlers";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+  const { isLoading, handleGoogleLogin, handleAppleLogin, handleGithubLogin } = useLoginHandlers();
 
-  const handleGithubLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      login();
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      login();
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
-  };
-
-  const handleAppleLogin = async () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      login();
-      router.push('/');
-      setIsLoading(false);
-    }, 1000);
-  };
+  
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#181818]">

@@ -158,6 +158,134 @@ return (
         <div className="absolute top-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-black blur-[120px] animate-blob animation-delay-200" />
     </div>
 
+    {/* 흐릿한 원형 배경 */}
+    <div
+        style={{
+            position: "absolute",
+            top: "20%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 400,
+            height: 400,
+            background: "radial-gradient(circle, #6b6b6b55 0%, #23232300 80%)",
+            filter: "blur(20px)",
+            zIndex: 1,
+        }}
+    />
+
+        {/* 눈동자 */}
+        <div
+        style={{
+            position: "absolute",
+            top: "22%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            gap: 32,
+            zIndex: 2,
+        }}
+        >
+        {/* 왼쪽 눈 */}
+        <div
+            ref={leftEyeRef}
+            style={{
+            width: 52,
+            height: 68,
+            background: "radial-gradient(circle, #fff 70%, #000 100%)",
+            borderRadius: "50%",
+            boxShadow: "0 0 32px 8px #fff8",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "blur(1.4px)",
+            position: "relative",
+            }}
+        >
+            <div
+            style={{
+                width: 28,
+                height: 32,
+                background: "#232323",
+                borderRadius: "50%",
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: `translate(-50%, -50%) translate(${leftPupil.x}px, ${leftPupil.y}px)`,
+                transition: "transform 0.07s linear",
+            }}
+            />
+        </div>
+        {/* 오른쪽 눈 */}
+        <div
+            ref={rightEyeRef}
+            style={{
+            width: 52,
+            height: 68,
+            background: "radial-gradient(circle, #fff 70%, #000 100%)",
+            borderRadius: "50%",
+            boxShadow: "0 0 32px 8px #fff8",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "blur(1.4px)",
+            position: "relative",
+            }}
+        >
+            <div
+            style={{
+                width: 28,
+                height: 32,
+                background: "#232323",
+                borderRadius: "50%",
+                position: "absolute",
+                left: "50%",
+                top: "50%",
+                transform: `translate(-50%, -50%) translate(${rightPupil.x}px, ${rightPupil.y}px)`,
+                transition: "transform 0.07s linear",
+            }}
+            />
+        </div>
+        </div>
+
+        {/* 메인 컨텐츠 */}
+        <div
+        style={{
+          position: "relative",
+          zIndex: 3,
+          marginTop: 15,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <h1
+          style={{
+            color: "#fff",
+            fontSize: 32,
+            fontWeight: 700,
+            marginBottom: 16,
+            textAlign: "center",
+          }}
+        >
+          유튜브 알고리즘은 나를 어떻게 보고 있을까?
+        </h1>
+        <p
+          style={{
+            color: "#b0b0b0",
+            fontSize: 18,
+            marginBottom: 40,
+            textAlign: "center",
+            fontWeight: 400,
+          }}
+        >
+          <span style={{ color: "#fff", fontWeight: 600 }}></span>
+          유튜브 시청기록을 올리고 결과를 확인해보세요
+        </p>
+
+        {/* 파일 업로드 버튼 */}
+        
+    </div>
+
     <div className="flex flex-col items-center space-y-8 text-center relative z-10 w-full">
         
         {/* 파일 업로드 버튼 */}
@@ -401,7 +529,7 @@ return (
                         </h1>
                     </div>
                 </div>
-                        {/* 업데이트 가능하면 파일 업로드 버튼 */}
+                {/* 업데이트 가능하면 파일 업로드 버튼 */}
                 <div
                     onClick={() => fileInputRef.current?.click()}
                         className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
@@ -499,7 +627,7 @@ return (
                     </div>
                         
                 </div>
-                        {/* 날짜, 영상 개수 설정-삭제*/}
+                {/* 날짜, 영상 개수 설정-삭제*/}
                 {/* 호버시 설명 란*/}
                 <div className="mt-4 flex justify-center">
                     <Dialog>

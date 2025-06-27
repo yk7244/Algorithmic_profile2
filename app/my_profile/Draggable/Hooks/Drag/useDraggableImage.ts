@@ -20,7 +20,7 @@ export function useDraggableImage(
 
             return {
                 transform: `translate3d(${(position?.x || 0) + transform.x}px, ${constrainedY}px, 0) rotate(${rotate || 0}deg)`,
-                transition: isEditing ? 'none' : 'transform 0.1s ease-in-out',
+            transition: isEditing ? 'none' : 'transform 0.1s ease-in-out',
             };
         }
         return {

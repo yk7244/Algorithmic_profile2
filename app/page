@@ -1,0 +1,204 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
+export default function Home() {
+  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+
+  // 눈동자 커서 추적용 상태 및 ref
+  const leftEyeRef = useRef(null);
+  const rightEyeRef = useRef(null);
+  const [leftPupil, setLeftPupil] = useState({ x: 0, y: 0 });
+  const [rightPupil, setRightPupil] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    function handleMouseMove(e: MouseEvent) {
+      const movePupil = (
+        eyeRef: React.RefObject<HTMLDivElement>,
+        setPupil: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>
+      ) => {
+        if (!eyeRef.current) return;
+        const rect = eyeRef.current.getBoundingClientRect();
+        const eyeCenter = {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+        };
+        const dx = e.clientX - eyeCenter.x;
+        const dy = e.clientY - eyeCenter.y;
+        // 타원 반경 (눈동자 크기 - 동공 크기 - 여유)
+        const rx = rect.width / 2 - 14; // x축 최대 이동 (눈동자 52, 동공 28)
+        const ry = rect.height / 2 - 16; // y축 최대 이동 (눈동자 68, 동공 32)
+        // 각도
+        const angle = Math.atan2(dy, dx);
+        // 타원 경계 내 최대 이동
+        const x = Math.cos(angle) * rx;
+        const y = Math.sin(angle) * ry;
+        // 실제 마우스와의 거리
+        const dist = Math.hypot(dx, dy);
+        // 동공이 타원 경계 안에서만 움직이도록 제한
+        if (dist < Math.min(rx, ry)) {
+          setPupil({ x: dx, y: dy });
+        } else {
+          setPupil({ x, y });
+        }
+      };
+      movePupil(leftEyeRef, setLeftPupil);
+      movePupil(rightEyeRef, setRightPupil);
+    }
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const handleButtonClick = () => {
+    if (isLoggedIn) {
+      router.push('/upload/page_user');
+    } else {
+      router.push('/login');
+    }
+  };
+
+  return (
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg, #0C0C0C 0%, #181818 100%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
+      {/* 흐릿한 원형 배경 */}
+      <div
+        style={{
+          position: "absolute",
+          top: "20%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 400,
+          height: 400,
+          background: "radial-gradient(circle, #6b6b6b55 0%, #23232300 80%)",
+          filter: "blur(20px)",
+          zIndex: 1,
+        }}
+      />
+
+      {/* 눈동자 */}
+      <div
+        style={{
+          position: "absolute",
+          top: "22%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          display: "flex",
+          gap: 32,
+          zIndex: 2,
+        }}
+      >
+        {/* 왼쪽 눈 */}
+        <div
+          ref={leftEyeRef}
+          style={{
+            width: 52,
+            height: 68,
+            background: "radial-gradient(circle, #fff 70%, #000 100%)",
+            borderRadius: "50%",
+            boxShadow: "0 0 32px 8px #fff8",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "blur(1.4px)",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 32,
+              background: "#232323",
+              borderRadius: "50%",
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: `translate(-50%, -50%) translate(${leftPupil.x}px, ${leftPupil.y}px)`,
+              transition: "transform 0.07s linear",
+            }}
+          />
+        </div>
+        {/* 오른쪽 눈 */}
+        <div
+          ref={rightEyeRef}
+          style={{
+            width: 52,
+            height: 68,
+            background: "radial-gradient(circle, #fff 70%, #000 100%)",
+            borderRadius: "50%",
+            boxShadow: "0 0 32px 8px #fff8",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            filter: "blur(1.4px)",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              width: 28,
+              height: 32,
+              background: "#232323",
+              borderRadius: "50%",
+              position: "absolute",
+              left: "50%",
+              top: "50%",
+              transform: `translate(-50%, -50%) translate(${rightPupil.x}px, ${rightPupil.y}px)`,
+              transition: "transform 0.07s linear",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 메인 컨텐츠 */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 3,
+          marginTop: 15,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <h1
+          style={{
+            color: "#fff",
+            fontSize: 32,
+            fontWeight: 700,
+            marginBottom: 16,
+            textAlign: "center",
+          }}
+        >
+          유튜브 알고리즘은 나를 어떻게 보고 있을까?
+        </h1>
+        <p
+          style={{
+            color: "#b0b0b0",
+            fontSize: 18,
+            marginBottom: 40,
+            textAlign: "center",
+            fontWeight: 400,
+          }}
+        >
+          <span style={{ color: "#fff", fontWeight: 600 }}></span>
+          유튜브 시청기록을 올리고 결과를 확인해보세요
+        </p>
+
+        {/* 파일 업로드 버튼 */}
+        
+      </div>
+    </main>
+  );
+} 
