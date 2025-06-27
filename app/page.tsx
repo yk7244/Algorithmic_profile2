@@ -159,7 +159,9 @@ useEffect(() => {
   const [leftPupil, setLeftPupil] = useState({ x: 0, y: 0 });
   const [rightPupil, setRightPupil] = useState({ x: 0, y: 0 });
 
+  const guideRef = useRef<HTMLDivElement>(null); // 안내 영역 ref 추가
   
+  const [scrollToGuide, setScrollToGuide] = useState(false); // 버튼 클릭용 상태
 
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
@@ -199,7 +201,41 @@ useEffect(() => {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  
+  // 업로드 후 1.7초 후 안내로 스크롤
+  useEffect(() => {
+    if (isFileUploaded) {
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFileUploaded]);
+
+  // 분석 시작 버튼 클릭 시 스크롤 트리거
+  useEffect(() => {
+    if (scrollToGuide && guideRef.current) {
+      const timer = setTimeout(() => {
+        guideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setScrollToGuide(false);
+      }, 1700);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollToGuide]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (guideRef.current) {
+        window.scrollTo({
+          top: guideRef.current.getBoundingClientRect().top + window.scrollY - 40,
+          behavior: 'smooth'
+        });
+      }
+    }, 1700);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <main className="flex min-h-[calc(110vh-4rem)] flex-col items-center p-4 py-40 relative overflow-hidden">
@@ -232,9 +268,9 @@ useEffect(() => {
       <div
         style={{
           position: "absolute",
-          top: "23%",
+          top: "160px",
           left: "50%",
-          transform: "translate(-50%, -50%)",
+          transform: "translateX(-50%)",
           display: "flex",
           gap: 32,
           zIndex: 2,
@@ -304,7 +340,7 @@ useEffect(() => {
     </>
 
     {/* 타이틀 */}
-    <div
+      <div
         style={{
           position: "relative",
           zIndex: 3,
@@ -378,38 +414,61 @@ useEffect(() => {
                       </button>
                       </DialogTrigger>
 
-                      <DialogContent className="w-[80vw] flex flex-col items-center justify-center max-w-4xl p-6 rounded-xl shadow-lg">
-                      <div className="space-y-4 flex flex-col items-center w-full">
-                        <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b text-center mx-auto">
+                      <DialogContent className="w-[80vw] justify-center max-w-4xl p-6 rounded-xl shadow-lg" >
+                      <div className="space-y-4" ref={guideRef}>
+                      <h3 className="text-lg font-semibold flex items-center gap-2 
+                      text-gray-800 pb-2 border-b text-center mx-auto">
                           시청기록 자동 선택 기준 안내
-                        </h3>
-                        <div className="grid grid-cols-2 gap-6 py-4 justify-center w-fit mx-auto">
-                          {/* 왼쪽: 일주일 간격 */}
-                          <div className="flex flex-col items-center bg-gray-50 rounded-lg p-4">
-                            <span className="text-3xl mb-2">📅</span>
-                            <span className="font-bold text-gray-800">일주일 간격</span>
-                            <span className="text-xs text-gray-500 mt-1 text-center">
-                              최근 날짜부터<br />7일마다 기록 선택
-                            </span>
-                          </div>
-                          {/* 오른쪽: 하루 30개 랜덤 */}
-                          <div className="flex flex-col items-center bg-gray-50 rounded-lg p-4">
-                            <span className="text-3xl mb-2">🎬</span>
-                            <span className="font-bold text-gray-800">하루 30개 랜덤</span>
-                            <span className="text-xs text-gray-500 mt-1 text-center">
-                              하루에 30개의<br />영상을 무작위 추출
-                            </span>
-                          </div>
+                      </h3>
+                      <div className="grid grid-cols-2 gap-6 py-4">
+                        {/* 왼쪽: 일주일 간격 */}
+                        <div className="flex flex-col items-center bg-gray-50 rounded-lg p-4">
+                          <span className="text-3xl mb-2">📅</span>
+                          <span className="font-bold text-gray-800">일주일 간격</span>
+                          <span className="text-xs text-gray-500 mt-1 text-center">
+                            최근 날짜부터<br />7일마다 기록 선택
+                          </span>
                         </div>
-                        {/* 아래 요약 문장 */}
-                        <div className="mt-2 text-sm text-gray-700 text-center mx-auto">
-                          <span className="font-semibold text-gray-800">최근 일주일</span> 동안, <span className="font-semibold text-gray-800">하루당 30개씩</span> <br />
-                          영상을 <span className="font-semibold">무작위</span>로 골라 분석합니다.
+                        {/* 오른쪽: 하루 30개 랜덤 */}
+                        <div className="flex flex-col items-center bg-gray-50 rounded-lg p-4">
+                          <span className="text-3xl mb-2">🎬</span>
+                          <span className="font-bold text-gray-800">하루 30개 랜덤</span>
+                          <span className="text-xs text-gray-500 mt-1 text-center">
+                            하루에 30개의<br />영상을 무작위 추출
+                          </span>
                         </div>
+                      </div>
+                      {/* 아래 요약 문장 */}
+                      <div className="mt-2 text-sm text-gray-700 text-center">
+                        <span className="font-semibold text-gray-800">최근 일주일</span> 동안, <span className="font-semibold text-gray-800">하루당 30개씩</span> <br />
+                        영상을 <span className="font-semibold">무작위</span>로 골라 분석합니다.
+                      </div>
                       </div>
                       </DialogContent>
                       </Dialog>
                   </div>
+                  {/* 분석 시작 버튼 */}
+                  <button
+                    onClick={() => {
+                      setScrollToGuide(true);
+                      console.log("분석 시작");
+                    }}
+                    style={{
+                      marginTop: 100,
+                      background: "#fff",
+                      color: "#181818",
+                      fontWeight: 700,
+                      fontSize: 20,
+                      border: "none",
+                      borderRadius: 32,
+                      padding: "16px 40px",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      boxShadow: "2.63px 2.63px 87.73px #ffffff66",
+                    }}
+                  >
+                    나의 알고리즘 분석하기
+                  </button>
                 </>
               ) : (
                 <>
