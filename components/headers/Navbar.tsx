@@ -51,7 +51,7 @@ export function Navbar() {
             <HoverCard openDelay={100} closeDelay={200}>
               <HoverCardTrigger asChild>
                 <Link href="/introduction" className="hidden md:flex items-center gap-1 text-gray-300 hover:text-white transition-colors ml-3">
-                  <span className="text-xs font-medium">TubeLens가 궁금하신가요?</span>
+                  <span className="text-xs font-medium">TubeLens 프로젝트가 궁금하신가요?</span>
                   <HelpCircle className="w-4 h-4" />
                 </Link>
               </HoverCardTrigger>
@@ -64,10 +64,10 @@ export function Navbar() {
               <>
                 
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/my_profile">나의 알고리즘</Link>
+                  <Link href="/my_profile">나의 알고리즘 프로필</Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/search">알고리즘 탐색</Link>
+                  <Link href="/search">다른 알고리즘 탐색</Link>
                 </Button>
                 
                 {/* 언어 선택 버튼 
@@ -89,10 +89,11 @@ export function Navbar() {
                 <Button variant="ghost" size="sm" onClick={handleLanguageToggle} className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-sm font-medium flex items-center px-6 rounded-[20px]`}>
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
-                */}
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 rounded-[20px]`}>
                   <Link href="/login">로그인</Link>
                 </Button>
+                */}
+                
               </>
             )}
           </nav>
@@ -133,10 +134,10 @@ export function Navbar() {
                       </Button>
 
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile">나의 튜브렌즈</Link>
+                        <Link href="/my_profile">나의 알고리즘 프로필</Link>
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/search">관심사 탐색</Link>
+                        <Link href="/search">다른 알고리즘 탐색</Link>
                       </Button>
                       
                       
@@ -146,9 +147,7 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/login">로그인</Link>
-                      </Button>
+                      
                       {isMainPage && (
                         <div className="px-4 pt-5 flex items-center gap-1.5 text-gray-400 border-t border-gray-700 mt-1.5 rounded-[20px]">
                           <HelpCircle className="w-5 h-5" />
