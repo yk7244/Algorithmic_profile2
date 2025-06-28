@@ -163,6 +163,9 @@ useEffect(() => {
   
   const [scrollToGuide, setScrollToGuide] = useState(false); // 버튼 클릭용 상태
 
+  // 버튼 1초 후 노출용 상태
+  const [showButton, setShowButton] = useState(false);
+
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
       const movePupil = (
@@ -234,6 +237,14 @@ useEffect(() => {
         });
       }
     }, 1700);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // 분석 시작 버튼 3초 후 보이게
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowButton(true);
+    }, 6000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -369,9 +380,10 @@ useEffect(() => {
             marginBottom: 40,
             textAlign: "center",
             fontWeight: 400,
+            
           }}
         >
-          <span style={{ color: "#fff", fontWeight: 600 }}></span>
+          <span style={{ color: "#fff", fontWeight: 600, }}></span>
           유튜브 시청기록을 올리고 결과를 확인해보세요
         </p>
       
@@ -448,38 +460,40 @@ useEffect(() => {
                       </DialogContent>
                       </Dialog>
                   </div>
-                  {/* 분석 시작 버튼 */}
-                  <button
-                    onClick={() => {
-                      setScrollToGuide(true);
-                      console.log("분석 시작");
-                      router.push('/upload/page_user');
-                      
-                    }}
-                    style={{
-                      marginTop: 100,
-                      marginBottom: 200,
-                      background: "#fff",
-                      color: "#181818",
-                      fontWeight: 700,
-                      fontSize: 20,
-                      border: "none",
-                      borderRadius: 32,
-                      padding: "16px 40px",
-                      cursor: "pointer",
-                      transition: "background 0.2s",
-                      boxShadow: "2.63px 2.63px 87.73px #ffffff66",
-                    }}
-                  >
-                    나의 알고리즘 분석하기
-                  </button>
+                  
+                    <button
+                      onClick={() => {
+                        setScrollToGuide(true);
+                        console.log("분석 시작");
+                        router.push('/upload/page_user');
+                      }}
+                      style={{
+                        position: "relative",
+                        marginTop: 140,
+                        marginBottom: 200,
+                        background: "#fff",
+                        color: "#181818",
+                        fontWeight: 700,
+                        fontSize: 20,
+                        border: "none",
+                        borderRadius: 32,
+                        padding: "16px 40px",
+                        cursor: "pointer",
+                        transition: "opacity 0.8s",
+                        boxShadow: "2.63px 2.63px 87.73px #ffffff66",
+                        opacity: showButton ? 1 : 0.4,  
+                      }}
+                    >
+                      나의 알고리즘 분석하기
+                    </button>
+                  )
                 </>
               ) : (
                 <>
                   {/* 1-1-2 로그인O, 업데이트 O, 파일 업로드 X => 파일 업로드 버튼 */}
                   <div
                       onClick={() => fileInputRef.current?.click()}
-                          className={`mt-10 max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
+                          className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
                       isDragging 
                           ? 'border-2 border-blue-500 bg-blue-50/30 scale-[1.02] shadow-lg' 
                           : 'border-2 border-gray-200/60 hover:border-blue-400/60 shadow-sm hover:shadow-md bg-white/70'
