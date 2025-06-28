@@ -1,32 +1,25 @@
 "use client";
 
-import { useState, useRef, DragEvent, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import OpenAI from 'openai';
-import { HelpCircle, Upload, ArrowRight, Youtube, CalendarIcon, Loader2, CheckCircle, XCircle } from "lucide-react";
-import { transformClustersToImageData, transformClusterToImageData } from '../../utils/clusterTransform';    
+import { ArrowRight,Loader2, CheckCircle } from "lucide-react";
+import { transformClusterToImageData } from '../../utils/clusterTransform';    
 
 import { OpenAILogger } from '../../utils/init-logger';
-import { parseJSONWatchHistory, processSelectedItems } from '../VideoParsing/jsonParser';
-import { parseWatchHistory } from '../VideoParsing/htmlParser';
-import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from '../Handlers/fileHandlers';
-import { isOneWeekPassed } from '../VideoParsing/dateUtils';
+import { processSelectedItems } from '../VideoParsing/jsonParser';
+
 
 //Refactoring
 import { searchClusterImage } from '../ImageSearch/NaverImageSearch';
-import { VideoCluster, handleCluster} from '../VideoAnalysis/videoCluster';
+import { handleCluster} from '../VideoAnalysis/videoCluster';
 import { fetchVideoInfo } from '../VideoAnalysis/videoKeyword';
 import { useClusterStorage } from '../hooks/useClusterStorage';
-import { my_account } from '../../data/dummyData';
 import { useRouter } from 'next/navigation';    
 import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
 import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
-import Image from 'next/image';
-import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
+
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -62,10 +55,9 @@ credit?: {
 };
 
 const steps = [
-    { id: 1, title: "키워드 추출", description: "시청 기록에서 관심사들을 발견하고 있어요..." },
-    { id: 2, title: "클러스터 분석", description: "알고리즘의 연결고리를 살펴보는 중이에요..." },
-    { id: 3, title: "이미지 생성", description: "흥미로운 패턴을 발견했어요! 당신의 알고리즘들을 사진으로 표현 중이예요" },
-    { id: 4, title: "분석 완료", description: "곧, 별명과 나만의 알고리즘 무드보드를 만나보실 수 있어요."}
+    { id: 1, title: "키워드 추출", description: "당신의 알고리즘은 무엇을 학습했을지 살펴보고 있어요... " },
+    { id: 2, title: "클러스터 분석", description: "흥미로운 시각을 발견했어요!" },
+    { id: 3, title: "이미지 생성", description: "이제 알고리즘이 생각한 당신의 모습을 보여줄게요." },
 ];
 
 
@@ -75,8 +67,6 @@ export default function Home() {
 const router = useRouter();
 const [isLoading, setIsLoading] = useState(false);
 const [error, setError] = useState<string | null>(null);
-const fileInputRef = useRef<HTMLInputElement>(null);
-const [isDragging, setIsDragging] = useState(false);
 const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
 const [clusters, setClusters] = useState<any[]>([]);
 const [showAnalysis, setShowAnalysis] = useState(false);
@@ -133,22 +123,48 @@ const { generateProfile } = useGenerateUserProfile({
     setProfile: setProfile,
 });
 
+// 단계별 설명 텍스트 fade-in/out 상태
+const [displayedStep, setDisplayedStep] = useState(generatingStep);
+const [showStepText, setShowStepText] = useState(true);
 useEffect(() => {
-    // 페이지가 처음 로드될 때 자동 분석 시작
+  setShowStepText(false); // 먼저 사라지게
+  const timeout1 = setTimeout(() => {
+    setDisplayedStep(generatingStep); // 텍스트 교체
+    setShowStepText(true); // 다시 나타나게
+  }, 400); // 0.4초 후 텍스트 교체
+  return () => clearTimeout(timeout1);
+}, [generatingStep]);
+
+// 배경 페이드 상태
+const [showBgFade, setShowBgFade] = useState(false);
+useEffect(() => {
+  setShowBgFade(false);
+  const timeout = setTimeout(() => {
+    setShowBgFade(true);
+  }, 400);
+  return () => clearTimeout(timeout);
+}, [showCompletePage]);
+
+ // 페이지가 처음 로드될 때 자동 분석 시작
+useEffect(() => {
     const startAnalysis = async () => {
         setShowGeneratingDialog(true);
         setGeneratingStep(1);
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
-            const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
+            /*const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
                 console.log(`${current}/${total} 처리 중`);
             });
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
+            */
+            await new Promise(resolve => setTimeout(resolve, 1200)); // 클러스터 분석 시뮬레이션
+
             // 2단계: 클러스터 분석
             setGeneratingStep(2);
-            await handleCluster(
+            await new Promise(resolve => setTimeout(resolve, 1200)); // 클러스터 분석 시뮬레이션
+            /*await handleCluster(
                 result,
                 openai,
                 OpenAILogger,
@@ -160,26 +176,26 @@ useEffect(() => {
                 setShowAnalysis,
                 setIsLoading,
                 setError,
-            );
+            );*/
             // 3단계: 이미지 생성 (이미 handleCluster에서 처리됨)
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 2000)); // 이미지 생성 시뮬레이션
             // 4단계: 완료
-            setGeneratingStep(4);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            setGeneratingStep(3);
+            await new Promise(resolve => setTimeout(resolve, 200));
             // 5단계: 완료 페이지 표시
             setShowCompletePage(true);
             setShowGeneratingDialog(false);
-            setCountdown(10);
+            setCountdown(100);
             // 6단계: 별명만들기
-            await generateProfile();
+            //await generateProfile();
             // 7단계: clusterHistory, sliderHistory 저장하기
-            const clusterHistoryResult = saveClusterHistory(clusters);
-            const sliderResult = saveSliderHistory(clusters);
-            if (clusterHistoryResult.success && sliderResult.success) {
-                console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
-                alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 무드보드로 이동할게요. ');
-            }
+            //const clusterHistoryResult = saveClusterHistory(clusters);
+            //const sliderResult = saveSliderHistory(clusters);
+            //if (clusterHistoryResult.success && sliderResult.success) {
+            //    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
+            //    alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 무드보드로 이동할게요. ');
+            //}
         } catch (error) {
             console.error('분석 중 오류:', error);
             setError('분석 중 오류가 발생했습니다.');
@@ -206,121 +222,111 @@ useEffect(() => {
 
 
 return (
-    <main className="flex min-h-[calc(110vh-4rem)] flex-col items-center p-4 py-40 relative overflow-hidden">
+    <main className="flex min-h-screen items-center p-4 py-40 relative overflow-hidden scroll-none">
     
-    {/* Animated background blobs */}
-    <div className="absolute inset-0 overflow-hidden -z-10 bg-gray-500">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-black blur-[120px] animate-blob" />
-        <div className="absolute -bottom-[30%] -right-[20%] w-[70%] h-[70%] rounded-full bg-black blur-[120px] animate-blob animation-delay-20" />
-        <div className="absolute top-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-black blur-[120px] animate-blob animation-delay-200" />
+    {/* 하단 퍼지는 블러 애니메이션 배경 */}
+    {showCompletePage ? (
+        <div
+          className={`scroll-none min-h-screen bg-[#0C0C0C] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
+          style={{
+            backgroundImage: "url('/images/upload_bg2.svg')",
+            backgroundSize: 'contain',
+            backgroundPosition: 'top',
+            border: 'none',
+            overflow: 'hidden',
+            backgroundRepeat: 'no-repeat',
+            opacity: showBgFade ? 1 : 0,
+            transition: 'opacity 0.4s ease-in-out',
+            animation: 'fadeIn 2s ease-in-out',            
+          }}>
+            <div className="relative -bottom-[30%] -left-[-20%] w-[40%] h-[60%] rounded-full bg-[#6776AF] blur-[220px] animate-blob" style={{ animationDelay: '1s' }} />
+            <div className="relative -bottom-[-20%] -right-[60%] w-[20%] h-[20%] rounded-full bg-white blur-[220px] animate-blob" style={{ animationDelay: '1s' }} />
+        </div>
+    ):(
+    <div className="bg-[#0C0C0C] absolute inset-0 overflow-hidden -z-20 pointer-events-none">
+        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#6165C9] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#6776AF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-white blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
     </div>
-
-    <div className="flex flex-col items-center space-y-8 text-center relative z-10 w-full">
-        
-        {/* 파일 업로드 버튼 */}
-        <div className="w-full max-w-[900px] ">
-        
+    )}
+    <div className="flex flex-col items-center space-y-8 relative z-10 w-full">
+        <div className="w-full max-w-[900px] ">  
         {showCompletePage ? (
             /* 분석 완료 결과 페이지 */
-            <div className="w-full h-screen flex flex-col">
-                
-
-                {/* 중간 여백 */}
-                <div className="h-40"></div>
-
-                {/* 메인 완료 메시지 - 하단 */}
-                <div className="text-center">
-                    <div className="space-y-4">
-                        <h1 className="text-xl font-bold text-white">
-                            별명과 나만의 알고리즘 무드보드가 완성되었습니다!
-                        </h1>
-                    </div>
-                    
-                    <div className="space-y-3 mt-5">
-                        <p className="text-lg text-gray-300">
-                            {countdown}초 뒤에 나의 알고리즘 페이지로 이동할게요.
-                        </p>
-                        <div className="flex justify-center space-x-4 mt-5">
-                            <Button
-                                onClick={() => {
-                                    setShowCompletePage(false);
-                                    setShowGeneratingDialog(false);
-                                    router.push('/my_profile');
-                                }}
-                                className="mt-5 bg-white text-black hover:bg-gray-100 font-semibold px-6 py-3 rounded-lg transition-all"
-                            >
-                                지금 보기
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => {
-                                    setShowCompletePage(false);
-                                    setShowGeneratingDialog(false);
-                                    setIsFileUploaded(false);
-                                    setWatchHistory([]);
-                                }}
-                                className="mt-5 bg-transparent border-white text-white hover:bg-white hover:text-black font-semibold px-6 py-3 rounded-lg transition-all"
-                            >
-                                다시 시작
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 배경 블러된 이미지들 (장식용) */}
-                <div className="absolute inset-0 overflow-hidden opacity-20">
-                    <div className="absolute top-1/4 left-1/3 w-32 h-24 bg-gray-600 rounded-lg blur-sm" />
-                    <div className="absolute top-1/3 right-1/3 w-28 h-20 bg-gray-700 rounded-lg blur-sm" />
-                    <div className="absolute bottom-1/3 left-1/4 w-36 h-28 bg-gray-500 rounded-lg blur-sm" />
-                    <div className="absolute bottom-1/4 right-1/4 w-30 h-22 bg-gray-600 rounded-lg blur-sm" />
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-18 bg-gray-700 rounded-lg blur-sm" />
-                    <div className="absolute top-2/5 left-2/5 w-28 h-20 bg-gray-600 rounded-lg blur-sm" />
-                    <div className="absolute bottom-2/5 right-2/5 w-32 h-24 bg-gray-500 rounded-lg blur-sm" />
+            <div className="w-full max-h-screen relative text-center">
+                {/* 메인 완료 메시지 - 상단 고정 */}
+                <div className="absolute left-1/2 -translate-x-1/2" style={{ top: '-100px', width: '100%' , transition: 'opacity 4s ease-in-out',}}>
+                    <h1 className="text-xl font-bold text-white text-center"
+                    style={{
+                        animation: 'fadeIn 2s ease-in-out',
+                    }}>
+                        알고리즘이 본 당신의 프로필 무드보드가 완성되었습니다. <br/>
+                        {countdown}초 뒤 나의 알고리즘 프로필로 이동할게요.
+                    </h1>
                 </div>
             </div>
         ) : (
             /* 분석 진행 중 페이지 */
-            <div className="w-full max-w-[500px] mx-auto">
+            <div className="w-full max-w-[800px] mx-auto">
                 <div className=" backdrop-white-sm rounded-2xl p-8 text-center space-y-6">
-                    {/* Current Step */}
-                    <div className="space-y-4 mt-40">
-                            <div className="flex items-center justify-center space-x-2">
-                                {generatingStep < 4 ? (
-                                    <Loader2 className="h-6 w-6 animate-spin text-white" />
-                                ) : (
-                                    <CheckCircle className="h-6 w-6 text-white" />
-                                )}
-                                
-                            </div>
-                            <p className="text-gray-300 text-xl">
-                                {steps[generatingStep - 1]?.description}
-                            </p>
+                    {/* Steps Indicator - 한 줄로 이어지는 라인, 각 단계별로만 글로우, 선도 밝게 */}
+                    <div className="flex items-center justify-center w-full max-w-xl mx-auto my-12 relative z-10">
+                        {/* Step 1 */}
+                        <div className="relative flex items-center">
+                            <div
+                                className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold border-2 transition-colors duration-300 
+                                    ${generatingStep === 1 ? 'bg-white text-black border-white' : 'bg-[#2A2A2A] text-white border-[#2A2A2A] opacity-90'}`}
+                                style={generatingStep === 1 ? { boxShadow: '0 0 60px #fff, 0 0 0 0 #fff', animation: 'glow-pulse 0.7s infinite alternate' } : {}}
+                            >1</div>
+                            
+                            <div
+                                className={
+                                    'h-1 w-40 ml-0 ' +
+                                    (generatingStep === 1 ? 'bg-gradient-to-r from-white to-[#2A2A2A]'
+                                    : generatingStep ===2 ? 'bg-gradient-to-r from-[#2A2A2A] to-white'
+                                    : 'bg-gradient-to-r from-[#2A2A2A]   to-[#2A2A2A]')
+                                }
+                            />
+                        </div>
+                        {/* Step 2 */}
+                        <div className="flex items-center">
+                            <div
+                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold border-2 transition-colors duration-300 
+                                ${generatingStep === 2 ? 'bg-white text-black border-white' : 'bg-[#2A2A2A] text-white border-[#2A2A2A] opacity-90'}`}
+                            style={generatingStep === 2 ? { boxShadow: '0 0 60px #fff, 0 0 0 0 #fff', animation: 'glow-pulse 0.7s infinite alternate' } : {}}
+                            >2</div>
+
+                            <div
+                            className={
+                                'h-1 w-40 ml-0 ' +
+                                (generatingStep === 1 ? 'bg-gradient-to-r from-[#2A2A2A] to-[#2A2A2A]'
+                                : generatingStep ===2 ? 'bg-gradient-to-r from-white to-[#2A2A2A]'
+                                : 'bg-gradient-to-r bg-gradient-to-r from-[#2A2A2A] to-white')
+                            }
+                            />
+                        </div>
+                        {/* Step 3 */}
+                        <div className="flex items-center">
+                            <div
+                            className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold border-2 transition-colors duration-300 
+                                ${generatingStep === 3 ? 'bg-white text-black border-white' : 'bg-[#2A2A2A] text-white border-[#2A2A2A] opacity-90'}`}
+                            style={generatingStep === 3 ? { boxShadow: '0 0 60px #fff, 0 0 0 0 #fff', animation: 'glow-pulse 0.7s infinite alternate' } : {}}
+                            >3</div>
+                        </div>
                     </div>
 
-                    {/* Steps Indicator */}
-                    <div className="flex justify-center space-x-2">
-                        {steps.map((step, index) => (
-                            <div key={step.id} className="flex items-center">
-                                <div
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-colors duration-300 ${
-                                        index + 1 <= generatingStep
-                                            ? 'bg-white text-black'
-                                            : 'bg-gray-800 text-gray-600 opacity-80'
-                                    }`}
-                                >
-                                    {index + 1 < generatingStep ? (
-                                        <CheckCircle className="h-4 w-4" />
-                                    ) : (
-                                        index + 1
-                                    )}
-                                </div>
-                                {index < steps.length - 1 && (
-                                    <ArrowRight className={`h-4 w-4 mx-2 ${
-                                        index + 1 < generatingStep ? 'text-white-500' : 'text-white opacity-50'
-                                    }`} />
-                                )}
-                            </div>
-                        ))}
+                    {/* Current Step -현재 단계 설명  */}
+                    <div className="space-y-4" style={{marginTop: '300px'}}>
+                        
+                        <p
+                            className="mt-200 text-gray-300 text-2xl font-bold mx-auto text-center"
+                            style={{
+                                opacity: showStepText ? 1 : 0,
+                                transition: 'opacity 0.4s ease-in-out',
+                            }}>
+                            {steps[displayedStep - 1]?.description}
+                            
+                        </p>
                     </div>
                 </div>
             </div>
