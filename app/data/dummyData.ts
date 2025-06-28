@@ -21,5 +21,5 @@ export const my_account = {
     id: 1,
     email: 'daisy@gmail.com',
     created_at: '2024-06-22T14:35:00.000Z',
-    updated_at: '2025-06-22T14:35:00.000Z'
+    updated_at: '2024-06-22T14:35:00.000Z'
 };

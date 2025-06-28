@@ -238,14 +238,17 @@ useEffect(() => {
   }, []);
 
   return (
-    <main className="flex min-h-[calc(110vh-4rem)] flex-col items-center p-4 py-40 relative overflow-hidden">
-    
-    {/* Animated background blobs */}
-    <div className="absolute inset-0 overflow-hidden -z-10 bg-gray-500">
-        <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-black blur-[120px] animate-blob" />
-        <div className="absolute -bottom-[30%] -right-[20%] w-[70%] h-[70%] rounded-full bg-black blur-[120px] animate-blob animation-delay-20" />
-        <div className="absolute top-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-black blur-[120px] animate-blob animation-delay-200" />
-    </div>
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(180deg, #232323 0%, #0C0C0C 100%)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+      }}
+    >
 
     {/* 눈동자 커서 추적용 상태 및 ref */}
     <>
@@ -267,10 +270,8 @@ useEffect(() => {
       {/* 눈동자 */}
       <div
         style={{
-          position: "absolute",
-          top: "160px",
-          left: "50%",
-          transform: "translateX(-50%)",
+          position: "relative",
+          marginTop: "80px",
           display: "flex",
           gap: 32,
           zIndex: 2,
@@ -344,7 +345,7 @@ useEffect(() => {
         style={{
           position: "relative",
           zIndex: 3,
-        marginTop: 120,
+          marginTop: 120,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -452,9 +453,12 @@ useEffect(() => {
                     onClick={() => {
                       setScrollToGuide(true);
                       console.log("분석 시작");
+                      router.push('/upload/page_user');
+                      
                     }}
                     style={{
                       marginTop: 100,
+                      marginBottom: 200,
                       background: "#fff",
                       color: "#181818",
                       fontWeight: 700,
