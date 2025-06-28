@@ -86,6 +86,15 @@
   animation: blob 7s infinite;
 }
 
+@keyframes glow-pulse {
+  0% {
+    box-shadow: 0 0 20px 0 #fff, 0 0 0 0 #fff;
+  }
+  100% {
+    box-shadow: 0 0 30px 2px #fff, 0 0 0 0 #fff;
+  }
+}
+
 /* my_profile 페이지에서만 적용되는 스타일 */
 [data-path="/my_profile"] {
   @apply fixed inset-0 overflow-hidden;

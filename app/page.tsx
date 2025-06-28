@@ -1,12 +1,8 @@
 "use client";
 
-import { useState, useRef, DragEvent, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { useState, useRef, useEffect } from 'react';  
 import OpenAI from 'openai';
-import { HelpCircle, Upload, ArrowRight, Youtube, CalendarIcon, Loader2, CheckCircle, XCircle, Check } from "lucide-react";
-import { transformClustersToImageData, transformClusterToImageData } from './utils/clusterTransform';    
+import { HelpCircle, Upload, Check } from "lucide-react";
 
 import { OpenAILogger } from './utils/init-logger';
 import { parseJSONWatchHistory, processSelectedItems } from './upload/VideoParsing/jsonParser';
@@ -16,24 +12,17 @@ import { isOneWeekPassed } from './upload/VideoParsing/dateUtils';
 
 //Refactoring
 import { searchClusterImage } from './upload/ImageSearch/NaverImageSearch';
-import { VideoCluster, handleCluster} from './upload/VideoAnalysis/videoCluster';
 import { fetchVideoInfo } from './upload/VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './upload/hooks/useClusterStorage';
 import { my_account } from './data/dummyData';
 import { useRouter } from 'next/navigation';    
-import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
-import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
 import { useGenerateUserProfile } from './my_profile/Nickname/Hooks/useGenerateUserProfile';    
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/AuthContext';
 import { useLoginHandlers } from "./login/hooks/useLoginHandlers";
 
 
-// 기본 이미지를 데이터 URI로 정의
-const placeholderImage = '/images/default_image.png'
-const defaultImageUri = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNlNWU4IiAvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNhMGEwYTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOb3QgTG9hZGVkPC90ZXh0Pgo8L3N2Zz4=";
 
 // OpenAI 클라이언트 초기화 수정
 const openai = new OpenAI({
@@ -82,8 +71,6 @@ const fileInputRef = useRef<HTMLInputElement>(null);
 const [isDragging, setIsDragging] = useState(false);
 const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
 const [clusters, setClusters] = useState<any[]>([]);
-const [showAnalysis, setShowAnalysis] = useState(false);
-const [expandedClusters, setExpandedClusters] = useState<Set<number>>(new Set());
 
 // clusterImages state 타입 수정
 const [clusterImages, setClusterImages] = useState<Record<number, ClusterImage | null>>({});
@@ -93,8 +80,6 @@ const [analysisHistory, setAnalysisHistory] = useState<{
     date: string;
     clusters: any[];
 }[]>([]);
-const [showVisionResults, setShowVisionResults] = useState(false);
-const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
 const [generatingStep, setGeneratingStep] = useState(0);
 const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
