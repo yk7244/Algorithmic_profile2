@@ -32,7 +32,7 @@ export function Navbar() {
 
   return (
       <header
-        className={`sticky top-0 z-50 w-full ${
+        className={`absolute top-0 z-50 w-full ${
           pathname === "/my_profile" || pathname === "/search"
             ? "bg-white/30 text-black backdrop-blur-lg"
             : "bg-black text-white"

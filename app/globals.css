@@ -95,6 +95,19 @@
   }
 }
 
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-move {
+  animation: gradient-move 3s linear infinite;
+}
+
 /* my_profile 페이지에서만 적용되는 스타일 */
 [data-path="/my_profile"] {
   @apply fixed inset-0 overflow-hidden;
