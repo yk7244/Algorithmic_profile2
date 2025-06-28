@@ -19,7 +19,7 @@ export function useImageChange(
         
         // 이미지 배열 업데이트
         const updatedImages = images.map(img =>
-            img.id === id ? { ...img, src: newSrc, main_keyword: newKeyword } : img
+            img.id === id ? { ...img, src: newSrc } : img
         );
 
         setImages(updatedImages);
@@ -40,7 +40,7 @@ export function useImageChange(
                 const updatedProfileImages = profileImages.map((img: any) => {
                     if (img.id === id) {
                         console.log(`✅ 배열에서 이미지 ${id} 찾음, 업데이트 중...`);
-                        return { ...img, src: newSrc, main_keyword: newKeyword };
+                        return { ...img, src: newSrc};
                     }
                     return img;
                 });
@@ -56,7 +56,7 @@ export function useImageChange(
                         [id]: {
                             ...profileImages[id],
                             src: newSrc,
-                            main_keyword: newKeyword
+                            
                         }
                     };
                     localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));

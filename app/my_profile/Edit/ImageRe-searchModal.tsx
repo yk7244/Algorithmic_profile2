@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
@@ -41,6 +41,15 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
     onImageChange,
     setShowThumbnailModal,
 }) => {
+    const [tempImage, setTempImage] = useState<{src: string, keyword: string} | null>(null);
+    
+    // 모달이 열릴 때마다 임시 이미지를 초기화
+    useEffect(() => {
+        if (open) {
+            setTempImage(null);
+        }
+    }, [open]);
+    
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         
@@ -50,9 +59,28 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
         }
     };
 
+    const handleTempImageSelect = (selectedImage: any, source: 'thumbnail' | 'search') => {
+        if (source === 'thumbnail') {
+            const thumbnailUrl = getYouTubeThumbnail(selectedImage.embedId);
+            setTempImage({ src: thumbnailUrl, keyword: image.main_keyword });
+        } else {
+            setTempImage({ 
+                src: selectedImage.urls.regular, 
+                keyword: selectedImage.alt_description || image.main_keyword 
+            });
+        }
+    };
+
+    const handleConfirmChange = () => {
+        if (tempImage) {
+            onImageChange(image.id, tempImage.src, tempImage.keyword);
+            onOpenChange(false);
+        }
+    };
+
     return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl w-full h-[80vh] p-0 gap-0 bg-gray-50 opacity-90 rounded-lg">
+        <DialogContent className="max-w-4xl w-full h-[83vh] p-0 gap-0 bg-gray-50 opacity-90 rounded-lg">
             <div className=" justify-center ">
                 
             
@@ -70,10 +98,12 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
                                 
                             </div>
                             <div className="p-6 items-center justify-center w-90 h-80 relative rounded-lg overflow-hidden">
-                                <p className="text-md font-bold text-gray-700 mt-2 mb-4 ">현재 선택된 사진</p>
+                                <p className="text-md font-bold text-gray-700 mt-2 mb-4 ">
+                                    현재 선택된 사진
+                                </p>
                                 <img
-                                    src={image.src}
-                                    alt={image.main_keyword}
+                                    src={tempImage ? tempImage.src : image.src}
+                                    alt={tempImage ? tempImage.keyword : image.main_keyword}
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement;
@@ -108,9 +138,7 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
                                                     <div 
                                                         className="aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer border hover:shadow-md transition-all"
                                                         onClick={() => {
-                                                            const thumbnailUrl = getYouTubeThumbnail(video.embedId);
-                                                            onImageChange(image.id, thumbnailUrl, image.main_keyword);
-                                                            setShowThumbnailModal(false);
+                                                            handleTempImageSelect(video, 'thumbnail');
                                                         }}
                                                     >
                                                         <img
@@ -159,7 +187,7 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
                                                     <div 
                                                         key={altImage.id}
                                                         className="relative aspect-square rounded-lg overflow-hidden cursor-pointer group shadow-sm border hover:shadow-md transition-all"
-                                                        onClick={() => handleImageSelect(altImage)}
+                                                        onClick={() => handleTempImageSelect(altImage, 'search')}
                                                     >
                                                         <img
                                                             src={altImage.urls.regular}
@@ -213,8 +241,22 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
                     </div>
                     
                 </div>
-                <div className="h-1/10 flex justify-center items-center ">
-                    <button className="w-[200px] h-[50px] bg-black text-white px-4 py-2 rounded-full text-md font-medium shadow-sm">
+                <div className="h-2/10 flex justify-center items-center gap-4 mb-20">
+                    <button 
+                        className="w-[150px] h-[44px] bg-gray-500 text-white px-4 py-2 rounded-full text-md font-medium shadow-sm hover:bg-gray-600 transition-colors"
+                        onClick={() => onOpenChange(false)}
+                    >
+                        취소
+                    </button>
+                    <button 
+                        className={`w-[150px] h-[44px] px-4 py-2 rounded-full text-md font-medium shadow-sm transition-colors ${
+                            tempImage 
+                                ? 'bg-black text-white hover:bg-gray-800' 
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                        onClick={handleConfirmChange}
+                        disabled={!tempImage}
+                    >
                         변경하기
                     </button>
                 </div>
