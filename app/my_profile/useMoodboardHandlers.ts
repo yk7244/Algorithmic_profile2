@@ -1,7 +1,7 @@
 import { useFrameStyleChange } from './Draggable/Hooks/Frame/useFrameStyleChange';
 import { useHistorySave } from './HistorySlider/Hooks/useHistorySave';
 import { useDragEnd } from './Draggable/Hooks/Drag/useDragHandlers';
-import { useImageChange } from './Draggable/Hooks/Image/useImageChange';
+import { useImageChange } from './Edit/Hooks/Image/useImageChange';
 import { useGenerateUserProfile } from './Nickname/Hooks/useGenerateUserProfile';
 import { 
   ImageData,  
