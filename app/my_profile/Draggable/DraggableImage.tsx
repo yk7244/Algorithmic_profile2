@@ -112,7 +112,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
             setImageLoadError(true); // 이미지 로드 에러 상태 설정
         }
         // 이 효과는 이미지 소스가 바뀔 때마다 실행됩니다.
-    }, [image.src, image.id, image.main_keyword, onImageChange]);
+    }, [image.src, image.id, onImageChange]);
 
     const {
         alternativeImages,
@@ -245,7 +245,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         }}
                     >
                         {/* 호버 툴팁 */}
-                        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]">
+                        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]" style={{zIndex: 9999}}>
                             가져온 관심사는 삭제 가능해요
                         </div>
                         <Trash2 className="h-4 w-4" />
@@ -260,7 +260,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         }}
                     >
                         {/* 호버 툴팁 */}
-                        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]">
+                        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]" style={{zIndex: 9999}}>
                             이미지를 변경해보세요!
                         </div>
                         <RefreshCw 
@@ -330,7 +330,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
             fetchAlternativeImages={fetchAlternativeImages}
             loadMoreImages={loadMoreImages}
             handleImageSelect={handleImageSelect}
-            onImageChange={onImageChange}
+            onImageChange={onImageChange}   
             setShowThumbnailModal={setShowThumbnailModal}
         />
 
