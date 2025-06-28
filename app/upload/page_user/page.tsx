@@ -159,11 +159,11 @@ useEffect(() => {
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             */
-            await new Promise(resolve => setTimeout(resolve, 1200)); // 클러스터 분석 시뮬레이션
+            await new Promise(resolve => setTimeout(resolve, 2200)); // 클러스터 분석 시뮬레이션
 
             // 2단계: 클러스터 분석
             setGeneratingStep(2);
-            await new Promise(resolve => setTimeout(resolve, 1200)); // 클러스터 분석 시뮬레이션
+            await new Promise(resolve => setTimeout(resolve, 2200)); // 클러스터 분석 시뮬레이션
             /*await handleCluster(
                 result,
                 openai,

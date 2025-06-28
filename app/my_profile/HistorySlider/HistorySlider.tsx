@@ -27,7 +27,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     }
     
     return (
-        <div className="w-[400px] flex flex-col items-center mx-auto mt-1 mb-40">
+        <div className=" max-w-[680px] flex flex-col items-center mx-auto pb-10">
             {/* 슬라이더 선과 점 */}
             <div className="relative w-full h-4 flex items-center">
                 {/* 선 */}

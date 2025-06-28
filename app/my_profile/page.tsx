@@ -178,45 +178,52 @@ export default function MyProfilePage() {
     });
   }, [images]);
 
+  const boardRef = useRef(null);
+
   return (
-    <main className={`fixed inset-0 overflow-y-auto transition-colors duration-500 ${bgColor}`}>
-      {/* 생성 중 다이얼로그 -> GeneratingDialog.tsx 
-      <GeneratingDialog
-        open={showGeneratingDialog}
-        onOpenChange={setShowGeneratingDialog}
-        generatingStep={generatingStep}
-      />
-      */}
+    <div className="grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden">
+      {/* 왼쪽: 프로필/설명/닉네임 등 */}
+      <div className="bg-[#f5f5f5] flex flex-col px-4 py-12">
+        {!isSearchMode && (
+          <ProfileHeader
+            profile={profile}
+            isEditing={isEditing}
+            isGeneratingProfile={showGeneratingDialog}
+            onEditClick={() => setIsEditing(true)}
+            onSaveClick={handleSave}
+            onGenerateProfile={generateProfile}
+          />
+        )}
+      </div>
+      {/* 오른쪽: 무드보드/이미지/카드 등 */}
+      <div className="relative flex flex-col h-full w-full" ref={boardRef}>
+        {/* 프로필 무드보드 텍스트 */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 top-24 text-center text-black text-md font-bold bg-gradient-to-r 
+            from-black via-gray-400 to-black bg-[length:200%_100%] 
+            bg-clip-text text-transparent animate-gradient-move"
+        >
+          {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 의 알고리즘 프로필 무드보드
+        </div>
 
-      {/* 검색 모드 UI -> SearchModeUI.tsx */}
-      <SearchModeUI
-        isSearchMode={isSearchMode}
-        selectedImage={selectedImage}
-        selectedImages={selectedImages}
-        handleSearch={handleSearch}
-        toggleSearchMode={toggleSearchMode}
-        setIsSearchMode={setIsSearchMode}
-      />
+        {/* 검색 모드 UI -> SearchModeUI.tsx */}
+        <SearchModeUI
+          isSearchMode={isSearchMode}
+          selectedImage={selectedImage}
+          selectedImages={selectedImages}
+          handleSearch={handleSearch}
+          toggleSearchMode={toggleSearchMode}
+          setIsSearchMode={setIsSearchMode}
+        />
 
-      {/* My_profile 페이지 레이아웃 */}
-      <div className="relative z-20 w-full">
-        <div className="max-w-[1200px] mx-auto ">
 
-          {/* 닉넴/설명/버튼 헤더 분리 -> ProfileHeader.tsx */}
-          {!isSearchMode && (
-            <ProfileHeader
-              profile={profile}
-              isEditing={isEditing}
-              isGeneratingProfile={showGeneratingDialog}
-              onEditClick={() => setIsEditing(true)}
-              onSaveClick={handleSave}
-              onGenerateProfile={generateProfile}
-            />
-          )}
-
-          {/* DraggableImage 컴포넌트 렌더링 -> DraggableImage.tsx */}
-          <div className="relative w-[1000px] h-[680px] mx-auto mt-8">
-            <DndContext onDragEnd={handleDragEnd} modifiers={[restrictToContainer]}>
+        {/* My_profile 페이지 이미지레이아웃 */}
+        <div className="flex-1 flex flex-col items-center justify-start w-full">
+          <div className="fixed w-full h-full mx-auto mt-8">
+            <DndContext
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToContainer]}
+            >
               {images.map((image) => (
                 <div
                   key={image.id || Math.random().toString()}
@@ -242,10 +249,9 @@ export default function MyProfilePage() {
               ))}
             </DndContext>
           </div>
-
           {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
           {isEditing && (
-            <div className="absolute top-[160px] right-[calc(50%-600px)] z-30">
+            <div className="fixed top-[160px] right-[100px] z-30">
               <button
                 onClick={handleAutoArrange}
                 className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-full shadow-md hover:bg-white transition-all"
@@ -255,18 +261,11 @@ export default function MyProfilePage() {
               </button>
             </div>
           )}
-
-          {/* 플로팅 검색 버튼 분리 */}
-          {!isEditing && !isSearchMode &&(
-            <SearchFloatingButton
-            isSearchMode={isSearchMode}
-            toggleSearchMode={toggleSearchMode}
-          />
-          )}
           
-
-          {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
-          {!isEditing && !isSearchMode && (
+        </div>
+        {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
+        {!isEditing && !isSearchMode && (
+          <div className="w-full">
             <HistorySlider
               histories={sliderHistories}
               currentHistoryIndex={sliderCurrentHistoryIndex}
@@ -274,31 +273,30 @@ export default function MyProfilePage() {
               handlePlayHistory={handlePlayHistory}
               handleHistoryClick={handleHistoryClick}
             />
-          )}
-        </div>
+          </div>
+        )}
+        {/* 컬러 팔레트 보드 (편집 모드일 때만 표시)->ColorPaletteBoard.tsx */}
+        {isEditing && !isSearchMode && (
+          <ColorPaletteBoard
+            colorOptions={colorOptions}
+            bgColor={bgColor}
+            onChange={handleBgColorChange}
+          />
+        )}
+        {/* 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}
+        {!isSearchMode && (
+          <BottomActionBar
+            isEditing={isEditing}
+            isGeneratingProfile={showGeneratingDialog}
+            onEditClick={() => setIsEditing(true)}
+            onSaveClick={handleSave}
+            onGenerateProfile={generateProfile}
+            sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
+            isSearchMode={isSearchMode}
+            toggleSearchMode={toggleSearchMode}
+          />
+        )}
       </div>
-
-      {/* 컬러 팔레트 보드 (편집 모드일 때만 표시)->ColorPaletteBoard.tsx */}
-      {isEditing && !isSearchMode && (
-        <ColorPaletteBoard
-          colorOptions={colorOptions}
-          bgColor={bgColor}
-          onChange={handleBgColorChange}
-        />
-      )}
-
-      {/* 하단 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}
-      {!isSearchMode && (
-      <BottomActionBar
-        isEditing={isEditing}
-          isGeneratingProfile={showGeneratingDialog}
-        onEditClick={() => setIsEditing(true)}
-        onSaveClick={handleSave}
-          onGenerateProfile={generateProfile}
-          sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
-      />
-      )}
-
-    </main>
+    </div>
   );
 } 
