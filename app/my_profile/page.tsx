@@ -7,27 +7,29 @@ import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
 
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
-import ColorPaletteBoard from './CustomEdit/ColorPaletteBoard';
-import { useBgColor } from './CustomEdit/hooks/useBgColor';
+import ColorPaletteBoard from './Edit/ColorPaletteBoard';
+import { useBgColor } from './Edit/Hooks/useBgColor';
 import HistorySlider from './HistorySlider/HistorySlider';
 import GeneratingDialog from './GeneratingDialog/GeneratingDialog';
 import { useHistorySlider } from './HistorySlider/Hooks/useHistorySlider';
-import { colorOptions } from './CustomEdit/hooks/colorOptions';
+import { colorOptions } from './Edit/Hooks/colorOptions';
 import SearchModeUI from '../search/SearchMode/SearchModeUI';
 import { useSearchMode } from '../search/SearchMode/Hooks/useSearchMode';
 import ProfileHeader from './Nickname/ProfileHeader';
 import SearchFloatingButton from '../search/SearchMode/SearchFloatingButton';
 import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
-import { useImageDelete } from "./Draggable/Hooks/Image/useImageDelete";
+import { useImageDelete } from "./Edit/Hooks/Image/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
 import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
 import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
-import { arrangeImagesInCenter } from '../utils/autoArrange';
-import { 
-  ImageData,
-  HistoryData,
-} from '../types/profile';
+  import { arrangeImagesInCenter } from '../utils/autoArrange';
+  import { 
+    ImageData,
+    HistoryData,
+  } from '../types/profile';
+  import useAutoArrange from './Edit/Hooks/useAutoArrange';
+  import AutoArrangeButton from './Edit/AutoArrangeButton';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -41,7 +43,7 @@ export default function MyProfilePage() {
   const [profile, setProfile] = useState({ nickname: '', description: '' });
   const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
-  const { bgColor, handleBgColorChange } = useBgColor();
+  const { leftBgColor, rightBgColor, handleColorChange, bgColor, handleBgColorChange } = useBgColor();
   const [images, setImages] = useState<ImageData[]>([]);
   const [positions, setPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
@@ -140,13 +142,14 @@ export default function MyProfilePage() {
     setProfile,
   });
 
-  const handleAutoArrange = () => {
-    const containerWidth = 1000;
-    const containerHeight = 680;
-    const topMargin = 100; // 제목 영역을 위한 상단 여백
-    const newPositions = arrangeImagesInCenter(images, containerWidth, containerHeight, topMargin);
-    setPositions(newPositions);
-  };
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  const handleAutoArrange = useAutoArrange({
+    boardRef,
+    images,
+    setPositions,
+    arrangeImagesInCenter,
+  });
 
   useEffect(() => {
     setPositions(prevPositions => {
@@ -178,12 +181,10 @@ export default function MyProfilePage() {
     });
   }, [images]);
 
-  const boardRef = useRef(null);
-
   return (
     <div className="grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden">
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
-      <div className="bg-[#f5f5f5] flex flex-col px-4 py-12">
+      <div className={`${leftBgColor} flex flex-col px-4 py-12`}>
         {!isSearchMode && (
           <ProfileHeader
             profile={profile}
@@ -196,11 +197,11 @@ export default function MyProfilePage() {
         )}
       </div>
       {/* 오른쪽: 무드보드/이미지/카드 등 */}
-      <div className="relative flex flex-col h-full w-full" ref={boardRef}>
+      <div className={`relative flex flex-col h-full w-full ${rightBgColor}`} ref={boardRef}>
         {/* 프로필 무드보드 텍스트 */}
         <div
           className="absolute left-1/2 -translate-x-1/2 top-24 text-center text-black text-md font-bold bg-gradient-to-r 
-            from-black via-gray-400 to-black bg-[length:200%_100%] 
+            from-gray-700 via-gray-200 to-gray-700  bg-[length:200%_100%] 
             bg-clip-text text-transparent animate-gradient-move"
         >
           {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 의 알고리즘 프로필 무드보드
@@ -250,17 +251,10 @@ export default function MyProfilePage() {
             </DndContext>
           </div>
           {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
-          {isEditing && (
-            <div className="fixed top-[160px] right-[100px] z-30">
-              <button
-                onClick={handleAutoArrange}
-                className="px-4 py-2 bg-white/80 backdrop-blur-sm text-gray-700 rounded-full shadow-md hover:bg-white transition-all"
-                title="자동 정렬"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              </button>
-            </div>
-          )}
+          <AutoArrangeButton 
+            isEditing={isEditing}
+            onAutoArrange={handleAutoArrange}
+          />
           
         </div>
         {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
@@ -279,8 +273,8 @@ export default function MyProfilePage() {
         {isEditing && !isSearchMode && (
           <ColorPaletteBoard
             colorOptions={colorOptions}
-            bgColor={bgColor}
-            onChange={handleBgColorChange}
+            rightBgColor={rightBgColor}
+            onColorChange={handleColorChange}
           />
         )}
         {/* 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}

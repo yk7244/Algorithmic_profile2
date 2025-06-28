@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     let query = searchParams.get('query') || '';
     const category = searchParams.get('category') || '';
     const mood = searchParams.get('mood') || '';
+    const start = searchParams.get('start') || '1';
 
     if (!query.trim()) {
       return NextResponse.json(
@@ -46,6 +47,7 @@ export async function GET(request: Request) {
     const searchOptions = new URLSearchParams({
       query: query,
       display: '10',
+      start: start,
       filter: 'large',
       sort: 'sim'
     });

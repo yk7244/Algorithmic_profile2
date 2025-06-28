@@ -24,7 +24,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <div className="absolute z-30 pl-8 max-w-[320px] space-y-6 pt-[40px]">
         {/* 닉네임 */}
         <div className="text-black text-md font-bold bg-gradient-to-r 
-        from-black via-gray-400 to-black bg-[length:200%_100%] 
+        from-gray-700 via-gray-200 to-gray-700 bg-[length:200%_100%] 
         bg-clip-text text-transparent animate-gradient-move">
             알고리즘이 본 당신은...
         </div>

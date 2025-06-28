@@ -5,8 +5,8 @@ import { RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
 
 //refactoring
 import ClusterDetailPanel from "../Modal/ClusterDetailPanel";
-import ImageResearchModal from "./ImageRe-searchModal";
-import { useImageSearch } from "./Hooks/Image/useImageResearch_naver";
+import ImageResearchModal from "../Edit/ImageRe-searchModal";
+import { useImageSearch } from "../Edit/Hooks/Image/useImageResearch_naver";
 import { useImageFrame } from "./Hooks/Frame/useImageFrame";
 
 // YouTube IFrame API 타입 선언 (TS 에러 방지)
@@ -117,7 +117,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
     const {
         alternativeImages,
         isLoadingImages,
+        isLoadingMore,
+        hasMore,
         fetchAlternativeImages,
+        loadMoreImages,
         handleImageSelect,
         setAlternativeImages,
     } = useImageSearch(image, showImageModal, onImageChange, setShowImageModal);
@@ -226,10 +229,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                     {image.desired_self ? (
                     <button 
-                        className="mb-10 z-[70] flex items-center justify-center gap-1.5 py-2 px-4 bg-red-500/90 text-white 
+                        className="mb-10 z-[70] group flex items-center justify-center gap-1.5 py-2 px-4 bg-red-500/90 text-white 
                         backdrop-blur-sm rounded-full hover:bg-red-600 shadow-sm transition-colors pointer-events-auto relative"
-                        onMouseEnter={() => setShowDeleteTooltip(true)}
-                        onMouseLeave={() => setShowDeleteTooltip(false)}
                         onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -243,24 +244,25 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         e.stopPropagation();
                         }}
                     >
-                        {/* 툴크 */}
-                        {showDeleteTooltip && (
-                            <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-[100]">
-                                내가 추가한 관심사 삭제하기
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                            </div>
-                        )}
+                        {/* 호버 툴팁 */}
+                        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]">
+                            가져온 관심사는 삭제 가능해요
+                        </div>
                         <Trash2 className="h-4 w-4" />
                     </button>
                     ) : (
                     <button 
                         className="z-[60] group flex mb-10 items-center justify-center py-2 px-4 backdrop-blur-sm rounded-full 
-                        hover:bg-white shadow-lg transition-all hover:scale-105 pointer-events-auto"
+                        hover:bg-white shadow-lg transition-all hover:scale-105 pointer-events-auto relative"
                         onPointerDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         }}
                     >
+                        {/* 호버 툴팁 */}
+                        <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]">
+                            이미지를 변경해보세요!
+                        </div>
                         <RefreshCw 
                             className="h-4 w-4 group-hover:rotate-180 transition-transform duration-300 cursor-pointer" 
                             onClick={(e) => {
@@ -273,7 +275,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     )}
                 </div>
                 )}
-                {/* 편집 모드-프레임 변경하기*/}
+                {/* 편집 모드-프레임 변경하기
                 {isEditing && (
                 <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 z-40 pointer-events-auto flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     {!image.desired_self && (
@@ -301,6 +303,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     
                 </div>
                 )}
+                */}
+                
                 {/* 편집 모드-드래그 가능한 영역*/}
                 {isEditing && (
                 <div
@@ -320,8 +324,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isLoadingImages={isLoadingImages}
+            isLoadingMore={isLoadingMore}
+            hasMore={hasMore}
             alternativeImages={alternativeImages}
             fetchAlternativeImages={fetchAlternativeImages}
+            loadMoreImages={loadMoreImages}
             handleImageSelect={handleImageSelect}
             onImageChange={onImageChange}
             setShowThumbnailModal={setShowThumbnailModal}
