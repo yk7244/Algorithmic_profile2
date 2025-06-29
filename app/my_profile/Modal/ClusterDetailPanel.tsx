@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { X, CheckCircle2 } from "lucide-react";
+import { X, CheckCircle2, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { 
     Dialog, 
@@ -38,6 +38,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         if (!showDetails) return null;
 
         const [watchedVideos, setWatchedVideos] = useState<string[]>([]);   
+        const [currentPage, setCurrentPage] = useState(1); // 페이지 상태 추가
         const router = useRouter();
         const { handleAddAsInterest } = useAddAsInterest(setShowDetails);
         const { isLoading: isLoadingAiVideos, videos: aiRecommendedVideos, fetchAndSet: fetchAndSetVideos } = useRecommend(image);
@@ -47,6 +48,13 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                 fetchAndSetVideos();
             }
         }, [showDetails, fetchAndSetVideos, isOwner, image.main_keyword, image.desired_self]);
+
+        // 모달이 열릴 때마다 첫 번째 페이지로 초기화
+        useEffect(() => {
+            if (showDetails) {
+                setCurrentPage(1);
+            }
+        }, [showDetails]);
 
         // 이미지 클릭 핸들러 (상세 패널에서 이미지 클릭 시)
         const handleImageClick = () => {
@@ -72,196 +80,241 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
         return (
         <Dialog open={showDetails} onOpenChange={setShowDetails} >
-            <DialogContent className="fixed left-1/2 top-1/2 w-[36vw] max-w-3xl h-[90vh] -translate-x-0 -translate-y-1/2 border-0 bg-background p-0 shadow-lg flex flex-col overflow-hidden">
-                {/* 상단 썸네일 이미지 + 제목/닫기버튼 오버레이 */}
-                <div className="relative w-full h-[150px] sm:h-[220px] flex-shrink-0 ">
-                    <img
-                        src={image.src}
-                        alt={image.main_keyword}
-                        className="w-full h-full object-cover"
-                        onClick={handleImageClick}
-                        onError={(e) => {
-                            e.currentTarget.style.backgroundColor = 'gray';
-                        }}
-                    />
-                    <DialogHeader className="absolute left-0 top-0 w-full h-full flex flex-col items-start justify-start px-4 pt-4 z-30 pointer-events-none">
-                        <div className="flex items-center w-full justify-between pointer-events-auto">
-                            <DialogTitle className="text-lg sm:text-xl font-bold text-white  px-3 py-1 truncate">
-                                #{image.main_keyword}
-                            </DialogTitle>
+            <DialogContent className="fixed left-1/2 top-1/2 w-[36vw] max-w-3xl h-[80vh] -translate-x-0 -translate-y-1/2 border-20 bg-background p-0 shadow-lg flex flex-col overflow-hidden rounded-2lg">
+                
+                {/* 페이지 1: 풀스크린 이미지 배경과 텍스트 오버레이 */}
+                {currentPage === 1 && (
+                    <div className="relative w-full h-full flex flex-col">
+                        {/* 풀스크린 배경 이미지 */}
+                        <div className="absolute inset-0 w-full h-full">
+                            <img
+                                src={image.src}
+                                alt={image.main_keyword}
+                                className="w-full h-full object-cover"
+                                onClick={handleImageClick}
+                                onError={(e) => {
+                                    e.currentTarget.style.backgroundColor = 'gray';
+                                }}
+                            />
+                            {/* 어두운 오버레이 */}
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+                            
+                            {/* 상단 검정 그라데이션 */}
+                            <div className="absolute top-0 left-0 right-0 h-3/5 bg-gradient-to-b from-black/80 via-black/40 to-transparent " />
+                            
+                            {/* 하단 검정 그라데이션 */}
+                            <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
                         </div>
-                    </DialogHeader>
-                    {/* 카테고리 뱃지: 이미지 좌측 하단 */}
-                    <span className="absolute left-4 bottom-4 px-2 sm:px-3 py-1 sm:py-1.5 bg-black/50 backdrop-blur-md rounded-full text-white text-[10px] font-medium z-30">
-                        {image.category}
-                    </span>
-                    {/* 관심도 뱃지: 이미지 우측 하단 */}
-                    <span className={`absolute right-4 bottom-4 px-3 py-1 rounded-full text-xs font-bold z-30
-                        ${image.sizeWeight >= 1.2 ? 'bg-red-500 text-white' : image.sizeWeight >= 0.8 ? 'bg-yellow-400 text-gray-900' : 'bg-blue-400 text-white'}`}
-                    >
-                        {image.sizeWeight >= 1.2 ? '관심도:강' : image.sizeWeight >= 0.8 ? '관심도:중' : '관심도:약'}
-                    </span>
-                    {/* 하단 그라데이션 오버레이로 텍스트 가독성 향상 */}
-                    <div className="absolute left-0 bottom-0 w-full h-1/2 bg-gradient-to-t from-black/50 to-transparent z-10 pointer-events-none" />
-                </div>
-                {/* 나머지 내용 (스크롤 가능 영역) */}
-                <div className="flex-grow overflow-y-auto px-6 sm:px-10">
-                    <div className="flex flex-col w-full mx-auto pb-14 pt-6">
-                        {/* 클러스터 Description*/}
-                        <p className="text-xs sm:text-[12px] font-bold text-purple-900">{image.mood_keyword}</p>
-                        <p className="text-[12px] pt-2 text-gray-700">{image.description}</p>
-                        
-                        {/* keywords list 섹션 */}
-                        <div className="mt-3 sm:mt-4">
-                            <div className="flex flex-wrap gap-2">
-                            {(image.keywords || []).map((keyword: string, idx: number) => (
-                                <span
-                                key={idx}
-                                className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors"
-                                >
-                                #{keyword}
+
+                        {/* 상단 헤더 */}
+                        <div className="relative z-40 flex justify-end p-6">
+                            <DialogClose className="rounded-full backdrop-blur-sm p-2 text-white hover:bg-black/50 transition-all">
+                                <X className="h-6 w-6" />
+                                <span className="sr-only">Close</span>
+                            </DialogClose>
+                        </div>
+
+                        {/* 메인 콘텐츠 - 중앙 정렬 */}
+                        <div className="relative z-30 flex-1 flex flex-col px-1 sm:px-12 text-white">
+                            {/* 메인 키워드 */}
+                            <div className="text-left mb-1">
+                                <h1 className="text-3xl  font-bold mb-4 tracking-wide">
+                                    #{image.main_keyword}
+                                </h1>
+                                
+                                {/* 카테고리와 관심도 뱃지 */}
+                                <div className="flex justify-left gap-4 mb-6">
+                                    <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium">
+                                        {image.category}
+                                    </span>
+                                    
+                                </div>
+                            </div>
+
+                            {/* 설명 */}
+                            <div className="text-left mb-8 max-w-2xl mx-auto">
+                                <p className="text-md sm:text-lg leading-relaxed text-white/90 mb-2">
+                                    {image.description}
+                                    <br />
+                                    <br />
+                                    <span className="text-white/90 font-bold"> #{image.main_keyword} </span>
+                                    와 관련된 키워드는 
+                                    {image.keywords.map((keyword: string) => (
+                                        <span key={keyword} className="text-blue-200 font-bold "> #{keyword} </span>
+                                    ))}
+                                    이 있어요.
+                                </p>
+                            </div>
+
+                            
+                        </div>
+
+                        {/* 하단 버튼 */}
+                        <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
+                            <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
+                            flex items-center text-base font-medium transition-all duration-300 animate-pulse duration-1000">
+                                이 키워드는 당신의 추천 알고리즘에
+                                <span className={`rounded-full font-bold`}>
+                                    {image.sizeWeight >= 1.2 ? '큰 영향' : image.sizeWeight >= 0.8 ? '중간 영향' : '작은 영향'}
                                 </span>
-                            ))}
+                                을 주고 있어요.
+                            </p>
+                        </div>
+                    
+                        <div className="relative z-30 flex justify-center pb-8">
+                                
+                            <Button
+                                onClick={() => setCurrentPage(2)}
+                                className="font-bold bg-black/100 backdrop-blur-sm hover:bg-white/30 text-white px-8 py-6 rounded-full flex items-center 
+                                gap-4 text-base font-medium transition-all duration-1000 hover:scale-105
+                                shadow-[0_0_30px_rgba(255,255,255,0.3),inset_0_2px_10px_rgba(255,255,255,0.1),inset_0_-2px_10px_rgba(0,0,0,0.3)]
+                                "
+                            >
+                                
+                                <ChevronDown className="h-5 w-5" />
+                                내 알고리즘 더 살펴보기   
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* 페이지 2: 영상과 상세 분석 */}
+                {currentPage === 2 && (
+                    <>
+                        {/* 헤더 - 전체 이미지 배경 */}
+                        <div className="relative w-full flex-shrink-0 overflow-hidden"
+                        style={{
+                            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.3), rgba(0,0,0,0)), url(${image.src})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
+                            minHeight: "200px",
+                        }}>
+                            {/* 상단 네비게이션 */}
+                            <div className="relative z-20 flex items-center justify-between px-6 py-4">
+                                <Button
+                                    onClick={() => setCurrentPage(1)}
+                                    variant="ghost"
+                                    className="text-white hover:bg-white/20 p-2 rounded-full backdrop-blur-sm"
+                                >
+                                    <ChevronLeft className="h-5 w-5" />
+                                </Button>
+                                
+                            </div>
+                            
+                            {/* 메인 키워드 섹션 */}
+                            <div className="relative z-10 px-8 pb-8">
+                                <h1 className="text-2xl font-bold mb-6 text-white">
+                                    #{image.main_keyword}
+                                </h1>
+                                {/* 설명 텍스트 */}
+                                <div className="text-left max-w-2xl text-white/90">
+                                    <p className="backdrop-blur-sm bg-black/30 text-white px-6 py-3 rounded-lg 
+                                    text-sm font-medium transition-all duration-300"
+                                    style={{
+                                        animation: 'pulse 4s ease-in-out infinite'
+                                    }}>
+                                        이 키워드는 당신의 추천 알고리즘에
+                                        <span className={`ml-1 font-bold`}>
+                                            {image.sizeWeight >= 1.2 ? ' 큰 영향' : image.sizeWeight >= 0.8 ? ' 중간 영향' : ' 작은 영향'}
+                                        </span>
+                                        을 주고 있어요.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        
-                        {/* 영상 탭 섹션-> 나의 클러스터 분석일때, 다른 사람의 클러스터 분석일때*/}
-                        <div className="space-y-6 pb-1 pt-4">
-                            {isOwner ? (
-                                <>
-                                {/* 나의 클러스터 분석일때 */}
-                                    {!image.desired_self ? (
-                                    //나의 클러스터 분석일때
-                                    <Tabs defaultValue="history" className="w-full">
-                                        <div className="bg-gray-70/70 rounded-lg ">
-                                            {/* 탭 목록 */}
-                                            <TabsList className={`w-full grid ${isOwner ? 'grid-cols-2' : 'grid-cols-1'} py-0 `}>
-                                                <TabsTrigger value="history" className="text-[12px] py-1">Where this image from</TabsTrigger>
-                                                <TabsTrigger value="AI" className="text-[12px] py-1">The way Algorithm see you</TabsTrigger>
-                                            </TabsList>
-                                            <br/> <br/>
-                                            {/* 관련 영상 탭 */}
-                                            <TabsContent value="history" className="px-4 pb-4">
+
+                        {/* 스크롤 가능한 영상 콘텐츠 영역 */}
+                        <div className="flex-grow overflow-y-auto bg-gray-50">
+                            <div className="px-8 py-6">
+                                <div className="space-y-6">
+                                    {/* 내 프로필일 때 */}
+                                    {isOwner ? (
+                                        <>
+                                            {/* 일반 클러스터 */}
+                                            {!image.desired_self ? (
+                                                <>
+                                                <p className="text-sm text-gray-600">아래의 시청 기록들이 이 카테고리에 반영되었어요.</p>
                                                 <VideoList
                                                     videos={image.relatedVideos || []}
                                                     watchedVideos={watchedVideos}
                                                     onVideoClick={handleVideoClick}
                                                 />
-                                            </TabsContent>
-                                            {/* AI 추천 영상 탭 */}
-                                            <TabsContent value="AI" className="px-4 pb-4">
+                                                <p className="text-sm text-gray-600">앞으로 아래와 같은 영상을 계속 추천받게 될거에요.</p>
                                                 <VideoList
                                                     isLoading={isLoadingAiVideos}
                                                     videos={aiRecommendedVideos}
                                                     watchedVideos={watchedVideos}
                                                     onVideoClick={handleVideoClick}
                                                     titlePrefix="AI 추천: "
-                                                    isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
+                                                    isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
                                                     emptyMessage="AI 추천 영상을 가져올 수 없습니다."
                                                     onRetry={fetchAndSetVideos}
                                                 />
-                                            </TabsContent>
-                                            
-                                        </div>
-                                    </Tabs>
+                                                </>
+                                            ) : (
+                                                /* 관심사 클러스터 */
+                                                <div className="space-y-6">
+                                                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-6">
+                                                        <div className="text-center space-y-3">
+                                                            <h3 className="text-base font-semibold text-gray-800">
+                                                                이 이미지의 원본 프로필
+                                                            </h3>
+                                                            <p className="text-sm text-gray-600">
+                                                                이 이미지를 가져온 프로필을 방문하여 더 많은 관심사를 발견해보세요
+                                                            </p>
+                                                            <Button
+                                                                onClick={handleVisitProfile}
+                                                                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
+                                                            >
+                                                                프로필 방문하기
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                    <VideoList
+                                                        isLoading={isLoadingAiVideos}
+                                                        videos={aiRecommendedVideos}
+                                                        watchedVideos={watchedVideos}
+                                                        onVideoClick={handleVideoClick}
+                                                        titlePrefix="AI 추천: "
+                                                        isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
+                                                        emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                        onRetry={fetchAndSetVideos}
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
                                     ) : (
-                                    //Desired_self 클러스터일땐, AI만 보여줌
-                                    <div className="space-y-6">
-                                        {/* 이 이미지의 원본 프로필 탭 */}
-                                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-6">
-                                            <div className="text-center space-y-3">
-                                                <h3 className="text-base font-semibold text-gray-800">
-                                                이 이미지의 원본 프로필
-                                                </h3>
-                                                <p className="text-sm text-gray-600">
-                                                이 이미지를 가져온 프로필을 방문하여 더 많은 관심사를 발견해보세요
-                                                </p>
-                                                <Button
-                                                onClick={handleVisitProfile}
-                                                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
-                                                >
-                                                프로필 방문하기
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        {/* AI 추천 영상 로딩 중 */}
-                                        <VideoList
-                                            isLoading={isLoadingAiVideos}
-                                            videos={aiRecommendedVideos}
-                                            watchedVideos={watchedVideos}
-                                            onVideoClick={handleVideoClick}
-                                            titlePrefix="AI 추천: "
-                                            isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
-                                            emptyMessage="AI 추천 영상을 가져올 수 없습니다."
-                                            onRetry={fetchAndSetVideos}
-                                        />
-                                    </div>
-                                    )}
-                                </>
-                            ):(
-                                <>
-                                {/* 다른 사람의 프로필 페이지에서의 클러스터 분석일때 */}
-                                    {/* Desired 추가하는거 */}
-                                        <Button
-                                            className="fixed bottom-10 z-[10] w-90% right-4 p-8 bg-black hover:from-purple-600 hover:to-pink-600 text-white px-6 py-7 
-                                            rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
-                                            onClick={() => handleAddAsInterest(image, ownerId)}
-                                        >
-                                            새로운 관심사로 추가하기
-                                        </Button>
-                                    {image.desired_self && (
-                                    <>
-                                        {/* Desired_self 가져온 프로필 */}
-                                        <div className="space-y-6">
-                                            {/* 이 이미지의 원본 프로필 탭 */}
-                                            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-6">
-                                                <div className="text-center space-y-3">
-                                                    <h3 className="text-base font-semibold text-gray-800">
-                                                    이 이미지의 원본 프로필
-                                                    </h3>
-                                                    <p className="text-sm text-gray-600">
-                                                    이 이미지를 가져온 프로필을 방문하여 더 많은 관심사를 발견해보세요
-                                                    </p>
+                                        /* 다른 사람의 프로필일 때 */
+                                        <>
+                                            {!isOwner && (
+                                                <div className="fixed bottom-6 left-6 right-6 z-50">
                                                     <Button
-                                                    onClick={handleVisitProfile}
-                                                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
+                                                        className="w-full bg-black hover:bg-gray-800 text-white px-6 py-4 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105"
+                                                        onClick={() => handleAddAsInterest(image, ownerId)}
                                                     >
-                                                    프로필 방문하기
+                                                        새로운 관심사로 추가하기
                                                     </Button>
                                                 </div>
-                                            </div>
-                                            {/* AI 추천 영상 */}
+                                            )}
+                                            
                                             <VideoList
                                                 isLoading={isLoadingAiVideos}
                                                 videos={aiRecommendedVideos}
                                                 watchedVideos={watchedVideos}
                                                 onVideoClick={handleVideoClick}
                                                 titlePrefix="AI 추천: "
-                                                isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
+                                                isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
                                                 emptyMessage="AI 추천 영상을 가져올 수 없습니다."
                                                 onRetry={fetchAndSetVideos}
                                             />
-                                        </div>
-                                    </>
+                                        </>
                                     )}
-                                    {/* 본인꺼 클러스터일때 */}
-                                    {/* AI영상 탭 */}
-                                    <VideoList
-                                        isLoading={isLoadingAiVideos}
-                                        videos={aiRecommendedVideos}
-                                        watchedVideos={watchedVideos}
-                                        onVideoClick={handleVideoClick}
-                                        titlePrefix="AI 추천: "
-                                        isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0 || aiRecommendedVideos[0].embedId === '')}
-                                        emptyMessage="AI 추천 영상을 가져올 수 없습니다."
-                                        onRetry={fetchAndSetVideos}
-                                    />
-                                </> 
-                            )}
-                            
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     );
