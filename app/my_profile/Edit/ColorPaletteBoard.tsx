@@ -16,8 +16,8 @@ const ColorPaletteBoard: React.FC<ColorPaletteBoardProps> = ({
   rightBgColor,
   onColorChange,
 }) => (
-  <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm rounded-full shadow-lg p-6 z-50">
-    <div className="flex flex-col items-center gap-4">
+  <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm pr-10 pl-10 py-4 rounded-[60px] shadow-lg z-50">
+    <div className="flex flex-col items-center gap-1">
       <p className="text-gray-700 text-sm">배경색 변경</p>
       <div className="flex items-center gap-3">
         {colorOptions.map((color) => (
@@ -31,7 +31,7 @@ const ColorPaletteBoard: React.FC<ColorPaletteBoardProps> = ({
               relative group
             `}
           >
-            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 
+            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2  
               bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 
               group-hover:opacity-100 transition-opacity whitespace-nowrap">
               {color.name}

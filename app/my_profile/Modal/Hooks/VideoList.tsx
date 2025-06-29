@@ -50,16 +50,15 @@ const VideoList: React.FC<VideoListProps> = ({
     }
     
     return (
-        <div className="grid gap-6">
+        <div className="grid grid-cols-2 gap-4">
             {videos.map((video, idx) => (
                 <div key={`${video.embedId}-${idx}`} className="space-y-2">
-                    <h5 className="text-sm font-medium text-gray-800 mb-1 truncate">
-                        {titlePrefix && <span className="text-blue-500 font-semibold">{titlePrefix}</span>}
-                        {video.title}
-                    </h5>
                     <div
-                        className="relative w-full max-h-[100px] max-w-[450px] pt-[56.25%] bg-gray-100 rounded-lg overflow-hidden cursor-pointer"
-                        onClick={() => onVideoClick(video)}
+                        className="relative w-full bg-gray-100 rounded-lg overflow-hidden cursor-pointer aspect-video"
+                        onClick={() => {
+                            onVideoClick(video);
+                            window.open(`https://www.youtube.com/watch?v=${video.embedId}`, '_blank');
+                        }}
                     >
                         <iframe
                             id={`player-${video.embedId}-${idx}`}
@@ -69,13 +68,17 @@ const VideoList: React.FC<VideoListProps> = ({
                             allowFullScreen
                             title={video.title}
                         />
-                        <div className={`absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
-                            <CheckCircle2 className={`h-3 w-3 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
+                        <div className={`absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
+                            <CheckCircle2 className={`h-2.5 w-2.5 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
                             <span className="text-xs font-medium">
                                 {watchedVideos.includes(video.embedId) ? "시청함" : "시청안함"}
                             </span>
                         </div>
                     </div>
+                    <h5 className="text-xs font-medium text-gray-800 truncate leading-tight">
+                        {titlePrefix && <span className="text-blue-500 font-semibold">{titlePrefix}</span>}
+                        {video.title}
+                    </h5>
                 </div>
             ))}
         </div>
