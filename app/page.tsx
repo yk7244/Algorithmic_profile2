@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';  
+import { useState, useRef, useEffect, useMemo } from 'react';  
 import OpenAI from 'openai';
 import { HelpCircle, Upload, Check } from "lucide-react";
 
 import { OpenAILogger } from './utils/init-logger';
-import { parseJSONWatchHistory, processSelectedItems } from './upload/VideoParsing/jsonParser';
+import { parseJSONWatchHistory } from './upload/VideoParsing/jsonParser';
 import { parseWatchHistory } from './upload/VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from './upload/Handlers/fileHandlers';
 import { isOneWeekPassed } from './utils/uploadCheck';
@@ -85,7 +85,7 @@ const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 
 //upload 가능여부 체크 및 기간 설정, 하루당 최대 영상 개수 설정
-const upload_check = isOneWeekPassed();
+const upload_check = useMemo(() => isOneWeekPassed(), []);
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
 const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
@@ -106,7 +106,7 @@ const [dateRange, setDateRange] = useState<{
             to: today
         };
     } else {
-        // 거짓(0), diffDays => 업로드 불가능 
+        // 거짓(0): 기본값 (일주일)
         return {
             from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
             to: today
@@ -400,12 +400,12 @@ useEffect(() => {
         {/* 로그인 여부 확인*/}
         {isLoggedIn ? (
           <>
-            {/* 1-1 로그인O, 업데이트 O */}  
-            {(upload_check==2||upload_check==1) ? (
-              // 1-1 로그인O => 업데이트 여부 확인 *
+            {/* 1-1 로그인O => 업데이트 여부 확인 */}  
+            {(upload_check === 2 || upload_check === 1) ? (
+              
               isFileUploaded ? (
                 <>  
-                  {/* 1-1-1 로그인O, 업데이트 O, 파일 업로드 O=> 분석 시작 버튼 */}
+                  {/* 1-1-1 로그인O, 업데이트 O, 파일 업로드 했을때=> 분석 시작 버튼 */}
                   <div className="mt-10 max-w-[700px] h-[200px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 
                   transition-all duration-300 hover:border-blue-400/60 
                   shadow-sm hover:shadow-md bg-[#292B2E]/70 flex items-center justify-center">  
@@ -488,7 +488,7 @@ useEffect(() => {
                     >
                       나의 알고리즘 분석하기
                     </button>
-                  
+                  )
                 </>
               ) : (
                 <>
@@ -698,7 +698,7 @@ useEffect(() => {
                         <p className="text-lg font-semibold text-gray-200 mb-2">
                         유튜브 알고리즘이 본 당신의 모습이 바뀌었을지 궁금하신가요?
                         <br/>
-                        <span className="text-blue-500">{upload_check}일 후</span> 
+                        <span className="text-blue-500">{7-upload_check}일 후</span> 
                         다시 시도해보세요.
                         </p>
                     </div> 

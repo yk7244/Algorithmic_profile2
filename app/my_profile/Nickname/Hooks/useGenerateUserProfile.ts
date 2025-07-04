@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { useProfileStorage } from "./useProfileStorage";
 import { ProfileData } from '../../../types/profile';
+import { saveProfileData } from "@/app/utils/saveProfileData";
 
 interface UseGenerateUserProfileParams {
     openai: any;
@@ -53,9 +54,8 @@ export function useGenerateUserProfile({
                     nickname: defaultProfile.nickname,
                     description: defaultProfile.description,
                     created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
                 };
-                saveProfileToStorage(profileData);
+                saveProfileData(profileData);
             return;
         }
 
@@ -118,10 +118,9 @@ export function useGenerateUserProfile({
                 id: generateProfileId(),
                 nickname: newProfile.nickname,
                 description: newProfile.description,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                created_at: new Date().toISOString()
             };
-            saveProfileToStorage(profileData);
+            saveProfileData(profileData); 
             
         } catch (error) {
         console.error('프로필 생성 오류:', error);

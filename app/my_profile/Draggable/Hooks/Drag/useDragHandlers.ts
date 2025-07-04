@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { DragEndEvent } from '@dnd-kit/core';
 import { ImageData } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
+import { saveProfileImages } from "@/app/utils/saveImageData";
 
 export function useDragEnd(
   isEditing: boolean, 
@@ -68,7 +69,7 @@ export function useDragEnd(
                   }
                   return img;
                 });
-                localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));
+                saveProfileImages(updatedProfileImages);
                 console.log(`✅ 배열 형태 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
               } else {
                 // 객체인 경우
@@ -83,7 +84,7 @@ export function useDragEnd(
                     }
                   };
                   
-                  localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));
+                  saveProfileImages(updatedProfileImages);
                   console.log(`✅ 객체 형태 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
                   const check =  localStorage.getItem('profileImages');
                   console.log('check', check);

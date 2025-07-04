@@ -117,44 +117,5 @@ export const parseJSONWatchHistory = async (
   }
 };
 
-// 키워드 추출 함수([관리자용] keyword 추출 버튼 클릭 시 호출)
-// selectedItems를 받아 각 영상의 정보를 fetchVideoInfo로 가져오고, 키워드를 가공하여 반환하는 함수
-export async function processSelectedItems(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
-  const processedItems: any[] = [];
-  let processedCount = 0;
-  const totalItems = selectedItems.length;
-
-  if (onProgress) {
-    onProgress(0, totalItems);
-  }
-
-  for (const item of selectedItems) {
-    try {
-      const videoInfo = await fetchVideoInfo(item.videoId);
-      console.log('⭐️videoInfo:', videoInfo);
-      if (videoInfo != null) {
-        processedItems.push({
-          videoId: videoInfo.videoId,
-          title: videoInfo.title,
-          channel: item.channel,
-          date: item.date,
-          keywords: videoInfo.keywords,
-          tags: videoInfo.tags,
-          timestamp: new Date().toISOString()
-        });
-      }
-      processedCount++;
-      if (onProgress) {
-        onProgress(processedCount, totalItems);
-      }
-    } catch (error) {
-      console.error(`Failed to process video ${item.videoId}:`, error);
-      processedCount++;
-      if (onProgress) {
-        onProgress(processedCount, totalItems);
-      }
-    }
-  }
-  return processedItems;
-} 
+ 
 

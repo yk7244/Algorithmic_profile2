@@ -1,4 +1,5 @@
 import { VideoCluster } from '../VideoAnalysis/videoCluster';
+import { saveWatchHistory } from '@/app/utils/saveWatchHistory';
 
 export const parseWatchHistory = async (
   file: File,
@@ -181,7 +182,7 @@ export const parseWatchHistory = async (
     // 저장된 시청 기록 분석
     if (savedHistory.length > 0) {
       const clusters = await VideoCluster(savedHistory, openai, OpenAILogger);
-      localStorage.setItem('watchClusters', JSON.stringify(clusters));
+      saveWatchHistory(clusters);
 
       console.log('분석 완료:', {
         totalVideos: savedHistory.length,

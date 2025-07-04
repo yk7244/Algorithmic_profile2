@@ -1,17 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from 'react';
 import OpenAI from 'openai';
-import { ArrowRight,Loader2, CheckCircle } from "lucide-react";
-import { transform, transformClustersToImageData } from '../../utils/clusterTransform';      
+import { transformClustersToImageData } from '../../utils/clusterTransform';      
 
 import { OpenAILogger } from '../../utils/init-logger';
-import { processSelectedItems } from '../VideoParsing/jsonParser';
+import { handleKeyword } from '../VideoAnalysis/videoKeyword';
 
 
 //Refactoring
-import { searchClusterImage } from '../ImageSearch/NaverImageSearch';
 import { handleCluster} from '../VideoAnalysis/videoCluster';
 import { fetchVideoInfo } from '../VideoAnalysis/videoKeyword';
 import { useClusterStorage } from '../hooks/useClusterStorage';
@@ -22,7 +19,6 @@ import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGener
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
-const defaultImageUri = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNlNWU4IiAvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiNhMGEwYTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBOb3QgTG9hZGVkPC90ZXh0Pgo8L3N2Zz4=";
 
 // OpenAI 클라이언트 초기화 수정
 const openai = new OpenAI({
@@ -73,21 +69,16 @@ const [expandedClusters, setExpandedClusters] = useState<Set<number>>(new Set())
 
 // clusterImages state 타입 수정
 const [clusterImages, setClusterImages] = useState<Record<number, ClusterImage | null>>({});
-const [successCount, setSuccessCount] = useState(0);
 const [analysisHistory, setAnalysisHistory] = useState<{
     id: string;
     date: string;
     clusters: any[];
 }[]>([]);
-const [showVisionResults, setShowVisionResults] = useState(false);
 const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
 const [generatingStep, setGeneratingStep] = useState(0);
 const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
-
-const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
-const [isFileUploaded, setIsFileUploaded] = useState(false);
 const [profile, setProfile] = useState({ nickname: '', description: '' });
 
 // useClusterStorage 커스텀 훅 사용
@@ -139,7 +130,7 @@ useEffect(() => {
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
-            const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
+            const result = await handleKeyword(watchHistory, fetchVideoInfo, (current, total) => {
                 console.log(`${current}/${total} 처리 중`);
             });
             setWatchHistory(result);

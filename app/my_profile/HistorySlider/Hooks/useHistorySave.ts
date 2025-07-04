@@ -33,8 +33,8 @@ export function useHistorySave({
     
     const updatedHistories = [...histories, newHistory];
     setHistories(updatedHistories as HistoryData[]);
-    //localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
-    //setCurrentHistoryIndex(updatedHistories.length - 1);
+    localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
+    setCurrentHistoryIndex(updatedHistories.length - 1);
     setIsEditing(false);
     
   }, [positions, frameStyles, images, histories, setHistories, setCurrentHistoryIndex, setIsEditing]);

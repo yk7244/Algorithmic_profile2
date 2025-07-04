@@ -1,7 +1,7 @@
 //[0] users 테이블 
 //[1] WatchHistory 테이블  (비디오들 키워드 분석)
 //[2] ClusterHistory 테이블 (AI 클러스터 분석한거 기록)
-//[3] ClusterImages 테이블 (지금 profile에 보이는)
+//[3] ImageData 테이블 (지금 profile에 보이는)
 //[4] ProfileData 테이블 (유저 닉네임,설명 정보)
 //[5] SliderHistory 테이블 (슬라이더 이미지 기록)
 
@@ -59,7 +59,7 @@ export interface ClusterHistory {
   created_at: string;
 }
 
-//[3]ClusterImages 테이블->배열 X(지금 profile에 보이는)-> 
+//[3]ImageData 테이블->배열 X(지금 profile에 보이는)-> 
 export interface ImageData { //ProfileImages(저장명) - ClusterImages(변수명)
   id: string;
   user_id?: string; 
@@ -97,7 +97,6 @@ export interface ProfileData {
   nickname: string;
   description: string;
   created_at: string;
-  updated_at: string;
 
   profileImage?: string; //search_map에서 사용
   open_to_connect?: boolean; //search_map에서 사용

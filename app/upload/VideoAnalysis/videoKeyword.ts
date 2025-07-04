@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { OpenAILogger } from '../../utils/init-logger';
+import { saveWatchHistory } from '@/app/utils/saveWatchHistory';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -24,7 +25,7 @@ type VideoInfo = {
   timestamp: string; //없음
 };
 
-// STEP1-2.키워드 추출 함수
+// STEP2.키워드 추출 함수
 const extractVideoKeywords = async (videoInfo: any) => {
   try {
     console.log('Starting keyword extraction for video:', {
@@ -108,7 +109,7 @@ const extractVideoKeywords = async (videoInfo: any) => {
   }
 };
 
-// STEP1.비디오 정보 가져오기 함수 -> STEP1-2키워드 추출 함수호출 
+// STEP1.비디오 정보 가져오기 함수 -> STEP2키워드 추출 함수호출 
 export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null> {
   try {
     console.log('Fetching video info for:', videoId);
@@ -150,7 +151,7 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
       const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
       watchHistory.push(videoInfo);
       //✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
-      localStorage.setItem('watchHistory', JSON.stringify(watchHistory));
+      saveWatchHistory(watchHistory);
       return videoInfo;
     }
     return null;
@@ -159,3 +160,45 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
     return null;
   }
 }
+
+// 키워드 추출 함수([관리자용] keyword 추출 버튼 클릭 시 호출)
+// selectedItems를 받아 각 영상의 정보를 fetchVideoInfo로 가져오고, 키워드를 가공하여 반환하는 함수
+export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
+  const processedItems: any[] = [];
+  let processedCount = 0;
+  const totalItems = selectedItems.length;
+
+  if (onProgress) {
+    onProgress(0, totalItems);
+  }
+
+  for (const item of selectedItems) {
+    try {
+      const videoInfo = await fetchVideoInfo(item.videoId);
+      console.log('⭐️videoInfo:', videoInfo);
+      if (videoInfo != null) {
+        processedItems.push({
+          videoId: videoInfo.videoId,
+          title: videoInfo.title,
+          channel: item.channel,
+          date: item.date,
+          keywords: videoInfo.keywords,
+          tags: videoInfo.tags,
+          timestamp: new Date().toISOString()
+        });
+      }
+      processedCount++;
+      if (onProgress) {
+        onProgress(processedCount, totalItems);
+      }
+    } catch (error) {
+      console.error(`Failed to process video ${item.videoId}:`, error);
+      processedCount++;
+      if (onProgress) {
+        onProgress(processedCount, totalItems);
+      }
+    }
+  }
+  return processedItems;
+}
+
