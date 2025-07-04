@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import OpenAI from 'openai';
 import { ArrowRight,Loader2, CheckCircle } from "lucide-react";
-import { transformClusterToImageData } from '../../utils/clusterTransform';    
+import { transform, transformClustersToImageData } from '../../utils/clusterTransform';      
 
 import { OpenAILogger } from '../../utils/init-logger';
 import { processSelectedItems } from '../VideoParsing/jsonParser';
@@ -110,7 +110,6 @@ useClusterStorage({
     clusterImages,
     clusters,
     setAnalysisHistory,
-    searchClusterImage
 });
 //console.log(isOneWeekPassed(my_account.updated_at))
 //console.log(my_account.updated_at)
@@ -127,22 +126,22 @@ const { generateProfile } = useGenerateUserProfile({
 const [displayedStep, setDisplayedStep] = useState(generatingStep);
 const [showStepText, setShowStepText] = useState(true);
 useEffect(() => {
-  setShowStepText(false); // 먼저 사라지게
-  const timeout1 = setTimeout(() => {
-    setDisplayedStep(generatingStep); // 텍스트 교체
-    setShowStepText(true); // 다시 나타나게
-  }, 400); // 0.4초 후 텍스트 교체
-  return () => clearTimeout(timeout1);
+    setShowStepText(false); // 먼저 사라지게
+    const timeout1 = setTimeout(() => {
+        setDisplayedStep(generatingStep); // 텍스트 교체
+        setShowStepText(true); // 다시 나타나게
+    }, 400); // 0.4초 후 텍스트 교체
+    return () => clearTimeout(timeout1);
 }, [generatingStep]);
 
 // 배경 페이드 상태
 const [showBgFade, setShowBgFade] = useState(false);
 useEffect(() => {
-  setShowBgFade(false);
-  const timeout = setTimeout(() => {
-    setShowBgFade(true);
-  }, 400);
-  return () => clearTimeout(timeout);
+    setShowBgFade(false);
+    const timeout = setTimeout(() => {
+        setShowBgFade(true);
+    }, 400);
+    return () => clearTimeout(timeout);
 }, [showCompletePage]);
 
  // 페이지가 처음 로드될 때 자동 분석 시작
@@ -153,30 +152,29 @@ useEffect(() => {
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
-            /*const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
+            const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
                 console.log(`${current}/${total} 처리 중`);
             });
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
-            */
+            
             await new Promise(resolve => setTimeout(resolve, 2200)); // 클러스터 분석 시뮬레이션
 
             // 2단계: 클러스터 분석
             setGeneratingStep(2);
             await new Promise(resolve => setTimeout(resolve, 2200)); // 클러스터 분석 시뮬레이션
-            /*await handleCluster(
+            await handleCluster(
                 result,
                 openai,
                 OpenAILogger,
-                searchClusterImage,
-                transformClusterToImageData,
+                transformClustersToImageData,
                 placeholderImage,
                 setClusters,
                 setAnalysisHistory,
                 setShowAnalysis,
                 setIsLoading,
-                setError,
-            );*/
+                setError
+            );
             // 3단계: 이미지 생성 (이미 handleCluster에서 처리됨)
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 2000)); // 이미지 생성 시뮬레이션
@@ -186,16 +184,16 @@ useEffect(() => {
             // 5단계: 완료 페이지 표시
             setShowCompletePage(true);
             setShowGeneratingDialog(false);
-            setCountdown(100);
+            setCountdown(10);
             // 6단계: 별명만들기
-            //await generateProfile();
+            await generateProfile();
             // 7단계: clusterHistory, sliderHistory 저장하기
-            //const clusterHistoryResult = saveClusterHistory(clusters);
-            //const sliderResult = saveSliderHistory(clusters);
-            //if (clusterHistoryResult.success && sliderResult.success) {
-            //    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
-            //    alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 무드보드로 이동할게요. ');
-            //}
+            const clusterHistoryResult = saveClusterHistory(clusters);
+            const sliderResult = saveSliderHistory(clusters);
+            if (clusterHistoryResult.success && sliderResult.success) {
+                console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
+                alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 무드보드로 이동할게요. ');
+            }
         } catch (error) {
             console.error('분석 중 오류:', error);
             setError('분석 중 오류가 발생했습니다.');

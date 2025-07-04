@@ -7,7 +7,6 @@ export function useClusterStorage({
     clusterImages,
     clusters,
     setAnalysisHistory,
-    searchClusterImage
     }: {
     setWatchHistory: (v: any) => void,
     setClusters: (v: any) => void,
@@ -15,7 +14,6 @@ export function useClusterStorage({
     clusterImages: any,
     clusters: any[],
     setAnalysisHistory: (v: any) => void,
-    searchClusterImage: (cluster: any) => Promise<any>
     }) {
     // 시청기록, 클러스터 로드 (최초 마운트 시 1회만 실행)
     useEffect(() => {
@@ -58,19 +56,6 @@ export function useClusterStorage({
         }
     }, []);
 
-    // 클러스터 이미지 자동 로드 (clusters, searchClusterImage가 바뀔 때만 실행)
-    useEffect(() => {
-        const fetchClusterImages = async () => {
-        const newClusterImages = {} as Record<number, any>;
-        for (let i = 0; i < clusters.length; i++) {
-            newClusterImages[i] = await searchClusterImage(clusters[i]);
-        }
-        setClusterImages(newClusterImages);
-        };
-        if (clusters.length > 0) {
-        fetchClusterImages();
-        }
-    }, [clusters, searchClusterImage]);
 
     // 저장된 이미지 로드 (clusters가 바뀔 때만 실행)
     useEffect(() => {
