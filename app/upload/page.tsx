@@ -22,7 +22,6 @@ import { parseJSONWatchHistory, processSelectedItems } from './VideoParsing/json
 import { parseWatchHistory } from './VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from './Handlers/fileHandlers';
 import { handleDownloadJSON, handleDownloadClusterJSON } from './Handlers/downloadHandlers';
-import { isOneWeekPassed } from './VideoParsing/dateUtils';
 
 //Refactoring
 import { searchClusterImage_pinterest, PinterestImageData } from './ImageSearch/GoogleImageSearch';

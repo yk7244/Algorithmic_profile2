@@ -8,7 +8,7 @@ import { OpenAILogger } from './utils/init-logger';
 import { parseJSONWatchHistory, processSelectedItems } from './upload/VideoParsing/jsonParser';
 import { parseWatchHistory } from './upload/VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from './upload/Handlers/fileHandlers';
-import { isOneWeekPassed } from './upload/VideoParsing/dateUtils';
+import { isOneWeekPassed } from './utils/uploadCheck';
 
 //Refactoring
 import { searchClusterImage } from './upload/ImageSearch/NaverImageSearch';
@@ -84,18 +84,36 @@ const [generatingStep, setGeneratingStep] = useState(0);
 const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 
+//upload 가능여부 체크 및 기간 설정, 하루당 최대 영상 개수 설정
+const upload_check = isOneWeekPassed();
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
 const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
-}>({
-    from: new Date('Tue Apr 14 2025 14:00:00 GMT+0900'),
-    to: new Date('Tue Apr 16 2025 14:00:00 GMT+0900'),
-    ////✅나중에 이걸로 바꾸기
-    //from: new Date(new Date().setDate(new Date().getDate() - 7)),
-    //to: new Date()
-
+}>(() => {
+    const today = new Date();
+    console.log('upload_check', upload_check);
+    if (upload_check === 1) {
+        // 초기 유저: 오늘부터 4주 전
+        return {
+            from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
+            to: today
+        };
+    } else if (upload_check === 2) {
+        // 두 번째 유저: 일주일
+        return {
+            from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 일주일 전
+            to: today
+        };
+    } else {
+        // 거짓(0), diffDays => 업로드 불가능 
+        return {
+            from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
+            to: today
+        };
+    }
 });
+
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
 const [profile, setProfile] = useState({ nickname: '', description: '' });
@@ -108,7 +126,6 @@ useClusterStorage({
     clusterImages,
     clusters,
     setAnalysisHistory,
-    searchClusterImage
 });
 //console.log(isOneWeekPassed(my_account.updated_at))
 //console.log(my_account.updated_at)
@@ -383,12 +400,12 @@ useEffect(() => {
         {/* 로그인 여부 확인*/}
         {isLoggedIn ? (
           <>
-            {/* 1-1 로그인O => 업데이트 여부 확인 */}  
-            {(my_account.updated_at == null || isOneWeekPassed(my_account.updated_at)) ? (
-              
+            {/* 1-1 로그인O, 업데이트 O */}  
+            {(upload_check==2||upload_check==1) ? (
+              // 1-1 로그인O => 업데이트 여부 확인 *
               isFileUploaded ? (
                 <>  
-                  {/* 1-1-1 로그인O, 업데이트 O, 파일 업로드 했을때=> 분석 시작 버튼 */}
+                  {/* 1-1-1 로그인O, 업데이트 O, 파일 업로드 O=> 분석 시작 버튼 */}
                   <div className="mt-10 max-w-[700px] h-[200px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 
                   transition-all duration-300 hover:border-blue-400/60 
                   shadow-sm hover:shadow-md bg-[#292B2E]/70 flex items-center justify-center">  
@@ -471,7 +488,7 @@ useEffect(() => {
                     >
                       나의 알고리즘 분석하기
                     </button>
-                  )
+                  
                 </>
               ) : (
                 <>
@@ -681,7 +698,7 @@ useEffect(() => {
                         <p className="text-lg font-semibold text-gray-200 mb-2">
                         유튜브 알고리즘이 본 당신의 모습이 바뀌었을지 궁금하신가요?
                         <br/>
-                        <span className="text-blue-500">4일 후</span> 
+                        <span className="text-blue-500">{upload_check}일 후</span> 
                         다시 시도해보세요.
                         </p>
                     </div> 

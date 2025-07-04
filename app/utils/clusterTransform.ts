@@ -1,5 +1,7 @@
 import { ImageData } from '../types/profile';
 import { arrangeImagesInCenter } from './autoArrange';
+import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
+import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
 
 // 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
@@ -107,7 +109,16 @@ export function transformClustersToImageData(
 
   console.log('✅ [transform] 3. Final transformed image data:', JSON.parse(JSON.stringify(finalImageData)));
 
+  //유상님✅ ClusterImages 저장
   localStorage.setItem('profileImages', JSON.stringify(finalImageData));
+  //유상님✅ ClusterHistory 저장
+  const clusterHistoryResult = saveClusterHistory(clusters);          
+  //유상님✅ SliderHistory 저장
+  const sliderResult = saveSliderHistory(clusters); 
+
+  if (clusterHistoryResult.success && sliderResult.success) {
+    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
+  }
   return finalImageData;
 }
 

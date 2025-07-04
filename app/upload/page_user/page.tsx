@@ -16,8 +16,7 @@ import { handleCluster} from '../VideoAnalysis/videoCluster';
 import { fetchVideoInfo } from '../VideoAnalysis/videoKeyword';
 import { useClusterStorage } from '../hooks/useClusterStorage';
 import { useRouter } from 'next/navigation';    
-import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
-import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
+
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
 
 
@@ -87,17 +86,6 @@ const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
-const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-}>({
-    from: new Date('Tue Apr 14 2025 14:00:00 GMT+0900'),
-    to: new Date('Tue Apr 16 2025 14:00:00 GMT+0900'),
-    ////✅나중에 이걸로 바꾸기
-    //from: new Date(new Date().setDate(new Date().getDate() - 7)),
-    //to: new Date()
-
-});
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
 const [profile, setProfile] = useState({ nickname: '', description: '' });
@@ -111,8 +99,7 @@ useClusterStorage({
     clusters,
     setAnalysisHistory,
 });
-//console.log(isOneWeekPassed(my_account.updated_at))
-//console.log(my_account.updated_at)
+
 
 // useGenerateUserProfile 훅을 컴포넌트 레벨에서 호출
 const { generateProfile } = useGenerateUserProfile({
@@ -158,11 +145,11 @@ useEffect(() => {
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             
-            await new Promise(resolve => setTimeout(resolve, 2200)); // 클러스터 분석 시뮬레이션
+            await new Promise(resolve => setTimeout(resolve, 200)); // 클러스터 분석 시뮬레이션
 
             // 2단계: 클러스터 분석
             setGeneratingStep(2);
-            await new Promise(resolve => setTimeout(resolve, 2200)); // 클러스터 분석 시뮬레이션
+            await new Promise(resolve => setTimeout(resolve, 200)); // 클러스터 분석 시뮬레이션
             await handleCluster(
                 result,
                 openai,
@@ -174,26 +161,24 @@ useEffect(() => {
                 setShowAnalysis,
                 setIsLoading,
                 setError
+                //ClusterTransform에서 ClusterImages 저장함 
+                
             );
-            // 3단계: 이미지 생성 (이미 handleCluster에서 처리됨)
+            // 3단계: 별명만들기
+            await generateProfile();
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 2000)); // 이미지 생성 시뮬레이션
-            // 4단계: 완료
+            // 4단계: clusterHistory, sliderHistory 저장하기
+            
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 200));
             // 5단계: 완료 페이지 표시
             setShowCompletePage(true);
             setShowGeneratingDialog(false);
             setCountdown(10);
-            // 6단계: 별명만들기
-            await generateProfile();
-            // 7단계: clusterHistory, sliderHistory 저장하기
-            const clusterHistoryResult = saveClusterHistory(clusters);
-            const sliderResult = saveSliderHistory(clusters);
-            if (clusterHistoryResult.success && sliderResult.success) {
-                console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
-                alert('나의 알고리즘 분석이 완료되었어요! 나의 알고리즘 무드보드로 이동할게요. ');
-            }
+            
+            
+            
         } catch (error) {
             console.error('분석 중 오류:', error);
             setError('분석 중 오류가 발생했습니다.');
