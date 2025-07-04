@@ -39,7 +39,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         {profile.description || '나만의 알고리즘 프로필을 생성해보세요.'}
         </div>
         
-        {/* 별명 생성 버튼 (isOwner가 true일 때만 렌더링) */}
+        {/* 별명 생성 버튼 (isOwner가 true일 때만 렌더링) 
         {isOwner && (
             <div className="mt-4">
             <Button
@@ -66,6 +66,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </Button>
             </div>
         )}
+            */}
     </div>
 );
 

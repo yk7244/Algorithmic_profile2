@@ -3,12 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Pen, Save, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import SearchFloatingButton from "@/app/search/SearchMode/SearchFloatingButton";
+import { saveProfileImages } from "@/app/utils/saveImageData";
+import { savePositions } from "./Hooks/savePosition";
 
 interface BottomActionBarProps {
     isEditing: boolean;
     isGeneratingProfile: boolean;
     onEditClick: () => void;
-    onSaveClick: () => void;
+    offEditClick: () => void;
+    images: any[];
+    positions: Record<string, {x: number, y: number}>;
     onGenerateProfile: () => void;
     sliderCurrentHistoryIndex: number;
     isSearchMode: boolean;
@@ -19,7 +23,10 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
     isEditing,
     isGeneratingProfile,
     onEditClick,
-    onSaveClick,
+    offEditClick,
+    images,
+    positions,
+    onGenerateProfile,
     sliderCurrentHistoryIndex,
     isSearchMode,
     toggleSearchMode,
@@ -27,6 +34,23 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
     if (sliderCurrentHistoryIndex !== -1) {
         return null;
     }
+
+    // 위치 병합 후 저장하는 함수
+    const savePositions = () => {
+        const updatedImages = images.map(img => {
+            const pos = positions[img.id];
+            if (pos) {
+                return {
+                    ...img,
+                    left: `${pos.x}px`,
+                    top: `${pos.y}px`,
+                };
+            }
+            return img;
+        });
+        console.log('updatedImages', updatedImages);
+        saveProfileImages(updatedImages);
+    };
 
     return (
         <>
@@ -96,10 +120,12 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
                     <button
                     className={`h-12 px-8 border border-gray-200 flex items-center gap-2 rounded-full shadow-md bg-black text-white hover:text-gray-200 hover:bg-gray-600`}                    
-                    onClick={ onSaveClick}
+                    onClick={() => {
+                        savePositions();
+                        offEditClick();
+                    }}
                     >
                     <Save className="w-5 h-5 text-white" />
-
                     저장하기
                     </button>
                     

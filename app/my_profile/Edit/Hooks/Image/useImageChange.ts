@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { ImageData } from '../../../../types/profile';
+import { saveProfileImages } from "@/app/utils/saveImageData";
 
 export function useImageChange(
     images: ImageData[],
@@ -44,7 +45,7 @@ export function useImageChange(
                     }
                     return img;
                 });
-                localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));
+                saveProfileImages(updatedProfileImages);
                 console.log('✅ 배열 형태 profileImages 업데이트 완료');
             } else {
                 // 객체인 경우
@@ -59,7 +60,7 @@ export function useImageChange(
                             
                         }
                     };
-                    localStorage.setItem('profileImages', JSON.stringify(updatedProfileImages));
+                    saveProfileImages(updatedProfileImages);
                     console.log('✅ 객체 형태 profileImages 업데이트 완료');
                 } else {
                     console.log(`❌ 객체에서 이미지 ${id}를 찾을 수 없음`);
@@ -69,20 +70,7 @@ export function useImageChange(
             console.log('❌ profileImages가 localStorage에 없습니다');
         }
 
-        // 새로운 히스토리 생성 및 저장 - 이미지 변경은 의미있는 변경사항이므로 히스토리 저장이 필요
-        const newHistory = {
-            timestamp: Date.now(),
-            positions,
-            frameStyles,
-            images: updatedImages
-        };
-
-        const updatedHistories = [...histories, newHistory];
-        setHistories(updatedHistories);
-        localStorage.setItem('moodboardHistories', JSON.stringify(updatedHistories));
-        setCurrentHistoryIndex(updatedHistories.length - 1);
         
-        console.log('✅ 이미지 변경 및 히스토리 저장 완료');
         },
         [images, setImages, positions, frameStyles, histories, setHistories, setCurrentHistoryIndex]
     );

@@ -1,5 +1,6 @@
 import { useRouter } from 'next/navigation';
 import { saveSliderHistory } from '../../utils/saveSliderHistory';
+import { saveProfileImages } from '@/app/utils/saveImageData';
 
 export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
     const router = useRouter();
@@ -84,8 +85,8 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
         }
 
         // 항상 push를 사용하여 새 관심사를 배열에 추가합니다.
-        imageList.push(newInterestImage);
-        localStorage.setItem('profileImages', JSON.stringify(imageList));
+        imageList.push(newInterestImage);   //✅ 이미지 추가 후 저장
+        saveProfileImages(imageList);
         
         // 슬라이더 히스토리에도 기록 추가
         const sliderResult = saveSliderHistory(imageList);

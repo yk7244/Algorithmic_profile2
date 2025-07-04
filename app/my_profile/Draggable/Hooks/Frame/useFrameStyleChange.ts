@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
 import { ImageData } from "../../../../types/profile";
+import { saveProfileImages } from "@/app/utils/saveImageData";
 
 export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Record<string, string>>>) {
   return useCallback((id: string, style: string) => {
@@ -29,7 +30,7 @@ export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Reco
             return img;
           });
           if (updated) {
-            localStorage.setItem('profileImages', JSON.stringify(updatedProfileImagesArray));
+            saveProfileImages(updatedProfileImagesArray);
             console.log('✅ localStorage (배열) profileImages 업데이트 완료.');
           }
         } else {
@@ -40,7 +41,7 @@ export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Reco
               ...profileImages,
               [id]: updatedImage
             };
-            localStorage.setItem('profileImages', JSON.stringify(updatedProfileImagesObject));
+            saveProfileImages(updatedProfileImagesObject);
             console.log('✅ localStorage (객체) profileImages 업데이트 완료.');
             updated = true;
           }

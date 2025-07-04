@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, DragEvent, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import OpenAI from 'openai';
@@ -11,27 +10,23 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { transform, transformClustersToImageData } from '../utils/clusterTransform';
+import { transform } from '../utils/clusterTransform';
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { OpenAILogger } from '../utils/init-logger';
-import { parseJSONWatchHistory, processSelectedItems } from './VideoParsing/jsonParser';
+import { parseJSONWatchHistory } from './VideoParsing/jsonParser';
 import { parseWatchHistory } from './VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from './Handlers/fileHandlers';
 import { handleDownloadJSON, handleDownloadClusterJSON } from './Handlers/downloadHandlers';
 
 //Refactoring
 import { searchClusterImage_pinterest, PinterestImageData } from './ImageSearch/GoogleImageSearch';
-import { searchClusterImage } from './ImageSearch/NaverImageSearch';
-import { VideoCluster, handleCluster} from './VideoAnalysis/videoCluster';
-import { fetchVideoInfo } from './VideoAnalysis/videoKeyword';
+import { handleCluster} from './VideoAnalysis/videoCluster';
+import { fetchVideoInfo, handleKeyword } from './VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './hooks/useClusterStorage';
-import { my_account } from '../data/dummyData';
-import { saveClusterHistory } from '../utils/saveClusterHistory';
-import { saveSliderHistory } from '../utils/saveSliderHistory';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -94,9 +89,7 @@ export default function Home() {
     to: undefined,
   });
 
-  const [uploadFinished, setUploadFinished] = useState(false);
   const [isFileUploaded, setIsFileUploaded] = useState(false);
-  const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
   
 
   // handleClusterClick 래퍼 함수 추가
@@ -426,7 +419,7 @@ export default function Home() {
                       {/* keyword 추출하기 버튼 */}
                       <Button
                         onClick={async () => {
-                          const result = await processSelectedItems(watchHistory, fetchVideoInfo, (current, total) => {
+                          const result = await handleKeyword(watchHistory, fetchVideoInfo, (current, total) => {
                             console.log(`${current}/${total} 처리 중`);
                           });
                           setWatchHistory(result);

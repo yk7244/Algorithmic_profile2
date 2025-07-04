@@ -30,6 +30,7 @@ import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
   } from '../types/profile';
   import useAutoArrange from './Edit/Hooks/useAutoArrange';
   import AutoArrangeButton from './Edit/AutoArrangeButton';
+import { savePositions } from "./Edit/Hooks/savePosition";
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -191,7 +192,7 @@ export default function MyProfilePage() {
             isEditing={isEditing}
             isGeneratingProfile={showGeneratingDialog}
             onEditClick={() => setIsEditing(true)}
-            onSaveClick={handleSave}
+            onSaveClick={() => savePositions(images, positions)}
             onGenerateProfile={generateProfile}
           />
         )}
@@ -283,11 +284,13 @@ export default function MyProfilePage() {
             isEditing={isEditing}
             isGeneratingProfile={showGeneratingDialog}
             onEditClick={() => setIsEditing(true)}
-            onSaveClick={handleSave}
+            images={images}
+            positions={positions}
             onGenerateProfile={generateProfile}
             sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
             isSearchMode={isSearchMode}
             toggleSearchMode={toggleSearchMode}
+            offEditClick={() => setIsEditing(false)}
           />
         )}
       </div>
