@@ -167,7 +167,7 @@ export default function MyProfilePage() {
             x: Number(image.left?.replace('px', '') || 0),
             y: Number(image.top?.replace('px', '') || 0),
           };
-          console.log('newPositions', newPositions);
+          //console.log('newPositions', newPositions);
         }
       });
 

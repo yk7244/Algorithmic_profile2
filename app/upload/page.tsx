@@ -11,7 +11,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { transformClustersToImageData, transformClusterToImageData } from '../utils/clusterTransform';
+import { transform, transformClustersToImageData } from '../utils/clusterTransform';
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -106,8 +106,7 @@ export default function Home() {
       watchHistory,
       openai,
       OpenAILogger,
-      searchClusterImage,
-      transformClusterToImageData,
+      transform,
       placeholderImage,
       setClusters,
       setAnalysisHistory,
@@ -125,7 +124,6 @@ export default function Home() {
     clusterImages,
     clusters,
     setAnalysisHistory,
-    searchClusterImage
   });
   //console.log(isOneWeekPassed(my_account.updated_at))
   //console.log(my_account.updated_at)
@@ -765,23 +763,6 @@ export default function Home() {
                 {/* tell me who I am 버튼 */  }
                 <div className="flex justify-center gap-4 mt-8">
                 <Button 
-                  onClick={() => {
-                    if (clusters.length > 0) {
-                      // [3]현재 선택된 분석 결과의 클러스터로 변환 ✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
-                      const profileImages = transformClustersToImageData(clusters, clusterImages);
-                      localStorage.setItem('profileImages', JSON.stringify(profileImages));
-                      
-                      // [2] ClusterHistory기존 배열에 새 데이터 ✅push
-                      const clusterHistoryResult = saveClusterHistory(profileImages);
-                      
-                      // [5] SliderHistory 저장
-                      const sliderResult = saveSliderHistory(profileImages);
-
-                      alert('프로필 데이터가 성공적으로 저장되었습니다!');
-                    } else {
-                      alert('분석 결과가 선택되어 있지 않습니다!');
-                    }
-                  }}
                   asChild 
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 transition-all px-16 py-8 text-2xl font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] text-white"

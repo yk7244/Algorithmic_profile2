@@ -39,6 +39,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
         const [watchedVideos, setWatchedVideos] = useState<string[]>([]);   
         const [currentPage, setCurrentPage] = useState(1); // 페이지 상태 추가
+        const [showWatchHistory, setShowWatchHistory] = useState(false); // 시청기록 토글
+        const [showRecommendations, setShowRecommendations] = useState(false); // 추천영상 토글
         const router = useRouter();
         const { handleAddAsInterest } = useAddAsInterest(setShowDetails);
         const { isLoading: isLoadingAiVideos, videos: aiRecommendedVideos, fetchAndSet: fetchAndSetVideos } = useRecommend(image);
@@ -53,6 +55,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         useEffect(() => {
             if (showDetails) {
                 setCurrentPage(1);
+                setShowWatchHistory(false);
+                setShowRecommendations(false);
             }
         }, [showDetails]);
 
@@ -80,7 +84,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
         return (
         <Dialog open={showDetails} onOpenChange={setShowDetails} >
-            <DialogContent className="fixed left-1/2 top-1/2 w-[36vw] max-w-3xl h-[80vh] -translate-x-0 -translate-y-1/2 border-20 bg-background p-0 shadow-lg flex flex-col overflow-hidden rounded-2lg">
+            <DialogContent className="fixed left-1/2 top-1/2 w-[36vw] max-w-3xl h-[90vh] -translate-x-0 -translate-y-1/2 border-20 bg-background p-0 shadow-lg flex flex-col overflow-hidden rounded-2lg">
                 
                 {/* 페이지 1: 풀스크린 이미지 배경과 텍스트 오버레이 */}
                 {currentPage === 1 && (
@@ -152,10 +156,16 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         {/* 하단 버튼 */}
                         <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
                             <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
-                            flex items-center text-base font-medium transition-all duration-300 animate-pulse duration-1000">
-                                이 키워드는 당신의 추천 알고리즘에
-                                <span className={`rounded-full font-bold`}>
-                                    {image.sizeWeight >= 1.2 ? '큰 영향' : image.sizeWeight >= 0.8 ? '중간 영향' : '작은 영향'}
+                            flex items-center text-base font-medium transition-all duration-300 "
+                            
+                            >
+                                이 키워드는 당신의 추천 알고리즘에&nbsp;
+                                <span className={`rounded-full font-bold animate-pulse duration-1000`}
+                                style={{
+                                    animation: 'pulse 1s ease-in-out infinite'
+                                }}
+                                >
+                                    {image.sizeWeight >= 1.2 ? ' 큰 영향 ' : image.sizeWeight >= 0.8 ? ' 중간 영향 ' : ' 작은 영향 '}
                                 </span>
                                 을 주고 있어요.
                             </p>
@@ -209,14 +219,14 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                 </h1>
                                 {/* 설명 텍스트 */}
                                 <div className="text-left max-w-2xl text-white/90">
-                                    <p className="backdrop-blur-sm bg-black/30 text-white px-6 py-3 rounded-lg 
+                                    <p className="backdrop-blur-sm bg-black/30 text-white px-6 py-3 rounded-3xl 
                                     text-sm font-medium transition-all duration-300"
                                     style={{
                                         animation: 'pulse 4s ease-in-out infinite'
                                     }}>
-                                        이 키워드는 당신의 추천 알고리즘에
+                                        이 키워드는 당신의 추천 알고리즘에&nbsp;
                                         <span className={`ml-1 font-bold`}>
-                                            {image.sizeWeight >= 1.2 ? ' 큰 영향' : image.sizeWeight >= 0.8 ? ' 중간 영향' : ' 작은 영향'}
+                                            {image.sizeWeight >= 1.2 ? '큰 영향' : image.sizeWeight >= 0.8 ? '중간 영향' : '작은 영향'}
                                         </span>
                                         을 주고 있어요.
                                     </p>
@@ -227,30 +237,56 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         {/* 스크롤 가능한 영상 콘텐츠 영역 */}
                         <div className="flex-grow overflow-y-auto bg-gray-50">
                             <div className="px-8 py-6">
-                                <div className="space-y-6">
+                                <div className="">
                                     {/* 내 프로필일 때 */}
                                     {isOwner ? (
                                         <>
                                             {/* 일반 클러스터 */}
                                             {!image.desired_self ? (
                                                 <>
-                                                <p className="text-sm text-gray-600">아래의 시청 기록들이 이 카테고리에 반영되었어요.</p>
-                                                <VideoList
-                                                    videos={image.relatedVideos || []}
-                                                    watchedVideos={watchedVideos}
-                                                    onVideoClick={handleVideoClick}
-                                                />
-                                                <p className="text-sm text-gray-600">앞으로 아래와 같은 영상을 계속 추천받게 될거에요.</p>
-                                                <VideoList
-                                                    isLoading={isLoadingAiVideos}
-                                                    videos={aiRecommendedVideos}
-                                                    watchedVideos={watchedVideos}
-                                                    onVideoClick={handleVideoClick}
-                                                    titlePrefix="AI 추천: "
-                                                    isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
-                                                    emptyMessage="AI 추천 영상을 가져올 수 없습니다."
-                                                    onRetry={fetchAndSetVideos}
-                                                />
+                                                <p className="mb-4 text-md text-gray-600 font-bold"> 아래의 시청 기록들이 알고리즘에 반영되었어요.</p>
+                                    
+                                                {!showWatchHistory && (
+                                                    <Button
+                                                        onClick={() => setShowWatchHistory(true)}
+                                                        className="bg-black hover:bg-black/80 text-white rounded-lg text-sm font-medium transition-all duration-300"
+                                                    >
+                                                        보기
+                                                    </Button>
+                                                )}
+                                                {showWatchHistory && (
+                                                    <VideoList
+                                                        videos={image.relatedVideos || []}
+                                                        watchedVideos={watchedVideos}
+                                                        onVideoClick={handleVideoClick}
+                                                        
+                                                    />
+                                                )}
+                                                
+                                                <p className="mt-10 mb-4 text-md text-gray-600 font-bold">
+                                                    앞으로 아래와 같은 영상들을 추천받게 될거에요.
+                                                </p>
+                                                {!showRecommendations && (
+                                                    <Button
+                                                        onClick={() => setShowRecommendations(true)}
+                                                        className="bg-black hover:bg-black/80 text-white rounded-lg text-sm font-medium transition-all duration-300"
+                                                    >
+                                                        보기
+                                                    </Button>
+                                                )}
+                                                
+                                                {showRecommendations && (
+                                                    <VideoList
+                                                        isLoading={isLoadingAiVideos}
+                                                        videos={aiRecommendedVideos}
+                                                        watchedVideos={watchedVideos}
+                                                        onVideoClick={handleVideoClick}
+                                                        titlePrefix="AI 추천: "
+                                                        isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
+                                                        emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                        onRetry={fetchAndSetVideos}
+                                                    />
+                                                )}
                                                 </>
                                             ) : (
                                                 /* 관심사 클러스터 */
@@ -271,16 +307,31 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                             </Button>
                                                         </div>
                                                     </div>
-                                                    <VideoList
-                                                        isLoading={isLoadingAiVideos}
-                                                        videos={aiRecommendedVideos}
-                                                        watchedVideos={watchedVideos}
-                                                        onVideoClick={handleVideoClick}
-                                                        titlePrefix="AI 추천: "
-                                                        isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
-                                                        emptyMessage="AI 추천 영상을 가져올 수 없습니다."
-                                                        onRetry={fetchAndSetVideos}
-                                                    />
+                                                    
+                                                    <p className="text-md text-gray-600 font-bold mb-4">
+                                                        AI 추천 영상
+                                                        {!showRecommendations && (
+                                                            <Button
+                                                                onClick={() => setShowRecommendations(true)}
+                                                                className="ml-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
+                                                            >
+                                                                보기
+                                                            </Button>
+                                                        )}
+                                                    </p>
+                                                    
+                                                    {showRecommendations && (
+                                                        <VideoList
+                                                            isLoading={isLoadingAiVideos}
+                                                            videos={aiRecommendedVideos}
+                                                            watchedVideos={watchedVideos}
+                                                            onVideoClick={handleVideoClick}
+                                                            titlePrefix="AI 추천: "
+                                                            isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
+                                                            emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                            onRetry={fetchAndSetVideos}
+                                                        />
+                                                    )}
                                                 </div>
                                             )}
                                         </>
