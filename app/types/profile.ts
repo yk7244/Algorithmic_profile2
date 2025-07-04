@@ -125,12 +125,11 @@ export interface ExploreWatchHistory{
   timestamp: string;
 }
 
-export interface VideoData {
-  title: string;
-  embedId: string;
-  description: string;
+//[7] ThumbnailData 테이블 
+export interface ThumbnailData {
+  main_keyword: string;
+  src: string;
 }
-
 
 export interface HistoryData {
   timestamp: number;
