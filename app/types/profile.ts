@@ -9,6 +9,7 @@
 export interface UserData {
   id: string;
   email: string;
+  background_color: string;
   created_at: string;
   updated_at: string;
 }

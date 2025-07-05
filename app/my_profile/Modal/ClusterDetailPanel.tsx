@@ -154,6 +154,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         </div>
 
                         {/* 하단 버튼 */}
+                        {isOwner && (
                         <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
                             <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
                             flex items-center text-base font-medium transition-all duration-300 "
@@ -170,7 +171,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                 을 주고 있어요.
                             </p>
                         </div>
-                    
+                        )}
                         <div className="relative z-30 flex justify-center pb-8">
                                 
                             <Button
@@ -182,7 +183,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             >
                                 
                                 <ChevronDown className="h-5 w-5" />
-                                내 알고리즘 더 살펴보기   
+                                알고리즘 더 살펴보기   
                             </Button>
                         </div>
                     </div>
@@ -213,6 +214,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             </div>
                             
                             {/* 메인 키워드 섹션 */}
+                            {isOwner && (
                             <div className="relative z-10 px-8 pb-8">
                                 <h1 className="text-2xl font-bold mb-6 text-white">
                                     #{image.main_keyword}
@@ -232,6 +234,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                     </p>
                                 </div>
                             </div>
+                            )}
                         </div>
 
                         {/* 스크롤 가능한 영상 콘텐츠 영역 */}

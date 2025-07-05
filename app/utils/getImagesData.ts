@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ImageData } from '../../../types/profile';
+import { ImageData } from '../types/profile';
 
 interface UseProfileImagesLoadProps {
 setImages: React.Dispatch<React.SetStateAction<ImageData[]>>;
@@ -99,3 +99,4 @@ useEffect(() => {
         // 이 경우 함수들이 useCallback으로 래핑되지 않았다면 매 렌더링마다 useEffect가 재실행될 수 있음.
         // 지금은 마운트 시 1회 실행을 의도하므로 비워둠.
 } 
+

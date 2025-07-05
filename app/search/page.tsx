@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
-import { dummyUsers } from '@/app/others_profile/dummy-data';
+import { profiles, userImages } from '@/app/others_profile/dummy-data'; 
 import { ProfileData, ImageData } from '@/app/types/profile';
 import SearchCard from '@/components/searchCard/SearchCard';
+import CardStack3D from './SearchMode/showCard';      
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -14,6 +15,7 @@ export default function SearchPage() {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchResults, setSearchResults] = useState<(ProfileData & { images: ImageData[] })[]>([]);
+  const [isSearchMode, setIsSearchMode] = useState(true);
 
   useEffect(() => {
     // URL에서 키워드 파라미터 가져오기
@@ -35,12 +37,11 @@ export default function SearchPage() {
     try {
       // 필터링 로직 주석 처리하고 모든 더미 프로필 표시
       setTimeout(() => {
-        // dummyUsers를 ProfileData 배열로 변환
-        const profiles = Object.values(dummyUsers).map(user => ({
-          ...user.profile,
-          images: user.images
-        }));
-        setSearchResults(profiles);
+        // users와 userImages를 조합해 ProfileData & { images: ImageData[] }[] 생성
+        setSearchResults((profiles as ProfileData[]).map((profile: ProfileData) => ({
+          ...profile,
+          images: (userImages[profile.id] as ImageData[]) || []
+        })));
         setIsLoading(false);
       }, 1500); // 로딩 효과를 위해 지연 시간 유지
       
@@ -73,31 +74,31 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen">
-      {/* 검색 모드일 때 배경 그라데이션 추가 */}
-      <div className="min-h-full fixed inset-0 overflow-hidden -z-10 bg-[#333947]">
-          <div className="absolute -top-[40%] -left-[10%] w-[90%] h-[60%] rounded-full bg-[#B3D4FF] blur-[120px] animate-blob" />
-          {/*<div className="absolute -bottom-[30%] -right-[10%] w-[70%] h-[60%] rounded-full bg-[#6B7F99] blur-[120px] animate-blob animation-delay-20" />*/}
-          <div className="absolute top-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-[#6179A7] blur-[120px] animate-blob animation-delay-200" />
-      </div>
+      {isSearchMode && (
+        <div className="min-h-full fixed inset-0 overflow-hidden -z-10 bg-[#333947]">
+          <div className="absolute -bottom-[10%] -left-[10%] w-[90%] h-[60%] rounded-full bg-[#B3D4FF] blur-[120px] animate-blob" />
+          <div className="absolute -bottom-[30%] -right-[10%] w-[70%] h-[60%] rounded-full bg-[#6B7F99] blur-[120px] animate-blob animation-delay-20" />
+          <div className="absolute -bottom-[20%] -right-[20%] w-[60%] h-[60%] rounded-full bg-[#6179A7] blur-[120px] animate-blob animation-delay-200" />
+        </div>
+      )}
 
-      <div className="max-w-6xl mx-auto p-8">
+      <div className="max-w-6xl mx-auto p-8 mt-20">
         {/* 헤더 */}
         <div className="flex items-center mb-8">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.back()}
-            className="mr-4 text-white hover:bg-white/10"
-          >
-            <ArrowLeft className="h-6 w-6" />
-            
-          </Button>
-          <h1 className="text-3xl font-bold text-white"> 검색 결과 </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.back()}
+              className="text-white hover:bg-white/10"
+              >
+              <ArrowLeft className="h-2 w-2" />
+              
+            </Button>
+          <h1 className="text-2xl font-bold text-white"> 알고리즘 탐색 결과 </h1>
         </div>
         
         {/* 검색 키워드 표시 */}
         <div className="mb-8">
-          <h2 className="text-xl text-white/80 mb-4">다음 관심사를 가진 프로필을 찾고 있어요:</h2>
           <div className="flex flex-wrap gap-3">
             {keywords.map((keyword, index) => (
               <div 
@@ -109,7 +110,9 @@ export default function SearchPage() {
                 </span>
               </div>
             ))}
-          </div>
+          </div>          
+          
+
         </div>
         
         {/* 검색 결과 */}
@@ -120,16 +123,10 @@ export default function SearchPage() {
               <p className="text-white text-xl"> 당신과 비슷한 취향의 사람을 찾고 있어요...</p>
             </div>
           ) : searchResults.length > 0 ? (
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {searchResults.map((profile) => (
-                <SearchCard
-                  key={profile.id}
-                  profile={profile}
-                  onCardClick={(profileId) => router.push(`/others_profile/${profileId}`)}
-                />
-              ))}
-            </div>
+            <>
+            <h2 className="text-lg text-white/80 mb-4">비슷한 알고리즘 프로필을 {searchResults.length}개 발견했어요</h2>
+            <CardStack3D cards={searchResults.flatMap(profile => profile.images)} />
+            </>
           ) : (
             <div className="text-center py-20">
               <Search className="w-16 h-16 text-white/40 mx-auto mb-4" />

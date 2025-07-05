@@ -71,7 +71,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 </div>
                 {/* 업로드 버튼 */}
                 <div className="relative group">
-                <Link href="/upload/page_user">
+                <Link href="/">
                     <button
                     className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md transition-all"
                     >

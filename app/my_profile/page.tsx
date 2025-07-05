@@ -2,7 +2,6 @@
 import OpenAI from "openai";
 import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import {DndContext} from '@dnd-kit/core';
-import { restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
 
 //Refactoring
@@ -21,15 +20,16 @@ import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Edit/Hooks/Image/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
-import { useProfileImagesLoad } from './HistorySlider/Hooks/useProfileImagesLoad';
-import { useInitialProfileLoad } from './Nickname/Hooks/useInitialProfileLoad';
-  import { arrangeImagesInCenter } from '../utils/autoArrange';
-  import { 
-    ImageData,
-    HistoryData,
-  } from '../types/profile';
-  import useAutoArrange from './Edit/Hooks/useAutoArrange';
-  import AutoArrangeButton from './Edit/AutoArrangeButton';
+import { useProfileImagesLoad } from '../utils/getImagesData';     
+import { arrangeImagesInCenter } from '../utils/autoArrange';
+import { 
+  ImageData,
+  HistoryData,
+} from '../types/profile';
+import useAutoArrange from './Edit/Hooks/useAutoArrange';
+import AutoArrangeButton from './Edit/AutoArrangeButton';
+import SearchHeader from "../search/SearchMode/SearchHeader";
+import { users } from '../others_profile/dummy-data';
 import { savePositions } from "./Edit/Hooks/savePosition";
 
 // OpenAI 클라이언트 초기화
@@ -44,7 +44,6 @@ export default function MyProfilePage() {
   const [profile, setProfile] = useState({ nickname: '', description: '' });
   const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
-  const { leftBgColor, rightBgColor, handleColorChange, bgColor, handleBgColorChange } = useBgColor();
   const [images, setImages] = useState<ImageData[]>([]);
   const [positions, setPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
@@ -53,6 +52,11 @@ export default function MyProfilePage() {
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "../../../public/images/default_image.png"
   
+  // 임시: 실제 환경에서는 로그인 유저 id를 동적으로 받아야 함
+  const userId = 'user1';
+  const user = users.find(u => u.id === userId);
+  const { handleColorChange, bgColor, handleBgColorChange } = useBgColor(user?.background_color || 'bg-[#F2F2F2]');
+
   // [새로고침시] ProfileImages 로드 훅 사용
   useProfileImagesLoad({
     setImages: setImages as Dispatch<SetStateAction<ImageData[]>>,
@@ -177,10 +181,10 @@ export default function MyProfilePage() {
   }, [images]);
 
   return (
-    <div className="grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden">
+    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? bgColor : ''}`}>
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
-      <div className={`${leftBgColor} flex flex-col px-4 py-12`}>
-        {!isSearchMode && (
+      <div className={`flex flex-col px-4 py-12 backdrop-blur-lg z-10 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
+        {!isSearchMode ? ( 
           <ProfileHeader
             profile={profile}
             isEditing={isEditing}
@@ -189,17 +193,22 @@ export default function MyProfilePage() {
             onSaveClick={() => savePositions(images, positions)}
             onGenerateProfile={generateProfile}
           />
+        ):(
+            <>
+            <SearchHeader onBack={() => setIsSearchMode(false)} />
+            </>
         )}
       </div>
       {/* 오른쪽: 무드보드/이미지/카드 등 */}
-      <div className={`relative flex flex-col h-full w-full ${rightBgColor}`} ref={boardRef}>
+      <div className={`relative flex flex-col h-full w-full ${!isSearchMode ? bgColor : ''}`} ref={boardRef}>
         {/* 프로필 무드보드 텍스트 */}
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-24 text-center text-black text-md font-bold bg-gradient-to-r 
-            from-gray-700 via-gray-200 to-gray-700  bg-[length:200%_100%] 
-            bg-clip-text text-transparent animate-gradient-move"
+          className={`absolute left-1/2 -translate-x-1/2 top-24 text-center text-black text-md font-bold bg-gradient-to-r 
+            bg-[length:200%_100%] 
+            bg-clip-text text-transparent animate-gradient-move ${!isSearchMode ? 'from-gray-700 via-gray-200 to-gray-700' : 'from-white via-[#3B71FE] to-white bg-[length:200%_100%] '}`}
         >
-          {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 의 알고리즘 프로필 무드보드
+          {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 
+          {isSearchMode ? '알고리즘 프로필 무드보드에서 궁금한 키워드를 선택해주세요' : '의 알고리즘 프로필 무드보드'}
         </div>
 
         {/* 검색 모드 UI -> SearchModeUI.tsx */}
@@ -268,7 +277,7 @@ export default function MyProfilePage() {
         {isEditing && !isSearchMode && (
           <ColorPaletteBoard
             colorOptions={colorOptions}
-            rightBgColor={rightBgColor}
+            bgColor={bgColor}
             onColorChange={handleColorChange}
           />
         )}

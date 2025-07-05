@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, RotateCcw } from "lucide-react";
 import { getLatestProfileData } from '@/app/utils/getProfileData';
@@ -22,8 +22,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     onGenerateProfile,
     isOwner = true,
     }) => {
-    const fallbackProfile = getLatestProfileData();
-    console.log('🔥 fallbackProfile:', fallbackProfile);
+    const displayProfile = useMemo(() => getLatestProfileData(), []);
+    
+    //console.log('🔥 fallbackProfile:', displayProfile);
     //const displayProfile = profile || fallbackProfile;
 
     return (
@@ -37,12 +38,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
             <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight">
-                {fallbackProfile.nickname ? `${fallbackProfile.nickname}` : 'My 무드보드'}
+                {displayProfile?.nickname ? displayProfile.nickname : 'My 무드보드'}
             </h1>
             </div>
             {/* 닉네임 설명 */}
             <div className="text-gray-700 text-sm leading-relaxed mt-2">
-            {fallbackProfile.description || '나만의 알고리즘 프로필을 생성해보세요.'}
+            {displayProfile?.description || '나만의 알고리즘 프로필을 생성해보세요.'}
             </div>
             
             {/* 별명 생성 버튼 (isOwner가 true일 때만 렌더링) 

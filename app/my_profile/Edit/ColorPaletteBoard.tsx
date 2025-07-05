@@ -7,13 +7,13 @@ interface ColorOption {
 
 interface ColorPaletteBoardProps {
   colorOptions: ColorOption[];
-  rightBgColor: string;
+  bgColor: string;
   onColorChange: (colorClass: string) => void;
 }
 
 const ColorPaletteBoard: React.FC<ColorPaletteBoardProps> = ({
   colorOptions,
-  rightBgColor,
+  bgColor,
   onColorChange,
 }) => (
   <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm pr-10 pl-10 py-4 rounded-[60px] shadow-lg z-50">
@@ -27,7 +27,7 @@ const ColorPaletteBoard: React.FC<ColorPaletteBoardProps> = ({
             className={`
               w-6 h-6 rounded-full ${color.class} transition-all duration-300
               hover:scale-110 shadow-md hover:shadow-lg
-              ${rightBgColor === color.class ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+              ${bgColor === color.class ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
               relative group
             `}
           >

@@ -47,6 +47,7 @@ export function useBgColor(defaultRightColor: string = 'bg-[#F2F2F2]') {
     
     localStorage.setItem('moodboard-right-bg-color', colorClass);
     localStorage.setItem('moodboard-left-bg-color', leftColor);
+    localStorage.setItem('user-profile-background-color', colorClass);
   };
 
   return { 
