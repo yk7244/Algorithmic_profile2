@@ -53,28 +53,28 @@ const VideoList: React.FC<VideoListProps> = ({
         <div className="grid grid-cols-2 gap-4">
             {videos.map((video, idx) => (
                 <div key={`${video.embedId}-${idx}`} className="space-y-2">
-                    <div
-                        className="relative w-full bg-gray-100 rounded-lg overflow-hidden cursor-pointer aspect-video"
-                        onClick={() => {
-                            onVideoClick(video);
-                            window.open(`https://www.youtube.com/watch?v=${video.embedId}`, '_blank');
-                        }}
+                    <a
+                        href={`https://www.youtube.com/watch?v=${video.embedId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative w-full bg-gray-100 rounded-lg overflow-hidden cursor-pointer aspect-video block"
+                        onClick={() => onVideoClick(video)}
                     >
-                        <iframe
-                            id={`player-${video.embedId}-${idx}`}
-                            className="absolute inset-0 w-full h-full"
-                            src={`https://www.youtube.com/embed/${video.embedId}?enablejsapi=1`}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            title={video.title}
+                        <img
+                            src={`https://img.youtube.com/vi/${video.embedId}/hqdefault.jpg`}
+                            alt={video.title}
+                            className="absolute inset-0 w-full h-full object-cover"
                         />
+                        {/* 시청 여부 표시 */}
+                        {/*
                         <div className={`absolute bottom-1 right-1 flex items-center gap-1 px-1.5 py-0.5 rounded-full backdrop-blur-sm transition-all duration-300 ${watchedVideos.includes(video.embedId) ? "bg-green-500/80 text-white" : "bg-gray-900/80 text-gray-200"}`}>
                             <CheckCircle2 className={`h-2.5 w-2.5 ${watchedVideos.includes(video.embedId) ? "text-white" : "text-gray-400"}`} />
                             <span className="text-xs font-medium">
                                 {watchedVideos.includes(video.embedId) ? "시청함" : "시청안함"}
                             </span>
                         </div>
-                    </div>
+                        */}
+                    </a>
                     <h5 className="text-xs font-medium text-gray-800 truncate leading-tight">
                         {titlePrefix && <span className="text-blue-500 font-semibold">{titlePrefix}</span>}
                         {video.title}

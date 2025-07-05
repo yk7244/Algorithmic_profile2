@@ -43,7 +43,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         const [showRecommendations, setShowRecommendations] = useState(false); // 추천영상 토글
         const router = useRouter();
         const { handleAddAsInterest } = useAddAsInterest(setShowDetails);
-        const { isLoading: isLoadingAiVideos, videos: aiRecommendedVideos, fetchAndSet: fetchAndSetVideos } = useRecommend(image);
+        const { isLoading: isLoadingAiVideos, videos: aiRecommendedVideos, fetchAndSet: fetchAndSetVideos, nextPageToken } = useRecommend(image);
 
         useEffect(() => {
             if (showDetails && image.main_keyword && (isOwner || image.desired_self)) {
@@ -84,7 +84,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
         return (
         <Dialog open={showDetails} onOpenChange={setShowDetails} >
-            <DialogContent className="fixed left-1/2 top-1/2 w-[36vw] max-w-3xl h-[90vh] -translate-x-0 -translate-y-1/2 border-20 bg-background p-0 shadow-lg flex flex-col overflow-hidden rounded-2lg">
+            <DialogContent className="fixed left-1/2 top-1/2 w-[36vw] min-w-[32rem] max-w-3xl h-[90vh] -translate-x-0 -translate-y-1/2 border-20 bg-background p-0 shadow-lg flex flex-col overflow-hidden rounded-2lg">
                 
                 {/* 페이지 1: 풀스크린 이미지 배경과 텍스트 오버레이 */}
                 {currentPage === 1 && (
@@ -137,7 +137,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                             {/* 설명 */}
                             <div className="text-left mb-8 max-w-2xl mx-auto">
-                                <p className="text-md sm:text-lg leading-relaxed text-white/90 mb-2">
+                                <p className="text-[15px] leading-relaxed text-white/90 mb-2">
                                     {image.description}
                                     <br />
                                     <br />
@@ -244,7 +244,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             {/* 일반 클러스터 */}
                                             {!image.desired_self ? (
                                                 <>
-                                                <p className="mb-4 text-md text-gray-600 font-bold"> 아래의 시청 기록들이 알고리즘에 반영되었어요.</p>
+                                                <p className="mb-4 text-md text-gray-600 font-bold"> 아래의 {image.relatedVideos.length}개의 시청 기록들이 알고리즘에 반영되었어요.</p>
                                     
                                                 {!showWatchHistory && (
                                                     <Button
@@ -276,16 +276,28 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 )}
                                                 
                                                 {showRecommendations && (
-                                                    <VideoList
-                                                        isLoading={isLoadingAiVideos}
-                                                        videos={aiRecommendedVideos}
-                                                        watchedVideos={watchedVideos}
-                                                        onVideoClick={handleVideoClick}
-                                                        titlePrefix="AI 추천: "
-                                                        isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
-                                                        emptyMessage="AI 추천 영상을 가져올 수 없습니다."
-                                                        onRetry={fetchAndSetVideos}
-                                                    />
+                                                    <>
+                                                        <VideoList
+                                                            isLoading={isLoadingAiVideos}
+                                                            videos={aiRecommendedVideos}
+                                                            watchedVideos={watchedVideos}
+                                                            onVideoClick={handleVideoClick}
+                                                            titlePrefix="AI 추천: "
+                                                            isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
+                                                            emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                            onRetry={fetchAndSetVideos}
+                                                        />
+                                                        {nextPageToken && (
+                                                            <div className="flex justify-center mt-4">
+                                                                <Button
+                                                                    onClick={() => fetchAndSetVideos(true)}
+                                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transition-all duration-300"
+                                                                >
+                                                                    더보기
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                                 </>
                                             ) : (
@@ -321,16 +333,28 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                     </p>
                                                     
                                                     {showRecommendations && (
-                                                        <VideoList
-                                                            isLoading={isLoadingAiVideos}
-                                                            videos={aiRecommendedVideos}
-                                                            watchedVideos={watchedVideos}
-                                                            onVideoClick={handleVideoClick}
-                                                            titlePrefix="AI 추천: "
-                                                            isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
-                                                            emptyMessage="AI 추천 영상을 가져올 수 없습니다."
-                                                            onRetry={fetchAndSetVideos}
-                                                        />
+                                                        <>
+                                                            <VideoList
+                                                                isLoading={isLoadingAiVideos}
+                                                                videos={aiRecommendedVideos}
+                                                                watchedVideos={watchedVideos}
+                                                                onVideoClick={handleVideoClick}
+                                                                titlePrefix="AI 추천: "
+                                                                isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
+                                                                emptyMessage="AI 추천 영상을 가져올 수 없습니다."
+                                                                onRetry={fetchAndSetVideos}
+                                                            />
+                                                            {nextPageToken && (
+                                                                <div className="flex justify-center mt-4">
+                                                                    <Button
+                                                                        onClick={() => fetchAndSetVideos(true)}
+                                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transition-all duration-300"
+                                                                    >
+                                                                        더보기
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </>
                                                     )}
                                                 </div>
                                             )}

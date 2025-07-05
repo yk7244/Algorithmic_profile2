@@ -81,7 +81,13 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
     // 썸네일 배열 생성
     const thumbnailObj = getThumbnailData(image.main_keyword);
     const thumbnails: string[] = Array.isArray(thumbnailObj?.src) ? thumbnailObj.src : [];
-    console.log(thumbnails);
+
+    // 관련 영상 썸네일 동적 생성
+    const relatedThumbnails: { url: string; embedId: string; title: string }[] = (image.relatedVideos || []).map((video: any) => ({
+        url: `https://img.youtube.com/vi/${video.embedId}/hqdefault.jpg`,
+        embedId: video.embedId,
+        title: video.title || '',
+    }));
 
     return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,18 +161,16 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
                                                     </div>
                                                 </div>
                                                 {/* 나머지 썸네일들 */}
-                                                {thumbnails.slice(1).map((url: string, idx: number) => (
-                                                    <div key={idx} className="relative group">
-                                                    <div
-                                                        className="aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer border hover:shadow-md transition-all"
-                                                    >
-                                                        <img
-                                                        src={url}
-                                                        alt={`썸네일 ${idx + 2}`}
-                                                        className="w-full h-full object-cover"
-                                                        onError={e => { (e.target as HTMLImageElement).src = '/images/placeholder.jpg'; }}
-                                                        />
-                                                    </div>
+                                                {relatedThumbnails.map((item, idx) => (
+                                                    <div key={item.embedId} className="relative group">
+                                                        <div className="aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer border hover:shadow-md transition-all">
+                                                            <img
+                                                                src={item.url}
+                                                                alt={item.title}
+                                                                className="w-full h-full object-cover"
+                                                                onError={e => { (e.target as HTMLImageElement).src = '/images/placeholder.jpg'; }}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 ))}
                                                 </>

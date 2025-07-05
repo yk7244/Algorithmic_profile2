@@ -11,7 +11,7 @@ export function getThumbnailData(main_keyword: string) {
     return thumbnailData ? JSON.parse(thumbnailData).find((item: ThumbnailData) => item.main_keyword === main_keyword) : null;
 }
 
-// 클러스터에서 점수 높은 영상 15개까지 썸네일 저장
+// 클러스터에서 점수 높은 영상 1개까지 썸네일 저장
 export function saveTopThumbnails(cluster: any) {
     const clusterKeywords = (cluster.main_keyword || "").toLowerCase().split(/\s+/);
 
@@ -29,13 +29,13 @@ export function saveTopThumbnails(cluster: any) {
         return { video, matches };
         });
 
-    // 점수 내림차순 정렬 후 상위 15개만 추출
+    // 점수 내림차순 정렬 후 상위 1개만 추출
     const topVideos = scoredVideos
         .sort((a: { matches: number }, b: { matches: number }) => b.matches - a.matches)
-        .slice(0, 15)
+        .slice(0, 1)
         .map((item: { video: any; matches: number }) => item.video);
 
-    // 썸네일 URL 배열 생성
+    // 썸네일 URL 배열 생성 (1개만 포함)
     const srcArray = topVideos.map((video: any) => getYouTubeThumbnail(video.embedId));
 
     // ThumbnailData 객체 생성
