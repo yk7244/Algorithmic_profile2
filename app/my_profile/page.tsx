@@ -135,13 +135,7 @@ export default function MyProfilePage() {
   // localStorage 프로필 관리 훅 사용
   const { loadProfileFromStorage, isProfileExpired } = useProfileStorage();
 
-  //새로고침시 별명 생성/로드 훅 사용
-  useInitialProfileLoad({
-    loadProfileFromStorage,
-    isProfileExpired,
-    generateProfile,
-    setProfile,
-  });
+  
 
   const boardRef = useRef<HTMLDivElement>(null);
 

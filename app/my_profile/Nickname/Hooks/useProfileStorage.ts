@@ -28,7 +28,7 @@ const loadProfileFromStorage = (): ProfileData | null => {
 
 // 프로필 만료 여부 확인 (7일 기준)
 const isProfileExpired = (profileData: ProfileData): boolean => {
-    const updatedAt = new Date(profileData.updated_at);
+    const updatedAt = new Date(profileData.created_at);
     const now = new Date();
     const diffDays = (now.getTime() - updatedAt.getTime()) / (1000 * 60 * 60 * 24);
     return diffDays > 7; // 7일 이상 지나면 만료

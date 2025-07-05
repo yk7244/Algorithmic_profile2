@@ -1,61 +1,64 @@
+import { ThumbnailData } from "../../types/profile";
+import { saveThumbnail } from "../../utils/saveThumnail";
+
 // YouTube 썸네일 URL 생성 함수
-export const getYouTubeThumbnail = (embedId: string) => {
-if (!embedId) return '/images/default_image.png';
-return `https://img.youtube.com/vi/${embedId}/mqdefault.jpg`;
-};
+export function getYouTubeThumbnail(videoId: string) {
+  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+}
+
+export function getThumbnailData(main_keyword: string) {
+    const thumbnailData = localStorage.getItem('thumbnailData');
+    return thumbnailData ? JSON.parse(thumbnailData).find((item: ThumbnailData) => item.main_keyword === main_keyword) : null;
+}
+
+// 클러스터에서 점수 높은 영상 1개까지 썸네일 저장
+export function saveTopThumbnails(cluster: any) {
+    const clusterKeywords = (cluster.main_keyword || "").toLowerCase().split(/\s+/);
+
+    // 각 영상의 제목과 키워드 매칭 점수 계산
+    const scoredVideos = (cluster.related_videos || [])
+        .filter((video: any) => video.title && video.embedId)
+        .map((video: any) => {
+        const videoTitle = video.title.toLowerCase();
+        let matches = 0;
+        clusterKeywords.forEach((keyword: string) => {
+            if (videoTitle.includes(keyword)) {
+            matches++;
+            }
+        });
+        return { video, matches };
+        });
+
+    // 점수 내림차순 정렬 후 상위 1개만 추출
+    const topVideos = scoredVideos
+        .sort((a: { matches: number }, b: { matches: number }) => b.matches - a.matches)
+        .slice(0, 1)
+        .map((item: { video: any; matches: number }) => item.video);
+
+    // 썸네일 URL 배열 생성 (1개만 포함)
+    const srcArray = topVideos.map((video: any) => getYouTubeThumbnail(video.embedId));
+
+    // ThumbnailData 객체 생성
+    const thumbnailData: ThumbnailData = {
+        main_keyword: cluster.main_keyword,
+        src: srcArray,
+    };
+
+    // 저장
+    saveThumbnail(cluster.main_keyword, thumbnailData);
+    console.log('저장된 썸네일 데이터:', thumbnailData);
+    return thumbnailData;
+}
 
 // 키워드 매칭으로 가장 적합한 썸네일 찾기
 export const findBestThumbnail = (cluster: any) => {
-if (!cluster.related_videos || cluster.related_videos.length === 0) {
-    return '/images/default_image.png';
-}
-
-// 클러스터 키워드들을 배열로 변환
-const clusterKeywords = cluster.keyword_list
-    ?.split(',')
-    .map((k: string) => k.trim().toLowerCase().replace(/\s*\(\d+회?\)\s*/g, '')) // "(12회)" 같은 빈도 제거
-    .filter(Boolean) || [];
-
-if (clusterKeywords.length === 0) {
-    // 키워드가 없으면 첫 번째 영상 사용
-    return getYouTubeThumbnail(cluster.related_videos[0].embedId);
-}
-
-let bestVideo = cluster.related_videos[0];
-let maxMatches = 0;
-
-// 각 영상의 제목과 키워드 매칭 점수 계산
-cluster.related_videos.forEach((video: any) => {
-    if (!video.title) return;
     
-    const videoTitle = video.title.toLowerCase();
-    let matches = 0;
-    
-    clusterKeywords.forEach((keyword: string) => {
-    if (videoTitle.includes(keyword)) {
-        matches++;
-    }
-    });
-    
-    if (matches > maxMatches) {
-    maxMatches = matches;
-    bestVideo = video;
-    }
-});
-
-console.log(`클러스터 "${cluster.keyword_list}" 최적 썸네일: ${bestVideo.title} (매칭: ${maxMatches}개)`);
-return getYouTubeThumbnail(bestVideo.embedId);
+    const thumbnailData = saveTopThumbnails(cluster);
+    console.log('정렬된 썸네일 데이터:', thumbnailData);
+    return thumbnailData && thumbnailData.src && thumbnailData.src.length > 0
+    ? thumbnailData.src[0]
+    : '/images/default_image.png'; // 없으면 기본 이미지
 };
 
-// 고화질 썸네일 (maxresdefault) 시도 후 실패시 기본 화질로 fallback
-export const getYouTubeThumbnailHQ = (embedId: string) => {
-if (!embedId) return '/images/default_image.png';
 
-// 고화질 먼저 시도
-const hqUrl = `https://img.youtube.com/vi/${embedId}/maxresdefault.jpg`;
-const defaultUrl = `https://img.youtube.com/vi/${embedId}/mqdefault.jpg`;
-
-// 실제 사용시에는 이미지 로드 체크가 필요하지만, 일단 기본 화질 반환
-return defaultUrl;
-};
 

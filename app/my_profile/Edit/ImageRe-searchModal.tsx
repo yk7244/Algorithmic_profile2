@@ -3,6 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import type { VideoData } from "../Draggable/DraggableImage";
+import { ThumbnailData } from "@/app/types/profile";
+import { getThumbnailData } from "@/app/utils/getThumnail";
 
 interface ImageResearchModalProps {
     open: boolean;
@@ -21,9 +23,7 @@ interface ImageResearchModalProps {
     setShowThumbnailModal: (v: boolean) => void;
 }
 
-const getYouTubeThumbnail = (videoId: string) => {
-  return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-};
+
 
 const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
     open,
@@ -61,8 +61,8 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
 
     const handleTempImageSelect = (selectedImage: any, source: 'thumbnail' | 'search') => {
         if (source === 'thumbnail') {
-            const thumbnailUrl = getYouTubeThumbnail(selectedImage.embedId);
-            setTempImage({ src: thumbnailUrl, keyword: image.main_keyword });
+            const thumbnailData = getThumbnailData(selectedImage.embedId);
+            setTempImage({ src: thumbnailData?.src[0] || '', keyword: image.main_keyword });
         } else {
             setTempImage({ 
                 src: selectedImage.urls.regular, 
@@ -77,6 +77,17 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
             onOpenChange(false);
         }
     };
+
+    // 썸네일 배열 생성
+    const thumbnailObj = getThumbnailData(image.main_keyword);
+    const thumbnails: string[] = Array.isArray(thumbnailObj?.src) ? thumbnailObj.src : [];
+
+    // 관련 영상 썸네일 동적 생성
+    const relatedThumbnails: { url: string; embedId: string; title: string }[] = (image.relatedVideos || []).map((video: any) => ({
+        url: `https://img.youtube.com/vi/${video.embedId}/hqdefault.jpg`,
+        embedId: video.embedId,
+        title: video.title || '',
+    }));
 
     return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -133,32 +144,38 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
                                         style={{ height: '350px' }}
                                     >
                                         <div className="grid grid-cols-2 gap-3">
-                                            {(image.relatedVideos || []).map((video: VideoData, idx: number) => (
-                                                <div key={idx} className="relative group">
-                                                    <div 
-                                                        className="aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer border hover:shadow-md transition-all"
-                                                        onClick={() => {
-                                                            handleTempImageSelect(video, 'thumbnail');
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src={getYouTubeThumbnail(video.embedId)}
-                                                            alt={video.title}
-                                                            className="w-full h-full object-cover"
-                                                            onError={(e) => {
-                                                                const target = e.target as HTMLImageElement;
-                                                                target.src = '/images/placeholder.jpg';
-                                                            }}
-                                                        />
+                                            {thumbnails && thumbnails.length > 0 && (
+                                                <>
+                                                {/* 대표(최상위) 썸네일 */}
+                                                <div className="relative group col-span-2">
+                                                    <div className="aspect-square rounded-lg overflow-hidden shadow-sm border-2 border-blue-500">
+                                                    <img
+                                                        src={thumbnails[0]}
+                                                        alt="대표 썸네일"
+                                                        className="w-full h-full object-cover"
+                                                        onError={e => { (e.target as HTMLImageElement).src = '/images/placeholder.jpg'; }}
+                                                    />
                                                     </div>
-                                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                                                        <button className="bg-white text-gray-800 px-3 py-1.5 rounded-full text-sm font-medium shadow-sm">
-                                                            선택하기
-                                                        </button>
+                                                    <div className="absolute bottom-2 left-2 bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow">
+                                                    알고리즘이 선택한 사진
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                                {/* 나머지 썸네일들 */}
+                                                {relatedThumbnails.map((item, idx) => (
+                                                    <div key={item.embedId} className="relative group">
+                                                        <div className="aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer border hover:shadow-md transition-all">
+                                                            <img
+                                                                src={item.url}
+                                                                alt={item.title}
+                                                                className="w-full h-full object-cover"
+                                                                onError={e => { (e.target as HTMLImageElement).src = '/images/placeholder.jpg'; }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                </>
+                                            )}
+                                            </div>
                                     </div>
                                     <div className="text-xs text-gray-500 text-center mt-4 mb-22">
                                             * 시청하신 영상들의 썸네일 이미지를 보여드립니다.

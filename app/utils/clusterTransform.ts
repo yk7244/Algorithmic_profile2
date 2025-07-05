@@ -49,8 +49,8 @@ export const transform = (
     mood_keyword: cluster.mood_keyword || '',
     description: cluster.description || '',
     category: cluster.category?.toLowerCase() || 'other',
-    keywords: keywords.slice(0, 5),
-    relatedVideos: relatedVideos.slice(0, 5),
+    keywords: keywords,
+    relatedVideos: relatedVideos,
     sizeWeight,
 
     desired_self: false,
