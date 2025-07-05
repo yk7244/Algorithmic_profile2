@@ -1,162 +1,698 @@
-import { ProfileData, ImageData } from '@/app/types/profile';
+import { UserData, ImageData } from '@/app/types/profile';
+import { ProfileData } from '@/app/types/profile';
 
-interface DummyUserData {
-profile: ProfileData;
-images: ImageData[];
-}
 
-const addDefaultImageFields = (image: any): ImageData => {
-    const defaults = {
+
+// UserData 테이블
+export const users: UserData[] = [
+    {
+        id: 'user1',
+        email: 'user1@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user2',
+        email: 'user2@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user3',
+        email: 'user3@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user4',
+        email: 'user4@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user5',
+        email: 'user5@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user6',
+        email: 'user6@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user7',
+        email: 'user7@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user8',
+        email: 'user8@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user9',
+        email: 'user9@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+    {
+        id: 'user10',
+        email: 'user10@example.com',
+        background_color: '#f0f0f0',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    },
+];
+
+// ImageData 테이블
+export const images: ImageData[] = [
+  // user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy1-1',
+        user_id: 'user1',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
         desired_self_profile: null,
         metadata: {},
         rotate: 0,
         width: 300,
         height: 200,
-        cluster: 'default',
-        color: 'default',
-        // 'src'는 이미 image 객체에 있다고 가정
-        // 'alt'는 이미 image 객체에 있다고 가정
-        // ... MoodboardImageData가 요구하는 다른 모든 필수 필드들
-    };
-    return { ...defaults, ...image };
-}
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy1-2',
+        user_id: 'user1',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
 
-export const dummyUsers: Record<string, DummyUserData> = {
-'user1': {
-    profile: {
+// ImageData 테이블
+export const images2: ImageData[] = [    
+// user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy2-1', 
+        user_id: 'user2',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy2-2',
+        user_id: 'user2',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+
+export const images3: ImageData[] = [    
+// user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy3-1', 
+        user_id: 'user3',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy3-2',
+        user_id: 'user3',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+
+export const images4: ImageData[] = [    
+// user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy2-1', 
+        user_id: 'user2',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy2-2',
+        user_id: 'user2',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+
+export const images5: ImageData[] = [    
+    // user1 (ImageData 타입에 완벽히 맞춤)
+        {
+            id: 'dummy5-1', 
+            user_id: 'user5',
+            main_keyword: '풍경',
+            keywords: ['산', '강', '하늘', '자연'],
+            mood_keyword: '#평화로운 #고요한',
+            description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+            category: '여행',
+            sizeWeight: 0.03,
+            src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+            relatedVideos: [
+            { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+            ],
+            desired_self: false,
+            desired_self_profile: null,
+            metadata: {},
+            rotate: 0,
+            width: 300,
+            height: 200,
+            left: '50px',
+            top: '100px',
+            position: { x: 50, y: 100 },
+            frameStyle: 'healing',
+            created_at: new Date().toISOString(),
+        },
+        {
+            id: 'dummy2-2',
+            user_id: 'user2',
+            main_keyword: '호수',
+            keywords: ['호수', '데크', '새벽', '안개'],
+            mood_keyword: '#차분한 #명상적인',
+            description: '고요한 호숫가의 나무 데크입니다.',
+            category: '휴식',
+            sizeWeight: 0.05,
+            src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+            relatedVideos: [
+            { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+            ],
+            desired_self: false,
+            desired_self_profile: null,
+            metadata: {},
+            rotate: 0,
+            width: 300,
+            height: 200,
+            left: '350px',
+            top: '250px',
+            position: { x: 350, y: 250 },
+            frameStyle: 'love',
+            created_at: new Date().toISOString(),
+        },
+];
+
+export const images6: ImageData[] = [
+    // user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy6-1',
+        user_id: 'user6',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy6-2',
+        user_id: 'user6',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+
+  // ImageData 테이블
+export const images7: ImageData[] = [    
+  // user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy7-1', 
+        user_id: 'user7',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy7-2',
+        user_id: 'user7',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+  
+export const images8: ImageData[] = [    
+  // user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy8-1', 
+        user_id: 'user8',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy8-2',
+        user_id: 'user8',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+  
+export const images9: ImageData[] = [    
+  // user1 (ImageData 타입에 완벽히 맞춤)
+    {
+        id: 'dummy9-1', 
+        user_id: 'user9',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+        id: 'dummy9-2',
+        user_id: 'user9',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+  
+export const images10: ImageData[] = [    
+      // user1 (ImageData 타입에 완벽히 맞춤)
+    {
+    id: 'dummy10-1', 
+    user_id: 'user10',
+        main_keyword: '풍경',
+        keywords: ['산', '강', '하늘', '자연'],
+        mood_keyword: '#평화로운 #고요한',
+        description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
+        category: '여행',
+        sizeWeight: 0.03,
+        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '50px',
+        top: '100px',
+        position: { x: 50, y: 100 },
+        frameStyle: 'healing',
+        created_at: new Date().toISOString(),
+    },
+    {
+    id: 'dummy10-2',
+        user_id: 'user10',
+        main_keyword: '호수',
+        keywords: ['호수', '데크', '새벽', '안개'],
+        mood_keyword: '#차분한 #명상적인',
+        description: '고요한 호숫가의 나무 데크입니다.',
+        category: '휴식',
+        sizeWeight: 0.05,
+        src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
+        relatedVideos: [
+        { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 300,
+        height: 200,
+        left: '350px',
+        top: '250px',
+        position: { x: 350, y: 250 },
+        frameStyle: 'love',
+        created_at: new Date().toISOString(),
+    },
+];
+
+export const userImages: Record<string, ImageData[]> = {
+  user1: images,
+  user2: images2,
+  user3: images3,
+  user4: images4,
+  user5: images5,
+  user6: images6,
+  user7: images7,
+  user8: images8,
+  user9: images9,
+  user10: images10,
+};
+
+// ProfileData 테이블 (닉네임, 설명 등)
+export const profiles: ProfileData[] = [
+  {
     id: 'user1',
     nickname: '여행가 감자',
     description: '아름다운 풍경을 찾아 떠나는 것을 좋아합니다. 저의 여정을 함께해요!',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    },
-    images: [
-        addDefaultImageFields({
-            id: 'dummy1-1',
-            user_id: 'user1',
-            src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
-            alt: 'A beautiful landscape with a river and mountains',
-            main_keyword: '풍경',
-            sub_keyword: '자연',
-            mood_keyword: '#평화로운 #고요한',
-            description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
-            position: { x: 50, y: 100 },
-            left: '50px',
-            top: '100px',
-            frameStyle: 'healing',
-            sizeWeight: 0.03,
-            category: "여행",
-            desired_self: false,
-            keywords: ["산", "강", "하늘", "자연"],
-            relatedVideos: [{ title: "아름다운 스위스 풍경", embedId: "f3I0_z_b-F4" }],
-        }),
-        addDefaultImageFields({
-            id: 'dummy1-2',
-            user_id: 'user1',
-            src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
-            alt: 'A serene lake with a wooden dock',
-            main_keyword: '호수',
-            sub_keyword: '물',
-            mood_keyword: '#차분한 #명상적인',
-            description: '고요한 호숫가의 나무 데크입니다.',
-            position: { x: 350, y: 250 },
-            left: '350px',
-            top: '250px',
-            frameStyle: 'love',
-            sizeWeight: 0.05,
-            category: "휴식",
-            desired_self: false,
-            keywords: ["호수", "데크", "새벽", "안개"],
-            relatedVideos: [{ title: "고요한 호수 소리", embedId: "m2-2B_2bL2E" }],
-        }),
-        addDefaultImageFields({
-            id: 'dummy1-3',
-            user_id: 'user1',
-            src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2071&auto=format&fit=crop',
-            alt: 'A dense forest with sunlight filtering through trees',
-            main_keyword: '숲',
-            sub_keyword: '나무',
-            mood_keyword: '#신비로운 #생명력',
-            description: '햇살이 스며드는 울창한 숲의 모습입니다.',
-            position: { x: 150, y: 400 },
-            left: '150px',
-            top: '400px',
-            frameStyle: 'normal',
-            sizeWeight: 0.04,
-            category: "자연",
-            desired_self: false,
-            keywords: ["숲", "나무", "햇살", "신비"],
-            relatedVideos: [{ title: "숲 속의 새소리", embedId: "xNN7iTA57jM" }],
-        }),
-        addDefaultImageFields({
-            id: 'dummy1-4',
-            user_id: 'user1',
-            src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=2074&auto=format&fit=crop',
-            alt: 'A night sky filled with stars over a mountain',
-            main_keyword: '별',
-            sub_keyword: '밤하늘',
-            mood_keyword: '#로맨틱한 #감동적인',
-            description: '산 위로 펼쳐진 별이 가득한 밤하늘입니다.',
-            position: { x: 500, y: 150 },
-            left: '500px',
-            top: '150px',
-            frameStyle: 'people',
-            sizeWeight: 0.045,
-            category: "천체",
-            desired_self: false,
-            keywords: ["별", "밤하늘", "은하수", "산"],
-            relatedVideos: [{ title: "밤하늘 타임랩스", embedId: "drGj8_tnq3A" }],
-        }),
-        addDefaultImageFields({
-            id: 'dummy1-5',
-            user_id: 'user1',
-            src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop',
-            alt: 'A beautiful sunset over the ocean with waves',
-            main_keyword: '바다',
-            sub_keyword: '일몰',
-            mood_keyword: '#따뜻한 #평온한',
-            description: '파도가 치는 바다 위로 지는 황금빛 일몰입니다.',
-            position: { x: 300, y: 500 },
-            left: '300px',
-            top: '500px',
-            frameStyle: 'pill',
-            sizeWeight: 0.035,
-            category: "바다",
-            desired_self: false,
-            keywords: ["바다", "일몰", "파도", "황금빛"],
-            relatedVideos: [{ title: "바다 파도 소리", embedId: "V1bFr2SWP1I" }],
-        })
-    ],
-    
-},
-'user2': {
-    profile: {
+  },
+  {
     id: 'user2',
     nickname: '고양이 집사',
     description: '귀여운 고양이들과 함께하는 일상을 공유합니다.',
     created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    },
-    images: [
-        addDefaultImageFields({
-            id: 'dummy2-1',
-            user_id: 'user2',
-            src: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?q=80&w=2043&auto=format&fit=crop',
-            alt: 'A cute cat looking at the camera',
-            main_keyword: '고양이',
-            sub_keyword: '동물',
-            mood_keyword: '#귀여운 #사랑스러운',
-            description: '카메라를 응시하는 귀여운 고양이',
-            position: { x: 100, y: 150 },
-            left: '100px',
-            top: '150px',
-            frameStyle: 'star',
-            sizeWeight: 0.05,
-            category: "반려동물",
-            desired_self: false,
-            keywords: ["고양이", "집사", "반려묘", "귀여움"],
-            relatedVideos: [{ title: "웃긴 고양이 영상", embedId: "hY7m5jjJ9e4" }],
-        })
-    ],
-},
-}; 
+  },
+  {
+    id: 'user3',
+    nickname: '커피 애호가',
+    description: '세상 모든 카페를 탐방하는 커피 마니아입니다.',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user4',
+    nickname: '영화광',
+    description: '최신 영화부터 고전 명작까지 모두 사랑하는 영화 덕후!',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user5',
+    nickname: '요리하는 남자',
+    description: '맛있는 요리로 행복을 나누는 셰프입니다.',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user6',
+    nickname: '책벌레',
+    description: '책 속에서 세상을 배우는 독서가입니다.',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user7',
+    nickname: '운동하는 개발자',
+    description: '코딩도 운동도 열정적으로!',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user8',
+    nickname: '사진작가',
+    description: '세상의 아름다움을 사진에 담는 작가입니다.',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user9',
+    nickname: '음악가',
+    description: '음악으로 감정을 표현하는 뮤지션입니다.',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'user10',
+    nickname: '여행 사진가',
+    description: '여행하며 만난 순간을 사진으로 남깁니다.',
+    created_at: new Date().toISOString(),
+  },
+];

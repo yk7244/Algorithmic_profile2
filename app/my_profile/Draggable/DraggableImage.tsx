@@ -167,10 +167,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         }}
                     >
                         <div 
-                        className="px-8 py-4"
+                        className="py-4"
                         >
                         
-                        <span className={`font-bold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
+                        <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
                             #{image.main_keyword}
                         </span>
                         </div>
@@ -179,20 +179,20 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                     {/* 이미지 */}
                     <SheetTrigger asChild>
                         <div 
-                        className={`relative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
+                        className={`rrelative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                         >
                         <div
                             style={{
                             ...getClipPath(),
                             }}
                             className={`relative w-full h-full ${getFrameStyle()} overflow-hidden ${
-                                isSelected ? 'ring-4 ring-white ring-opacity-70 shadow-xl' : ''
+                                isSelected ? 'ring-2 ring-white ring-opacity-70 shadow-xl' : ''
                             }`}
                         >
                             <img
                                 src={imageLoadError ? "/images/default_image.png" : image.src}
                                 alt={image.main_keyword}
-                                className={`w-full h-full object-cover shadow-lg transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
+                                className={`w-full h-full object-cover shadow-xl transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isEditing && isSearchMode) {
