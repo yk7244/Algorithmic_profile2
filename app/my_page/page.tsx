@@ -6,6 +6,10 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { CheckCircle2, UserPlus, UserX } from 'lucide-react';
 import { ExploreWatchHistory, WatchHistory } from '../types/profile';
+import { getClusterHistory } from '@/app/utils/get/getClusterHistory';
+import { ClusterHistory } from '@/app/types/profile';
+import { ClusterHistoryCard } from './History/ClusterHistoryCard';  
+import { UpdateCard } from './History/UpdateCard';
 // 페이지 컴포넌트에 전달될 props가 있다면 여기에 타입을 정의할 수 있습니다.
 // interface PageProps {
 //   // 예: params: { slug: string };
@@ -27,6 +31,8 @@ interface ProfileImage {
   [key: string]: any;
 }
 
+
+
 // 실제 페이지 이름으로 함수 이름을 변경하세요. (예: UpdatePage, SearchMapPage)
 export default function MyPage() {
   const { logout } = useAuth();
@@ -35,6 +41,8 @@ export default function MyPage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileImages, setProfileImages] = useState<ProfileImage[]>([]);
   const [profileImageUrl, setProfileImageUrl] = useState<string>('images/default.png');
+  const [watchHistory, setWatchHistory] = useState<ExploreWatchHistory[]>([]);
+  const [clusterHistory, setClusterHistory] = useState<ClusterHistory[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -72,15 +80,16 @@ export default function MyPage() {
       }
     }
   }, []);
-  const [watchHistory, setWatchHistory] = useState<ExploreWatchHistory[]>([]);
+
+  
 
   useEffect(() => {
-    // 로컬 스토리지에서 시청 기록 불러오기
-    const history = localStorage.getItem('exploreWatchHistory');
-    if (history) {
-      setWatchHistory(JSON.parse(history));
-    }
+    setClusterHistory(getClusterHistory());
   }, []);
+
+  // 최신 기록 날짜 구하기
+  const latestEntry = clusterHistory[clusterHistory.length - 1];
+  
 
   // 기본값
   const nickname = profile?.nickname || '닉네임';
@@ -132,65 +141,22 @@ export default function MyPage() {
       {/* 오른쪽 내용 */}
       <main className="flex-1 flex flex-col items-start justify-start w-full box-border pt-20 pr-10 pl-10 mt-10 overflow-hidden">
         {activeTab === 'profile' && (
-          <div className="w-full max-w-none bg-white rounded-2xl shadow-sm border border-gray-200 p-10 flex">
-            {/* 프로필 사진 */}
-            <div className="flex-shrink-0 flex flex-col items-center justify-center mr-12">
-              <img
-                src={profileImageUrl}
-                alt="프로필 사진"
-                className="w-48 h-48 rounded-full object-cover"
-              />
+          <>
+            {/* 최신 기록 날짜 안내 */}
+            {clusterHistory.length > 0 && (
+              <UpdateCard history={latestEntry} />
+            )}
+            {/* ClusterHistory 카드 리스트 */}
+            <div className="mt-8 scrollbar-auto">
+              {clusterHistory.length === 0 ? (
+                <div className="text-gray-400 text-base py-10">아직 분석 이력이 없습니다.</div>
+              ) : (
+                clusterHistory.map((history, idx) => (
+                  <ClusterHistoryCard key={history.id ? `cluster-${history.id}-${idx}` : `cluster-fallback-${idx}`} history={history} />
+                ))
+              )}
             </div>
-            {/* 프로필 정보 - 2단 pill 라벨 그리드 */}
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="grid grid-cols-[70px_1fr] gap-y-4 gap-x-6 items-center">
-                <span className="text-gray-400 text-sm ">닉네임</span>
-                <span className="font-bold text-lg text-gray-900">{nickname}</span>
-                <span className="text-gray-400 text-sm">취향 설명</span>
-                <span className="text-gray-500 text-base leading-relaxed">{description}</span>
-              </div>
-              <div className="flex items-center mt-8 mb-2">
-                <span className="text-sm text-gray-500">내 프로필 공개</span>
-                <button
-                  onClick={() => setIsProfilePublic(!isProfilePublic)}
-                  className={`ml-4 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    isProfilePublic ? 'bg-blue-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      isProfilePublic ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              {/* 프로필 업데이트 안내/버튼 */}
-              <div className="flex flex-col items-end mt-6">
-                {canUpdate ? (
-                  <div className="mb-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
-                    프로필을 업데이트할 수 있습니다!
-                  </div>
-                ) : (
-                  <div className="mb-2 px-4 py-2 bg-gray-100 text-gray-400 rounded-lg text-xs font-medium">
-                    프로필은 7일마다 한 번만 수정할 수 있습니다.
-                  </div>
-                )}
-                <Link href={canUpdate ? '/upload' : '#'} tabIndex={canUpdate ? 0 : -1}>
-                  <button
-                    disabled={!canUpdate}
-                    className={`rounded-full px-6 py-1.5 font-semibold shadow text-sm transition
-                      ${canUpdate
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }`}
-                    style={{ minWidth: 120 }}
-                  >
-                    {canUpdate ? '프로필 업데이트 하기' : '아직 업데이트 불가'}
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
+          </>
         )}
         {activeTab === 'open_setting' && (
           <div className="w-full mx-auto flex flex-col items-center justify-center py-2 pr-20">
