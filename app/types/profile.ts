@@ -12,6 +12,7 @@ export interface UserData {
   background_color: string;
   created_at: string;
   updated_at: string;
+  open_to_connect?: boolean; //search_map에서 사용
 
 }
 
@@ -30,36 +31,14 @@ export interface WatchHistory{
 
 //[2] ClusterHistory 테이블 -> utils/saveClusterHistory.ts 에서 저장함
 export interface ClusterHistory {
-  id: string;
-  user_id?: string; // 유저 아이디
+  id: string; // UUID/int PK
+  user_id: string; // UUID FK
 
-  main_keyword: string;
-  keywords: string[]; //sub_keyword
-  mood_keyword: string;
-  description: string;
-  category: string;
-  sizeWeight: number; //strength
-  src: string; //main_image_url
-  relatedVideos: {
-    title: string;
-    embedId: string;
-  }[];
-  desired_self: boolean;
-  desired_self_profile: any;
-  metadata: any;
+  nickname: string; // 당시의 별명 (ProfileData에서 복사)
+  description: string; // 당시의 별명의 설명 (ProfileData에서 복사)
 
-  rotate: number;
-  width: number;
-  height: number;
-  left: string;
-  top: string;
-  position: {
-    x: number;
-    y: number;
-  };
-  frameStyle: string; //normal로 고정 
-  created_at?: string;
-  date?: string;
+  images: ImageData[]; //profileImages로 복사되거나 ClusterHistory로 복사됨
+  created_at: string; // timestamp - 저장 시점
 }
 
 //[3]ImageData 테이블->배열 X(지금 profile에 보이는)-> 
@@ -100,9 +79,6 @@ export interface ProfileData {
   nickname: string;
   description: string;
   created_at: string;
-
-  profileImage?: string; //search_map에서 사용
-  open_to_connect?: boolean; //search_map에서 사용
 }
 
 // [5] SliderHistory 테이블 -> utils/saveSliderHistory.ts 에서 저장함

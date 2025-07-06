@@ -113,9 +113,9 @@ export function transformClustersToImageData(
   //유상님✅ ClusterImages 저장   
   saveProfileImages(finalImageData);
   //유상님✅ ClusterHistory 저장
-  const clusterHistoryResult = saveClusterHistory(clusters);          
+  const clusterHistoryResult = saveClusterHistory(finalImageData); 
   //유상님✅ SliderHistory 저장
-  const sliderResult = saveSliderHistory(clusters); 
+  const sliderResult = saveSliderHistory(finalImageData); 
 
   if (clusterHistoryResult.success && sliderResult.success) {
     console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });

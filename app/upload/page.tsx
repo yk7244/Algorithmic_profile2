@@ -27,6 +27,7 @@ import { searchClusterImage_pinterest, PinterestImageData } from './ImageSearch/
 import { handleCluster} from './VideoAnalysis/videoCluster';
 import { fetchVideoInfo, handleKeyword } from './VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './hooks/useClusterStorage';
+import { createUserData } from '@/app/utils/save/saveUserData';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -105,6 +106,7 @@ export default function Home() {
       setShowAnalysis,
       setIsLoading,
       setError,
+      createUserData,
     );
   };
 

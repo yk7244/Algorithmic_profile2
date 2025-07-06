@@ -9,22 +9,22 @@ interface AnalysisModalProps {
 }
 
 const steps = [
-  {
-    title: "시청기록 키워드 추출",
-    desc: "시청한 영상에서 키워드를 뽑아냈어요.",
-  },
-  {
-    title: "키워드 그룹화",
-    desc: "비슷한 키워드끼리 묶어 정리했어요.",
-  },
-  {
-    title: "키워드 그룹을 대표하는 표현 생성",
-    desc: "묶음을 관통하는 감정이나 상황을 표현했어요.",
-  },
-  {
-    title: "그룹 이미지화",
-    desc: "묶음을 잘 표현해주는 이미지로 나타냈어요.",
-  },
+    {
+        title: "시청기록 키워드 추출",
+        desc: "시청한 영상에서 키워드를 뽑아냈어요.",
+    },
+    {
+        title: "키워드 그룹화",
+        desc: "비슷한 키워드끼리 묶어 정리했어요.",
+    },
+    {
+        title: "키워드 그룹을 대표하는 표현 생성",
+        desc: "묶음을 관통하는 감정이나 상황을 표현했어요.",
+    },
+    {
+        title: "그룹 이미지화",
+        desc: "묶음을 잘 표현해주는 이미지로 나타냈어요.",
+    },
 ];
 
 export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, history }) => {
@@ -38,6 +38,9 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
     const totalVideos = watchHistory.length;
     const allKeywords = watchHistory.flatMap((v) => v.keywords || []);
     const totalKeywords = allKeywords.length;
+
+    console.log('현재 history', history);
+
 
     if (!open) return null;
     return (
@@ -60,7 +63,10 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
                                 <button
                                     key={step.title}
                                     className={`ml-10 mr-10 p-2 rounded-2xl justfy-centerflex items-start gap-4 relative z-10 mb-2 w-[380px] text-left focus:outline-none ${activeStep === idx ? 'bg-black' : ''}`}
-                                    onClick={() => setActiveStep(idx)}
+                                    onClick={() => {
+                                        setActiveStep(idx);
+                                    }}
+                                    
                                     tabIndex={0}
                                     type="button"
                                 >
@@ -112,16 +118,40 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
                     {activeStep === 1 && (
                         // 2단계: 키워드 그룹화 결과 or 설명
                         <>
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex gap-8">
+                                <div className="text-gray-700 text-md">
+                                    총 키워드 묶음 개수: <span className="font-bold text-lg">{history.images.length}</span>
+                                </div>
+                            </div>
+                            <div className="text-blue-600 text-sm cursor-pointer hover:underline select-none">
+                                키워드를 묶은 기준이 궁금해요 ?
+                            </div>
+                        </div>
+                        <div className="flex flex-col w-full overflow-y-auto mt-10">
+                            {history.images.map((image, i) => (        
+                                <div key={image.id + i} className="bg-white rounded-xl p-4 mb-4">
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        <span className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-sm font-semibold">{image.main_keyword}</span>
+                                    </div>
+                                    <div className="text-gray-500 text-sm font-semibold">
+                                        포함된 영상: {image.relatedVideos.length}개
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                         </>
                     )}
                     {activeStep === 2 && (
                         // 3단계: 대표 표현 생성 결과 or 설명
                         <>
+                        ..
                         </>
                     )}
                     {activeStep === 3 && (
                         // 4단계: 그룹 이미지화 결과 or 설명
                         <>
+                        //
                         </>
                     )}
                 </div>

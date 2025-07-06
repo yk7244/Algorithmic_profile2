@@ -8,7 +8,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
     console.log('history', history);
     // 최신 기록 날짜 구하기
     const latestEntry = history;
-    const latestEntryDate = latestEntry.date ? new Date(new Date(latestEntry.date).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : '';
+    const latestEntryDate = latestEntry.created_at ? new Date(new Date(latestEntry.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : '';
 
     const updateDate = isOneWeekPassed();
     
@@ -18,7 +18,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
         업데이트 날짜: {latestEntryDate} 
         </div>
 
-        {updateDate !== 2 ? (   
+        {updateDate == 2 ? (   
         <div className="flex flex-row justify-between items-center"> 
             <div className="flex flex-col pl-2  text-md">
                 <div className="text-black mb-7 font-bold">새로운 알고리즘 프로필 업데이트가 가능해요</div>
