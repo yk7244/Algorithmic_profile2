@@ -18,3 +18,15 @@ export function getUserFullProfileById(userId: string): {
   const images = userImages[userId] || [];
   return { user, profile, images };
 }
+
+export function getUserData() {
+  const raw = localStorage.getItem('UserData');
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+}

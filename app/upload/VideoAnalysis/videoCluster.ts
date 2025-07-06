@@ -1,6 +1,11 @@
 // Pinterest 이미지 검색 함수 import
 import { findBestThumbnail } from '../ImageSearch/YoutubeThumnail';
 import { transformClustersToImageData } from '@/app/utils/clusterTransform';
+import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';
+import { ProfileData } from '@/app/types/profile';
+import { useProfileStorage } from '@/app/my_profile/Nickname/Hooks/useProfileStorage';
+import { saveProfileData } from '@/app/utils/save/saveProfileData';
+import { createUserData } from '@/app/utils/save/saveUserData';
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
@@ -108,16 +113,27 @@ const findRelatedVideos = async (
   allKeywordToVideos: { [key: string]: { title: string; embedId: string; }[] },
 ) => {
   console.log('---STEP2. 관련 비디오 찾기 시작 ---');
-  
+  //console.log('keywordClusters', keywordClusters);
+  //console.log('allKeywordToVideos', allKeywordToVideos);
+
   return keywordClusters.map(cluster => {
     const relatedVideos: { title: string; embedId: string; }[] = [];
-    const clusterKeywords = cluster.keyword_list.split(',').map((k: string) => k.trim());
+    const clusterKeywords = cluster.keyword_list
+      ? cluster.keyword_list.split(',').map((k: string) =>
+          k.replace(/\s*\(\d+회\)\s*$/, '').trim()
+        )
+      : [];
+    //console.log('clusterKeywords', clusterKeywords);
     
     // 각 키워드에 해당하는 비디오들 수집
     clusterKeywords.forEach((keyword: string) => {
+      //console.log('keyword', keyword);
+
       if (allKeywordToVideos[keyword]) {
+        //console.log('allKeywordToVideos[keyword]', allKeywordToVideos[keyword]);
         allKeywordToVideos[keyword].forEach(video => {
           // 중복 제거
+          //console.log('video', video);
           if (!relatedVideos.find(v => v.embedId === video.embedId)) {
             relatedVideos.push(video);
           }
@@ -285,6 +301,60 @@ const addClusterImages = async (clusters: any[]) => {
   return result;
 };
 
+//STEP5. 별명 생성
+const generateNickname = async (clusters: any[], openai: any) => {
+  console.log('---STEP5. 별명 생성 시작 ---');
+  const {generateProfileId} = useProfileStorage();
+  
+  const prompt = `
+    당신은 사용자의 관심사와 성향을 분석하여 그들의 성격과 취향을 파악하는 전문가입니다.
+    다음은 사용자의 관심사와 성향을 분석한 정보입니다:
+
+    ${clusters.map((cluster: any, index: number) => `
+    이미지 ${index + 1}:
+    - 주요 키워드: ${cluster.main_keyword || '정보 없음'}
+    - 카테고리: ${cluster.category || '미분류'}
+    - 설명: ${cluster.description || '정보 없음'}
+    - 감성 키워드: ${cluster.mood_keyword || '정보 없음'}
+    - 관련 키워드: ${cluster.keywords?.join(', ') || '정보 없음'}
+    `).join('\n')}
+
+    위 정보를 바탕으로 다음 두 가지를 한국어로 생성해주세요:
+
+    1. 사용자의 대표 관심사를 종합하여 봤을때, 여러가지를 혼합하여 새로운 키워드로 취향과 성격을 반영한 독특하고 창의적인 짧은 명사 별명 (예: "감성적인 여행자", "호기심 많은 지식탐험가" 등)
+    2. 중요!!: 별명 생성시 재밌는 동물, 물건, 이름등으로 은유법이나 비유 명사를 무조건 활용해야함 ("예: 현아를 좋아하는 사과, 토끼)
+    3. 사용자의 콘텐츠 소비 패턴, 취향, 관심사를 2-3문장으로 짧게 재밌게 흥미롭게 요약한 설명, 사용자를 예측해도 됨
+
+    응답 형식:
+    별명: [생성된 별명]
+    설명: [생성된 설명]
+  `;
+
+  console.log('OpenAI 요청 시작');
+        const completion = await openai.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "gpt-3.5-turbo",
+            temperature: 0.9,
+        });
+        const response = completion.choices[0].message.content || '';
+        console.log('OpenAI 응답:', response);
+            
+        // 응답 파싱 개선
+        const nicknameMatch = response.match(/별명:\s*(.*?)(?=\n|$)/);
+        const descriptionMatch = response.match(/설명:\s*([\s\S]*?)(?=\n\n|$)/);
+
+        const newProfile = {
+            id: generateProfileId(),
+            nickname: nicknameMatch ? nicknameMatch[1].trim() : '알고리즘 탐험가',
+            description: descriptionMatch ? descriptionMatch[1].trim() : '당신만의 독특한 콘텐츠 취향을 가지고 있습니다. 메인 페이지에서 더 많은 관심사를 추가해보세요!',
+            created_at: new Date().toISOString()
+        };
+        console.log('새로운 프로필:', newProfile);
+        saveProfileData(newProfile);
+  return newProfile;
+};
+
+
 //클러스터 실행 (handleCluster 함수 내부에서 호출)
 export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any, OpenAILogger: any) => {
   try {
@@ -350,9 +420,19 @@ export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any
     const finalClusters = await addClusterImages(clustersAnalysis);
     console.log('4단계 결과:', finalClusters);
 
+    // 5단계: 별명 생성
+    console.log('5단계: 별명 생성');
+    const nickname = await generateNickname(finalClusters, openai);
+    console.log('5단계 결과:', nickname);
+
+    // 6단계: 유저 데이터 생성
+    console.log('6단계: 유저 데이터 생성');
+    createUserData();
+    console.log('6단계 결과: 유저 데이터 생성 완료'); 
+
     console.log('=== VideoCluster 완료 ===');
     
-    return clustersAnalysis;
+    return finalClusters;
 
   } catch (error) {
     console.error('클러스터 분석 실패:', error);
@@ -372,6 +452,7 @@ export const handleCluster = async (
   setShowAnalysis: (show: boolean) => void,
   setIsLoading: (loading: boolean) => void,
   setError: (err: string) => void,
+  generateProfile: (profileImages: any[]) => void,
   //setIsGeneratingProfile: (isGeneratingProfile: boolean) => void,
   //generateUserProfile: (localStorageObj: Storage) => void,
 ) => {
@@ -416,7 +497,14 @@ export const handleCluster = async (
       const imageUrl = cluster.thumbnailUrl || placeholderImage;
       return transform(cluster, index, imageUrl);
     });
+    //별명 생성
 
+    useGenerateUserProfile({
+      openai,
+      setShowGeneratingDialog: () => {},
+      setGeneratingStep: () => {},
+      setProfile: () => {},
+    });
     //Transform 함수 호출
     transformClustersToImageData(newClusters);
     setShowAnalysis(true);

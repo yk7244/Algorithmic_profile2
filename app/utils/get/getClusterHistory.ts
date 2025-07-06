@@ -2,10 +2,10 @@ import { ClusterHistory } from "@/app/types/profile";
 
 export function getClusterHistory(): ClusterHistory[] {
     if (typeof window === "undefined") return [];
-    const raw = localStorage.getItem("ClusterHistory");
-    if (!raw) return [];
     try {
-        return JSON.parse(raw);
+        const clusterHistory = JSON.parse(localStorage.getItem("ClusterHistory") || "[]");
+        //console.log('clusterHistory', clusterHistory);
+        return clusterHistory;
     } catch {
         return [];
     }
