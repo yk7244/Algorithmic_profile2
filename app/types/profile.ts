@@ -58,7 +58,8 @@ export interface ClusterHistory {
     y: number;
   };
   frameStyle: string; //normal로 고정 
-  created_at: string;
+  created_at?: string;
+  date?: string;
 }
 
 //[3]ImageData 테이블->배열 X(지금 profile에 보이는)-> 

@@ -1,18 +1,20 @@
+import { getClusterHistory } from "./get/getClusterHistory";
+
 export function isOneWeekPassed(): number {
   try {
-    // 유상님✅localStorage에서 ClusterHistory 가져오기
-    const clusterHistory = localStorage.getItem('ClusterHistory');
+    //const clusterHistory = localStorage.getItem('ClusterHistory');
+    const clusterHistory = getClusterHistory();
     //console.log('clusterHistory', !clusterHistory);
     if (!clusterHistory) return 1; // 초기 유저
 
-    const parsedHistory = JSON.parse(clusterHistory);
+    const parsedHistory = clusterHistory; 
     if (!parsedHistory || !Array.isArray(parsedHistory) || parsedHistory.length === 0) return 1; // 초기 유저
 
     // 가장 최근 항목의 date 가져오기
     const latestEntry = parsedHistory[parsedHistory.length - 1];
-    if (!latestEntry || !latestEntry.date) return 1; // 초기 유저
+    if (!latestEntry || !latestEntry.created_at) return 1; // 초기 유저
 
-    const updated = new Date(latestEntry.date);
+    const updated = new Date(latestEntry.created_at);
     const now = new Date();
 
     // 시/분/초/밀리초를 0으로 맞춰 날짜만 비교
@@ -27,3 +29,4 @@ export function isOneWeekPassed(): number {
     return 0; // 오류 시 거짓
   }
 } 
+
