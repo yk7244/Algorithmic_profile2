@@ -1,4 +1,4 @@
-import { saveProfileImages } from "@/app/utils/saveImageData";
+import { saveProfileImages } from "@/app/utils/save/saveImageData";
 
 export function savePositions(images: any[], positions: Record<string, {x: number, y: number}>) {
     const ImagesPosition = images.map(img => {

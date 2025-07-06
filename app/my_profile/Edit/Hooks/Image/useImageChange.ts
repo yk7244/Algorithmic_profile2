@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { ImageData } from '../../../../types/profile';
-import { saveProfileImages } from "@/app/utils/saveImageData";
+import { saveProfileImages } from "@/app/utils/save/saveImageData";
 
 export function useImageChange(
     images: ImageData[],

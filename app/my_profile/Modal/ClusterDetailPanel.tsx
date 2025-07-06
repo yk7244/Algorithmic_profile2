@@ -154,7 +154,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         </div>
 
                         {/* 하단 버튼 */}
-                        {isOwner && (
+                        {isOwner && !image.desired_self && (
                         <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
                             <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
                             flex items-center text-base font-medium transition-all duration-300 "
@@ -214,12 +214,13 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             </div>
                             
                             {/* 메인 키워드 섹션 */}
-                            {isOwner && (
+                            
                             <div className="relative z-10 px-8 pb-8">
                                 <h1 className="text-2xl font-bold mb-6 text-white">
                                     #{image.main_keyword}
                                 </h1>
                                 {/* 설명 텍스트 */}
+                                {isOwner && !image.desired_self && (
                                 <div className="text-left max-w-2xl text-white/90">
                                     <p className="backdrop-blur-sm bg-black/30 text-white px-6 py-3 rounded-3xl 
                                     text-sm font-medium transition-all duration-300"
@@ -233,8 +234,9 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                         을 주고 있어요.
                                     </p>
                                 </div>
+                                )}
                             </div>
-                            )}
+                            
                         </div>
 
                         {/* 스크롤 가능한 영상 콘텐츠 영역 */}
@@ -306,7 +308,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             ) : (
                                                 /* 관심사 클러스터 */
                                                 <div className="space-y-6">
-                                                    <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-6">
+                                                    <div className="bg-gradient-to-r from-blue-100 to-blue-200 rounded-xl p-6">
                                                         <div className="text-center space-y-3">
                                                             <h3 className="text-base font-semibold text-gray-800">
                                                                 이 이미지의 원본 프로필
@@ -316,7 +318,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                             </p>
                                                             <Button
                                                                 onClick={handleVisitProfile}
-                                                                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
+                                                                className="bg-black hover:bg-black/80 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transform transition-all duration-300 hover:scale-105"
                                                             >
                                                                 프로필 방문하기
                                                             </Button>
@@ -324,11 +326,13 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                     </div>
                                                     
                                                     <p className="text-md text-gray-600 font-bold mb-4">
-                                                        AI 추천 영상
+                                                    이 알고리즘의 원본 프로필에서 추천된 영상들이에요.
+                                                    <br/>
+                                                    
                                                         {!showRecommendations && (
                                                             <Button
                                                                 onClick={() => setShowRecommendations(true)}
-                                                                className="ml-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
+                                                                className="mt-4 bg-black hover:bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300"
                                                             >
                                                                 보기
                                                             </Button>
@@ -368,7 +372,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             {!isOwner && (
                                                 <div className="fixed bottom-6 left-6 right-6 z-50">
                                                     <Button
-                                                        className="w-full bg-black hover:bg-gray-800 text-white px-6 py-4 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105"
+                                                        className="w-full bg-black hover:bg-gray-800 text-white px-6 py-6 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                                                         onClick={() => handleAddAsInterest(image, ownerId)}
                                                     >
                                                         새로운 관심사로 추가하기

@@ -12,6 +12,7 @@ export interface UserData {
   background_color: string;
   created_at: string;
   updated_at: string;
+
 }
 
 //[1] WatchHistory 테이블 -> upload/VideoAnalysis/videoKeyword.ts 에서 저장함

@@ -1,6 +1,6 @@
 import { useRouter } from 'next/navigation';
-import { saveSliderHistory } from '../../utils/saveSliderHistory';
-import { saveProfileImages } from '@/app/utils/saveImageData';
+import { saveSliderHistory } from '../../utils/save/saveSliderHistory';
+import { saveProfileImages } from '@/app/utils/save/saveImageData';
 
 export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
     const router = useRouter();

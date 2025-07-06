@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Pen, Save, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import SearchFloatingButton from "@/app/search/SearchMode/SearchFloatingButton";
-import { saveProfileImages } from "@/app/utils/saveImageData";
+import { saveProfileImages } from "@/app/utils/save/saveImageData";
 import { savePositions } from "./Hooks/savePosition";
+import { useRouter } from 'next/navigation';
 
 interface BottomActionBarProps {
     isEditing: boolean;
@@ -31,6 +32,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
     isSearchMode,
     toggleSearchMode,
 }) => {
+    const router = useRouter();
     if (sliderCurrentHistoryIndex !== -1) {
         return null;
     }
@@ -86,7 +88,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 <div className="relative group">
                 <button
                     className="group relative w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-md transition-all duration-300 hover:scale-110 active:scale-95 overflow-hidden"
-                    onClick={toggleSearchMode}
+                    onClick={() => router.replace('/my_profile?explore=1')}
                     aria-label={isSearchMode ? '검색 모드 종료' : '검색하기'}
                 >
                     {/* 애니메이션 그라데이션 테두리 */}

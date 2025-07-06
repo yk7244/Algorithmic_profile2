@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, RotateCcw } from "lucide-react";
-import { getLatestProfileData } from '@/app/utils/getProfileData';
+import { getLatestProfileData } from '@/app/utils/get/getProfileData';
 
 interface ProfileHeaderProps {
     profile: { nickname: string; description: string };

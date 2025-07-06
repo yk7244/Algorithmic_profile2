@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import {DndContext} from '@dnd-kit/core';
 import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
+import { useSearchParams } from 'next/navigation';
 
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
@@ -20,7 +21,7 @@ import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Edit/Hooks/Image/useImageDelete";
 import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
-import { useProfileImagesLoad } from '../utils/getImagesData';     
+import { useProfileImagesLoad } from '../utils/get/getImageData';     
 import { arrangeImagesInCenter } from '../utils/autoArrange';
 import { 
   ImageData,
@@ -39,6 +40,8 @@ const openai = new OpenAI({
 });
 
 export default function MyProfilePage() {
+  const searchParams = useSearchParams();
+  const [exploreAnimation, setExploreAnimation] = useState(false);
   // --- 상태 선언 ---
   const [visibleImageIds, setVisibleImageIds] = useState<Set<string>>(new Set());
   const [profile, setProfile] = useState({ nickname: '', description: '' });
@@ -180,8 +183,24 @@ export default function MyProfilePage() {
     });
   }, [images]);
 
+  // explore=1 쿼리 감지 시 5초간 탐색모드 애니메이션
+  useEffect(() => {
+    if (searchParams.get('explore') === '1') {
+      setIsSearchMode(true);
+      setExploreAnimation(true);
+
+      const timer = setTimeout(() => {
+        setExploreAnimation(false);
+        // setIsSearchMode(false); // 필요시 탐색모드 해제
+      }, 10000);
+      return () => clearTimeout(timer);
+    }else{
+      setIsSearchMode(false);
+    }
+  }, [searchParams]);
+
   return (
-    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? bgColor : ''}`}>
+    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? bgColor : ''} transform transition-all duration-1000 ease-in-out`}>
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
       <div className={`flex flex-col px-4 py-12 backdrop-blur-lg z-10 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
         {!isSearchMode ? ( 
@@ -200,12 +219,15 @@ export default function MyProfilePage() {
         )}
       </div>
       {/* 오른쪽: 무드보드/이미지/카드 등 */}
-      <div className={`relative flex flex-col h-full w-full ${!isSearchMode ? bgColor : ''}`} ref={boardRef}>
+      <div className={`relative flex flex-col h-full w-full ${!isSearchMode ? bgColor : ''} ${exploreAnimation ? 'animate-fadeIn' : ''}`} ref={boardRef}>
         {/* 프로필 무드보드 텍스트 */}
         <div
           className={`absolute left-1/2 -translate-x-1/2 top-24 text-center text-black text-md font-bold bg-gradient-to-r 
             bg-[length:200%_100%] 
-            bg-clip-text text-transparent animate-gradient-move ${!isSearchMode ? 'from-gray-700 via-gray-200 to-gray-700' : 'from-white via-[#3B71FE] to-white bg-[length:200%_100%] '}`}
+            bg-clip-text text-transparent animate-gradient-move 
+            transition-all duration-1000 ease-in-out
+            transform transition-transform duration-1000 ease-in-out
+            ${!isSearchMode ? 'from-gray-700 via-gray-200 to-gray-700' : 'from-white via-[#3B71FE] to-white bg-[length:200%_100%] '}`}
         >
           {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 
           {isSearchMode ? '알고리즘 프로필 무드보드에서 궁금한 키워드를 선택해주세요' : '의 알고리즘 프로필 무드보드'}

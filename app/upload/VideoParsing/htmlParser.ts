@@ -1,5 +1,5 @@
 import { VideoCluster } from '../VideoAnalysis/videoCluster';
-import { saveWatchHistory } from '@/app/utils/saveWatchHistory';
+import { saveWatchHistory } from '@/app/utils/save/saveWatchHistory';
 
 export const parseWatchHistory = async (
   file: File,

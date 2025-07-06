@@ -1,5 +1,5 @@
 import { ThumbnailData } from "../../types/profile";
-import { saveThumbnail } from "../../utils/saveThumnail";
+import { saveThumbnail } from "../../utils/save/saveThumnail";
 
 // YouTube 썸네일 URL 생성 함수
 export function getYouTubeThumbnail(videoId: string) {

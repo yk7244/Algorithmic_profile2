@@ -22,7 +22,7 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
     return (
     <>
         {/* 검색 모드일 때 배경 그라데이션 추가 */}
-        <div className="absolute inset-0 overflow-hidden -z-10 bg-[#333947]">
+        <div className="absolute inset-0 overflow-hidden -z-10 bg-[#333947] transition-all duration-1000 ease-in-out">
             <div className="absolute -top-[40%] -left-[10%] w-[90%] h-[60%] rounded-full bg-[#B3D4FF] blur-[120px] animate-blob" />
             {/*<div className="absolute -bottom-[30%] -right-[10%] w-[70%] h-[60%] rounded-full bg-[#6B7F99] blur-[120px] animate-blob animation-delay-20" />*/}
             <div className="absolute top-[20%] right-[20%] w-[60%] h-[60%] rounded-full bg-[#6179A7] blur-[120px] animate-blob animation-delay-200" />
