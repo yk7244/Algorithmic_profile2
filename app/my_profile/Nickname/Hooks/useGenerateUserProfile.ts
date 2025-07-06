@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { useProfileStorage } from "./useProfileStorage";
 import { ProfileData } from '../../../types/profile';
-import { saveProfileData } from "@/app/utils/saveProfileData";
+import { saveProfileData } from "../../../utils/save/saveProfileData";
 
 interface UseGenerateUserProfileParams {
     openai: any;

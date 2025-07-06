@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ImageData } from '../types/profile';
+import { ImageData } from '../../types/profile';
 
 interface UseProfileImagesLoadProps {
 setImages: React.Dispatch<React.SetStateAction<ImageData[]>>;

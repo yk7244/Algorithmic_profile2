@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 import { OpenAILogger } from '../../utils/init-logger';
-import { saveWatchHistory } from '@/app/utils/saveWatchHistory';
+import { saveWatchHistory } from '@/app/utils/save/saveWatchHistory';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({

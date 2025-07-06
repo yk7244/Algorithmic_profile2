@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RefreshCw } from "lucide-react";
 import type { VideoData } from "../Draggable/DraggableImage";
 import { ThumbnailData } from "@/app/types/profile";
-import { getThumbnailData } from "@/app/utils/getThumnail";
+import { getThumbnailData } from "@/app/utils/get/getThumnailData";
 
 interface ImageResearchModalProps {
     open: boolean;

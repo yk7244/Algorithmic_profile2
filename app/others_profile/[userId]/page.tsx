@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import DraggableImage from '@/app/my_profile/Draggable/DraggableImage';
 import ProfileHeader from '@/app/my_profile/Nickname/ProfileHeader';
+//유상님✅ 더미 데이터로 가져옴
 import { profiles, userImages, users } from '@/app/others_profile/dummy-data';
 import { 
 ProfileData, 

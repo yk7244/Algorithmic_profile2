@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { DragEndEvent } from '@dnd-kit/core';
 import { ImageData } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
-import { saveProfileImages } from "@/app/utils/saveImageData";
+import { saveProfileImages } from "@/app/utils/save/saveImageData";
 
 export function useDragEnd(
   isEditing: boolean, 

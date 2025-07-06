@@ -1,8 +1,8 @@
 import { ImageData } from '../types/profile';
 import { arrangeImagesInCenter } from './autoArrange';
-import { saveClusterHistory } from '@/app/utils/saveClusterHistory';
-import { saveSliderHistory } from '@/app/utils/saveSliderHistory';
-import { saveProfileImages } from './saveImageData';
+import { saveClusterHistory } from './save/saveClusterHistory'; 
+import { saveSliderHistory } from './save/saveSliderHistory'; 
+import { saveProfileImages } from './save/saveImageData';
 
 // 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [

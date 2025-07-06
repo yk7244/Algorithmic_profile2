@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { getUserBackgroundColor } from '@/app/utils/get/getUserData';
+import { saveUserBackgroundColor } from '@/app/utils/save/saveUserData';
 
 // 오른쪽 색상에 대응하는 왼쪽 색상 매핑
 const getLeftColorFromRight = (rightColor: string): string => {
@@ -27,35 +29,30 @@ const getLeftColorFromRight = (rightColor: string): string => {
 };
 
 export function useBgColor(defaultRightColor: string = 'bg-[#F2F2F2]') {
-  const [rightBgColor, setRightBgColor] = useState(defaultRightColor);
-  const [leftBgColor, setLeftBgColor] = useState(getLeftColorFromRight(defaultRightColor));
-
+  const [bgColor, setBgColor] = useState(defaultRightColor);
+  
   useEffect(() => {
-    const savedRightBgColor = localStorage.getItem('moodboard-right-bg-color');
-    
+    // userId는 실제 환경에 맞게 전달 필요
+    const userId = 'user1';
+    const savedRightBgColor = getUserBackgroundColor(userId);
     if (savedRightBgColor) {
-      setRightBgColor(savedRightBgColor);
-      setLeftBgColor(getLeftColorFromRight(savedRightBgColor));
+      setBgColor(savedRightBgColor);
     }
   }, []);
 
   const handleColorChange = (colorClass: string) => {
-    const leftColor = getLeftColorFromRight(colorClass);
+    const bgColor = getLeftColorFromRight(colorClass);
     
-    setRightBgColor(colorClass);
-    setLeftBgColor(leftColor);
-    
-    localStorage.setItem('moodboard-right-bg-color', colorClass);
-    localStorage.setItem('moodboard-left-bg-color', leftColor);
-    localStorage.setItem('user-profile-background-color', colorClass);
+    setBgColor(bgColor);
+    // userId는 실제 환경에 맞게 전달 필요
+    const userId = 'user1';
+    saveUserBackgroundColor(userId, bgColor);
   };
 
   return { 
-    leftBgColor, 
-    rightBgColor, 
+    bgColor, 
     handleColorChange,
     // 하위 호환성을 위해 기존 API도 유지
-    bgColor: rightBgColor,
     handleBgColorChange: handleColorChange
   };
 } 

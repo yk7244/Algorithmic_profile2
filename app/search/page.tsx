@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
-import { profiles, userImages } from '@/app/others_profile/dummy-data'; 
-import { ProfileData, ImageData } from '@/app/types/profile';
-import SearchCard from '@/components/searchCard/SearchCard';
+
+
+import { profiles, userImages } from '@/app/others_profile/dummy-data';
+import { ImageData } from '@/app/types/profile';
 import CardStack3D from './SearchMode/showCard';      
 
 export default function SearchPage() {
@@ -14,7 +15,9 @@ export default function SearchPage() {
   const router = useRouter();
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchResults, setSearchResults] = useState<(ProfileData & { images: ImageData[] })[]>([]);
+
+  // 유상님✅ 더미 데이터로 가져온 이미지들 그냥 검색 결과에 다 ImageData[] 형태로 저장
+  const [searchResults, setSearchResults] = useState<ImageData[]>([]);
   const [isSearchMode, setIsSearchMode] = useState(true);
 
   useEffect(() => {
@@ -37,35 +40,11 @@ export default function SearchPage() {
     try {
       // 필터링 로직 주석 처리하고 모든 더미 프로필 표시
       setTimeout(() => {
-        // users와 userImages를 조합해 ProfileData & { images: ImageData[] }[] 생성
-        setSearchResults((profiles as ProfileData[]).map((profile: ProfileData) => ({
-          ...profile,
-          images: (userImages[profile.id] as ImageData[]) || []
-        })));
+        
+        setSearchResults(profiles.flatMap(profile => userImages[profile.id] || []));
         setIsLoading(false);
       }, 1500); // 로딩 효과를 위해 지연 시간 유지
       
-      /* 원래 필터링 로직 (주석 처리)
-      setTimeout(() => {
-        // 키워드와 일치하는 프로필 찾기
-        const results = dummyProfiles.filter(profile => {
-          // 프로필의 모든 이미지에서 키워드 추출
-          const profileKeywords = profile.images.flatMap(img => 
-            [img.main_keyword, ...img.keywords]
-          );
-          
-          // 검색 키워드 중 하나라도 프로필 키워드에 포함되면 결과에 추가
-          return searchKeywords.some(keyword => 
-            profileKeywords.some(profileKeyword => 
-              profileKeyword.toLowerCase().includes(keyword.toLowerCase())
-            )
-          );
-        });
-        
-        setSearchResults(results);
-        setIsLoading(false);
-      }, 1500);
-      */
     } catch (error) {
       console.error('검색 오류:', error);
       setIsLoading(false);
@@ -125,7 +104,7 @@ export default function SearchPage() {
           ) : searchResults.length > 0 ? (
             <>
             <h2 className="text-lg text-white/80 mb-4">비슷한 알고리즘 프로필을 {searchResults.length}개 발견했어요</h2>
-            <CardStack3D cards={searchResults.flatMap(profile => profile.images)} />
+            <CardStack3D cards={searchResults} />
             </>
           ) : (
             <div className="text-center py-20">

@@ -1,4 +1,4 @@
-import { ThumbnailData } from "../types/profile";
+import { ThumbnailData } from "../../types/profile";
 
 
 // main_keyword로 ThumbnailData 전체 객체 반환
