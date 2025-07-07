@@ -17,13 +17,23 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { useRouter } from 'next/navigation';
+import { getReflectionData } from '@/app/utils/get/getReflectionData';
+import OverlayQuestion1 from '@/app/reflection/reflection1/overlay/OverlayQuestion1';
+import OverlayQuestion2 from '@/app/reflection/reflection2/overlay/OverlayQuestion2';
 
 export function Navbar() {
   const pathname = usePathname();
   const isMainPage = pathname === '/';
   const { isLoggedIn, logout } = useAuth();
   const [language, setLanguage] = useState("KO");
+  const router = useRouter();
+  const [showOverlayQuestion1, setShowOverlayQuestion1] = useState(false);
+  const [showOverlayQuestion2, setShowOverlayQuestion2] = useState(false);
 
+  const reflectionData = getReflectionData();
+  const isReflection1 = reflectionData?.reflection1 !== false;
+  const isReflection2 = reflectionData?.reflection2 !== false;
   const handleLanguageToggle = () => {
     setLanguage(prevLang => prevLang === "KO" ? "EN" : "KO");
   };
@@ -31,7 +41,8 @@ export function Navbar() {
   const userName = "daisy";
 
   return (
-      <header
+    <>
+        <header
         className={`absolute top-0 z-50 w-full ${
           pathname === "/my_profile" || pathname === "/search"
             ? "bg-white/30 text-black backdrop-blur-lg"
@@ -68,8 +79,16 @@ export function Navbar() {
               }>
                   <Link href="/my_profile">나의 알고리즘 프로필</Link>
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}>
-                  <Link href="/my_profile?explore=1">다른 알고리즘 탐색</Link>
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                onClick={() => {
+                  if (isReflection1) {
+                    router.replace('/my_profile?explore=1');
+                  } else {
+                    setShowOverlayQuestion1(true);
+                  }
+                }}
+                >
+                  <span>다른 알고리즘 탐색</span>
                 </Button>
                 
                 {/* 언어 선택 버튼 
@@ -164,5 +183,24 @@ export function Navbar() {
           </div>
         </div>
       </header>
+      {showOverlayQuestion1 && (
+        <OverlayQuestion1
+          onLeftClick={() => setShowOverlayQuestion1(false)}
+          onRightClick={() => {
+            router.replace('/reflection/reflection1');
+            setShowOverlayQuestion1(false);
+          }}
+        />
+      )}
+      {showOverlayQuestion2 && (
+        <OverlayQuestion2
+          onLeftClick={() => setShowOverlayQuestion2(false)}
+          onRightClick={() => {
+            router.replace('/reflection/reflection2');
+            setShowOverlayQuestion2(false);
+          }}
+        />
+      )}
+    </>
   );
 } 

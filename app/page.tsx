@@ -22,7 +22,8 @@ import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/
 import { useAuth } from '@/context/AuthContext';
 import { useLoginHandlers } from "./login/hooks/useLoginHandlers";
 import { saveParseHistory } from './utils/save/savePraseHistory';
-
+import OverlayQuestion from "./reflection/reflection1/overlay/OverlayQuestion1";
+import { getReflectionData } from './utils/get/getReflectionData';
 
 
 // OpenAI 클라이언트 초기화 수정
@@ -30,6 +31,11 @@ const openai = new OpenAI({
 apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 dangerouslyAllowBrowser: true
 });
+
+// 리플렉션 여부 확인
+const reflectionData = getReflectionData();
+const isReflection1 = reflectionData?.reflection1 !== false;
+const isReflection2 = reflectionData?.reflection2 !== false;
 
 
 //localstorage->watchHistory 에 배열로 들어감
@@ -170,6 +176,9 @@ useEffect(() => {
 
   // 버튼 1초 후 노출용 상태
   const [showButton, setShowButton] = useState(false);
+
+  const [showOverlayQuestion, setShowOverlayQuestion] = useState(false);
+  const [pendingUploadAction, setPendingUploadAction] = useState<null | (() => void)>(null);
 
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
@@ -498,8 +507,16 @@ useEffect(() => {
                 <>
                   {/* 1-1-2 로그인O, 업데이트 O, 파일 업로드 X => 파일 업로드 버튼 */}
                   <div
-                      onClick={() => fileInputRef.current?.click()}
-                          className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
+                      onClick={e => {
+                        if (isReflection2) {  // 리플렉션 2 여부 확인
+                          setPendingUploadAction(() => () => fileInputRef.current?.click());
+                          pendingUploadAction?.();
+
+                        } else {
+                          setShowOverlayQuestion(true);
+                        }
+                      }}
+                      className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
                       isDragging 
                           ? 'border-2 border-blue-500 bg-blue-50/30 scale-[1.02] shadow-lg' 
                           : 'border-2 border-gray-200/60 hover:border-blue-400/60 shadow-sm hover:shadow-md bg-white/70'
@@ -507,18 +524,22 @@ useEffect(() => {
                       onDragEnter={e => handleDragEnter(e, setIsDragging)}
                       onDragOver={handleDragOver}
                       onDragLeave={e => handleDragLeave(e, setIsDragging)}
-                      onDrop={e => handleDrop(e, {
-                      setIsDragging,
-                      setIsLoading,
-                      setError,
-                      setSuccessCount,
-                      dateRange,
-                      maxVideosPerDay,
-                      fetchVideoInfo,
-                      openai,
-                      OpenAILogger,
-                      parseWatchHistory
-                      })}
+                      onDrop={e => {
+                        e.preventDefault();
+                        setPendingUploadAction(() => () => handleDrop(e, {
+                          setIsDragging,
+                          setIsLoading,
+                          setError,
+                          setSuccessCount,
+                          dateRange,
+                          maxVideosPerDay,
+                          fetchVideoInfo,
+                          openai,
+                          OpenAILogger,
+                          parseWatchHistory
+                        }));
+                        setShowOverlayQuestion(true);
+                      }}
                   >
                           
                       <input
@@ -737,6 +758,15 @@ useEffect(() => {
         )}
       </div>
       </div>
+      {showOverlayQuestion && (
+      <OverlayQuestion
+        onLeftClick={() => setShowOverlayQuestion(false)}
+        onRightClick={() => {
+          setShowOverlayQuestion(false);
+          router.push('/reflection/reflection2');
+        }}
+      />
+    )}
     </main>
   );
 
