@@ -5,24 +5,24 @@ import { useState } from "react";
 import { getUserData } from "@/app/utils/get/getUserData";
 import { getLatestProfileData, getProfileData } from "@/app/utils/get/getProfileData";
 import { useRouter } from "next/navigation";
-import { setReflectionData, setReflectionData_reflection2 } from "@/app/utils/save/saveReflectionData";
+import { setReflectionData, setReflectionData_reflection1, setReflectionData_reflection2 } from "@/app/utils/save/saveReflectionData";
 
 const subQuestions = [
-    "다시 만나게 되어 반가워요. 튜브렌즈에서의 여정은 즐거우셨나요?",
-    "Q1. 내가 주도적으로 선택한 알고리즘을 탐색하면서,",
-    "Q2. 이후, 내가 어떤 콘텐츠를 더 보고 싶어졌는지, 혹은 앞으로 유튜브를 어떻게 탐색하고 싶은지 등 ",
+    "지난 한 주, 튜브렌즈에서의 경험은 어떠셨나요?",
+    "Q1. 지난 한 주 튜브렌즈를 사용하면서 들었던 감정이나 스스로에 대해 새롭게 발견하게 된 점이 있나요? ",
+    "Q2. 지난 한 주 튜브렌즈를 사용하면서 유튜브를 사용하는 방식에 변화가 생긴 부분이 있나요?  ",
     "리플랙션 공간에서 표현해주셔서 감사해요.",
     "스스로 선택하고 탐색한 흐름은,",
     "이제, 업로드할 모든 준비가 되었어요."
 ];
 
 const questions = [
-  "튜브렌즈에서의 여정, 함께 되돌아봐도 괜찮을까요?",
-  "새롭게 이해하게 된 관점이나 감정이 있었나요?",
-  " 어떤 생각이 드셨나요?",
-  "짧은 시간 이렇게나 변화하신 모습이 인상적이었어요.",
-  "앞으로 어떤 시청을 만들어갈지에 대한 강한 힌트가 되어줄 거예요.", 
-  "새로운 알고리즘 프로필에서는, 어떤 점이 달라져 있을까요?"
+    "함께 되돌아볼까요?",
+    "이 과정에 특히 도움이 된 튜브렌즈의 기능이 있다면 함께 공유해주세요.",
+    "있다면 자유롭게 공유해주세요.",
+    "짧은 시간 이렇게나 변화하신 모습이 인상적이었어요.",
+    "앞으로 어떤 시청을 만들어갈지에 대한 강한 힌트가 되어줄 거예요.", 
+    "새로운 알고리즘 프로필에서는, 어떤 점이 달라져 있을까요?"
   
 ];
 
@@ -55,7 +55,7 @@ export default function ReflectionQuestionsPage2() {
 
         {/* 질문 콘텐츠 */}
         <main className="relative z-10 flex-grow flex flex-col items-center justify-center text-center px-6">
-            <div className="mb-10 w-[40px] h-[40px] rounded-full bg-[#3B71FE] blur-[9px] animate-blob-move" />
+            <div className="mb-10 w-[40px] h-[40px] rounded-full bg-[#3B71FE] blur-[9px] animate-pulse" />
 
             {currentIndex === 0 && (
                 <h1 className="text-black text-xl font-semibold mb-1">안녕하세요! {userData?.nickname}님</h1>
@@ -66,21 +66,23 @@ export default function ReflectionQuestionsPage2() {
 
             {/* 입력 필드: Q1~Q3에만 보임 */}
             {currentIndex >= 1 && currentIndex <= 2 && (
-            <div className="flex items-center bg-white rounded-full shadow-lg px-6 py-4 w-full max-w-2xl">
-                <input
-                type="text"
-                value={answers[currentIndex - 1]}
-                onChange={handleInputChange}
-                placeholder="Text"
-                className="flex-grow text-black bg-transparent outline-none text-base placeholder-gray-400"
-                />
-                <button
-                onClick={handleNext}
-                className="ml-4 p-2 rounded-full bg-black text-white hover:bg-gray-800 transition"
-                >
-                <ArrowUpRight className="w-5 h-5" />
-                </button>
-            </div>
+                <>
+                <div className="text-gray-400 text-[12px] mb-10">
+                25자에서 300자 내외로 작성해주세요.
+                </div>
+                <div className="flex items-center bg-white rounded-full shadow-2xl px-6 py-4 w-full max-w-2xl">
+                    <input
+                    type="text"
+                    value={answers[currentIndex - 1]}
+                    onChange={handleInputChange}
+                    placeholder={`${currentIndex === 1 ? "예시 답안: 다른 사람들의 관심사를 탐색하는게 저의 관심사를 확장시키는데 효과적이었어요" : 
+                        currentIndex === 2 ? "예시 답안: 좀 더 생산적인 컨텐츠를 적극적으로 찾아봤어요" : ""}`}
+                    minLength={25}
+                    maxLength={300}
+                    className="flex-grow text-black bg-transparent outline-none text-base placeholder-gray-400 pl-4 placeholder:text-sm placeholder:text-gray-300"
+                    />
+                </div>
+            </>
             )}
 
             {/* 하단 Next 버튼: 항상 있음 */}
@@ -89,22 +91,35 @@ export default function ReflectionQuestionsPage2() {
                 onClick={handleNext}
                 className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
                 >
-                Next
+                다음
                 <ArrowRight className="ml-1 w-5 h-5" />
                 </button>
             ):(
                 <>  
-                <button
-                className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
+                <div className="flex flex-row gap-4">  
+                    <button
+                        className="mt-10 text-gray-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
-                onClick={() => {
-                    router.push("/my_page"); 
-                    setReflectionData_reflection2();
-                }}
-                >
-                Finish
-                <ArrowRight className="ml-1 w-5 h-5" />
-                </button>
+                        onClick={() => {
+                            router.push("/my_page"); 
+                            setReflectionData_reflection2();
+                        }}
+                        >
+                        마이페이지로 돌아가기
+                        <ArrowRight className="ml-1 w-5 h-5" />
+                    </button>
+                    <button
+                        className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
+
+                        onClick={() => {
+                            router.push("/"); 
+                            setReflectionData_reflection2();
+                        }}
+                        >
+                        알고리즘 프로필 업데이트하기
+                        <ArrowRight className="ml-1 w-5 h-5" />
+                    </button>
+                </div>
                 </>
             )}
             

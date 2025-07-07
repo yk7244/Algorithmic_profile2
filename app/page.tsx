@@ -85,6 +85,7 @@ const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 
 //upload 가능여부 체크 및 기간 설정, 하루당 최대 영상 개수 설정
+const upload_check_test = 2;
 const upload_check = useMemo(() => isOneWeekPassed(), []);
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
 const [dateRange, setDateRange] = useState<{
@@ -401,7 +402,7 @@ useEffect(() => {
         {isLoggedIn ? (
           <>
             {/* 1-1 로그인O => 업데이트 여부 확인 */}  
-            {(upload_check === 2 || upload_check === 1) ? (
+            {(upload_check === 2 || upload_check === 1 || upload_check_test === 2) ? (
               
               isFileUploaded ? (
                 <>  

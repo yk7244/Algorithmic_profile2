@@ -11,7 +11,7 @@ import { ReflectionData } from "@/app/types/profile";
 import { useRouter } from "next/navigation";
 
 // ClusterHistory 카드 컴포넌트
-export const ClusterHistoryCard: React.FC<{ history: ClusterHistory }> = ({ history  }) => {
+export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boolean }> = ({ history, latest }) => {
     const router = useRouter();
     if (!history) return null;
     const [open, setOpen] = useState(false);     
@@ -52,20 +52,25 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory }> = ({ hist
                 >
                     알고리즘 프로필 분석 과정 살펴보기
                 </button>
-
-                <button className="bg-blue-600 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
+                {latest && ( !isDisabled ? (
+                    <button className="bg-blue-600 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
                         onClick={() => {
                             router.push('/reflection/reflection1');         
                         }}
-                        disabled={isDisabled}
-                        style={{
-                            opacity: isDisabled ? 0.5 : 1,
-                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                    >
+                        <Sparkles className="w-5 h-5" />
+                        알고리즘 프로필 감상 기록하기
+                    </button>
+                ):(
+                    <button className="bg-blue-400 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
+                        onClick={() => {
+                            router.push('/reflection/reflection1');         
                         }}
                     >
                         <Sparkles className="w-5 h-5" />
-                        알고리즘 프로필 리플랙션 하기
+                        알고리즘 프로필 감상 다시 남기기
                     </button>
+                ))}   
             </div>
             <AnalysisModal open={open} onClose={() => setOpen(false)} history={history} /> 
         </div>

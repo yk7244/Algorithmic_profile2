@@ -100,7 +100,7 @@ export default function MyPage() {
               ) : (
                 clusterHistory.slice().reverse().map((history, idx) => (
                   <>
-                  <ClusterHistoryCard  history={history} />  
+                  <ClusterHistoryCard  history={history} latest={idx === 0} />  
                   </>
                 ))
               )}
