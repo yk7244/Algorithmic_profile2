@@ -6,6 +6,7 @@ import { ProfileData } from '@/app/types/profile';
 import { useProfileStorage } from '@/app/my_profile/Nickname/Hooks/useProfileStorage';
 import { saveProfileData } from '@/app/utils/save/saveProfileData';
 import { createUserData } from '@/app/utils/save/saveUserData';
+import { setReflectionData } from '@/app/utils/save/saveReflectionData';  
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
@@ -427,8 +428,13 @@ export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any
 
     // 6단계: 유저 데이터 생성
     console.log('6단계: 유저 데이터 생성');
-    createUserData();
+    const userData = createUserData();
     console.log('6단계 결과: 유저 데이터 생성 완료'); 
+
+    // 7단계: 리플랙션 데이터 생성
+    console.log('7단계: 리플랙션 데이터 생성'); 
+    setReflectionData();
+    console.log('7단계 결과: 리플랙션 데이터 생성 완료');
 
     console.log('=== VideoCluster 완료 ===');
     

@@ -1,4 +1,4 @@
-import { ThumbnailData } from "../types/profile";
+import { ThumbnailData } from "../../types/profile";
 
 export function saveThumbnail(main_keyword: string, thumbnailData: ThumbnailData, localStorageObj: Storage = localStorage) {
     // 기존 데이터 불러오기 (배열)

@@ -30,7 +30,7 @@ const getLeftColorFromRight = (rightColor: string): string => {
 
 export function useBgColor(defaultRightColor: string = 'bg-[#F2F2F2]') {
   const [bgColor, setBgColor] = useState(defaultRightColor);
-  
+
   useEffect(() => {
     // userId는 실제 환경에 맞게 전달 필요
     const userId = 'user1';

@@ -11,6 +11,7 @@ export function createUserData() {
         open_to_connect: false
     }
     localStorage.setItem('UserData', JSON.stringify(newUserData));
+    return newUserData;
 }
 
 // user profile의 background_color를 저장하는 함수

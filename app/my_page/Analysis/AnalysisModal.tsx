@@ -39,7 +39,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
     const allKeywords = watchHistory.flatMap((v) => v.keywords || []);
     const totalKeywords = allKeywords.length;
 
-    console.log('현재 history', history);
+    //console.log('현재 history', history);
 
 
     if (!open) return null;
