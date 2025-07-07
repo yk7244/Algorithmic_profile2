@@ -9,6 +9,7 @@ import { setReflectionData } from "@/app/utils/save/saveReflectionData";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { ReflectionData } from "@/app/types/profile";
 import { useRouter } from "next/navigation";
+import { saveWatchHistory_array } from "@/app/utils/save/saveWatchHistory_array";
 
 // ClusterHistory 카드 컴포넌트
 export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boolean }> = ({ history, latest }) => {
@@ -25,7 +26,7 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
     const totalKeywords = allKeywords.length;
 
     const reflectionData = getReflectionData();
-    console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
+    //console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
     const isDisabled = reflectionData?.reflection1 !== false;
 
     //const reflectionData = getReflectionData();
@@ -48,6 +49,7 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                 onClick={() => {
                     setOpen(true);
                     setReflectionData();
+                    
                 }}
                 >
                     알고리즘 프로필 분석 과정 살펴보기

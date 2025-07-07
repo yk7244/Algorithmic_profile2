@@ -3,6 +3,7 @@ import { arrangeImagesInCenter } from './autoArrange';
 import { saveClusterHistory } from './save/saveClusterHistory'; 
 import { saveSliderHistory } from './save/saveSliderHistory'; 
 import { saveProfileImages } from './save/saveImageData';
+import { saveWatchHistory_array } from './save/saveWatchHistory_array';
 
 // 중앙 위주 좌표 배열 (px 단위)
 const centerPositions = [
@@ -106,9 +107,11 @@ export function transformClustersToImageData(clusters: any[]): ImageData[] {
   saveProfileImages(finalImageData);
   const clusterHistoryResult = saveClusterHistory(finalImageData);
   const sliderResult = saveSliderHistory(finalImageData);
+  const watchHistoryResult = saveWatchHistory_array();   
 
-  if (clusterHistoryResult.success && sliderResult.success) {
-    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
+
+  if (clusterHistoryResult.success && sliderResult.success && watchHistoryResult.success) {
+    console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult, watchHistoryResult });
   }
 
   return finalImageData;

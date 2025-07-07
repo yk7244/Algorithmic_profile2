@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ClusterHistory, WatchHistory } from "@/app/types/profile";
 import { getWatchHistory } from "@/app/utils/get/getWatchHistory";
+import { getWatchHistory_by_clusterHistory_id } from "@/app/utils/get/getWatchHistory_array";
 
 interface AnalysisModalProps {
     open: boolean;
@@ -31,8 +32,18 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
     const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
     const [activeStep, setActiveStep] = useState(0);
     useEffect(() => {
-        setWatchHistory(getWatchHistory() as WatchHistory[]);
+        //setWatchHistory(getWatchHistory() as WatchHistory[]);
+
+        //console.log('history.id', history.id);
+        
+        // clusterHistory_id 로 부터 watchHistory 배열 가져오기
+        const getwatchHistory = getWatchHistory_by_clusterHistory_id(history);
+
+        console.log('가져왔나?getwatchHistory', getwatchHistory);
+        // watchHistory 배열 펼치기
+        setWatchHistory(getwatchHistory);     
     }, []);
+
 
     const date = watchHistory[0]?.timestamp?.slice(0, 10) || new Date().toISOString().slice(0, 10);
     const totalVideos = watchHistory.length;
@@ -90,7 +101,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
                 </div>
                 <div className="w-[700px] h-full ml-10 flex flex-col p-14 bg-[#F7F7F8] overflow-y-auto">
                     {activeStep === 0 && (
-                        // 1단계: 기존 시청기록/키워드 리스트
+                        // 1단계: 기존 시청기록/키워드 리스트 => watchHistory 배열 불러오기
                         <>
                         <div className="flex justify-between items-center mb-4">
                             <div className="flex gap-8">

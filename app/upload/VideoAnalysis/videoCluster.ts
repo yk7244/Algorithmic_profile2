@@ -7,6 +7,7 @@ import { useProfileStorage } from '@/app/my_profile/Nickname/Hooks/useProfileSto
 import { saveProfileData } from '@/app/utils/save/saveProfileData';
 import { createUserData } from '@/app/utils/save/saveUserData';
 import { setReflectionData } from '@/app/utils/save/saveReflectionData';  
+import { saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory_array';
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
