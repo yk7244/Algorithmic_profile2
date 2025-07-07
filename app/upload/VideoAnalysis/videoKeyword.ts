@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { OpenAILogger } from '../../utils/init-logger';
-import { saveWatchHistory } from '@/app/utils/save/saveWatchHistory';  
+import { saveWatchHistory, saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory';  
+import { getWatchHistory } from '@/app/utils/get/getWatchHistory';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -147,11 +148,7 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
         videoInfo.keywords = extractedKeywords;
       }
       console.log('받아왔음!!:', videoInfo);
-
-      const watchHistory = JSON.parse(localStorage.getItem('watchHistory') || '[]');
-      watchHistory.push(videoInfo);
       //✅ 나중에 DB로 확인하고 호출하는걸로 바꾸기
-      saveWatchHistory(watchHistory);
       return videoInfo;
     }
     return null;
@@ -167,15 +164,19 @@ export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, o
   const processedItems: any[] = [];
   let processedCount = 0;
   const totalItems = selectedItems.length;
+  console.log('selectedItems:', selectedItems);
 
   if (onProgress) {
     onProgress(0, totalItems);
   }
+const watchHistory_temp =[];
 
   for (const item of selectedItems) {
     try {
       const videoInfo = await fetchVideoInfo(item.videoId);
       console.log('⭐️videoInfo:', videoInfo);
+      watchHistory_temp.push(videoInfo);
+
       if (videoInfo != null) {
         processedItems.push({
           videoId: videoInfo.videoId,
@@ -199,6 +200,9 @@ export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, o
       }
     }
   }
+  console.log('watchHistory_temp:', watchHistory_temp);
+  saveWatchHistory(watchHistory_temp);
+  saveWatchHistory_array(watchHistory_temp);
   return processedItems;
 }
 

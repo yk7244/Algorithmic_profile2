@@ -108,6 +108,7 @@ export const parseJSONWatchHistory = async (
 
     const selectedItems = Object.values(groupedByDate).flat();
     console.log(`3)그룹화 및 제한 후 영상 수: ${selectedItems.length}개`);
+    console.log('selectedItems:', selectedItems);
 
     return selectedItems;
     

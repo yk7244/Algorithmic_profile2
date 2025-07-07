@@ -28,6 +28,11 @@ export interface WatchHistory{
   keywords: string[];
   timestamp: string;
 }
+//[1-2] WatchHistory_array 타입 정의 -> watchHistory 배열 저장용
+export interface WatchHistory_array{
+  watchHistory: WatchHistory[];
+  timestamp: string;
+}
 
 //[2] ClusterHistory 테이블 -> utils/saveClusterHistory.ts 에서 저장함
 export interface ClusterHistory {

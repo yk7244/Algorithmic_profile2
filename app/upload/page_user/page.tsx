@@ -15,6 +15,7 @@ import { useClusterStorage } from '../hooks/useClusterStorage';
 import { useRouter } from 'next/navigation';    
 
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
+import { getParseHistory } from '@/app/utils/get/getpraseHistory';
 
 
 // 기본 이미지를 데이터 URI로 정의
@@ -122,6 +123,9 @@ useEffect(() => {
     return () => clearTimeout(timeout);
 }, [showCompletePage]);
 
+const [current, setCurrent] = useState(0);
+const [total, setTotal] = useState(0);
+
  // 페이지가 처음 로드될 때 자동 분석 시작
 useEffect(() => {
     const startAnalysis = async () => {
@@ -130,8 +134,15 @@ useEffect(() => {
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
-            const result = await handleKeyword(watchHistory, fetchVideoInfo, (current, total) => {
+            const parseHistory = getParseHistory();
+            console.log('parseHistory 불러오기:', parseHistory);
+            console.log('fetchVideoInfo:', fetchVideoInfo);
+            
+            const result = await handleKeyword(parseHistory, fetchVideoInfo, 
+                (current, total) => {
                 console.log(`${current}/${total} 처리 중`);
+                setCurrent(current);
+                setTotal(total);
             });
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
@@ -298,14 +309,20 @@ return (
                     <div className="space-y-4" style={{marginTop: '300px'}}>
                         
                         <p
-                            className="mt-200 text-gray-300 text-2xl font-bold mx-auto text-center"
+                            className="mt-200 text-gray-300 text-2xl font-bold mx-auto text-center "
                             style={{
                                 opacity: showStepText ? 1 : 0,
                                 transition: 'opacity 0.4s ease-in-out',
+                                animation: generatingStep === 2 ? 'pulse 1s infinite' : 'none',
                             }}>
                             {steps[displayedStep - 1]?.description}
                             
                         </p>
+                        {generatingStep === 1 &&(
+                            <p className="mt-200 text-gray-300 text-md font-bold mx-auto text-center">
+                                {Math.round((current / total) * 100)}% 진행 중
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
