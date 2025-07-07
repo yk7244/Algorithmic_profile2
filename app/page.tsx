@@ -21,6 +21,7 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { useLoginHandlers } from "./login/hooks/useLoginHandlers";
+import { saveParseHistory } from './utils/save/savePraseHistory';
 
 
 
@@ -94,6 +95,7 @@ const [dateRange, setDateRange] = useState<{
 }>(() => {
     const today = new Date();
     console.log('upload_check', upload_check);
+    
     if (upload_check === 1) {
         // 초기 유저: 오늘부터 4주 전
         return {
@@ -109,7 +111,7 @@ const [dateRange, setDateRange] = useState<{
     } else {
         // 거짓(0): 기본값 (일주일)
         return {
-            from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
+            from: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
             to: today
         };
     }
@@ -469,6 +471,7 @@ useEffect(() => {
                         setScrollToGuide(true);
                         console.log("분석 시작");
                         router.push('/upload/page_user');
+                        saveParseHistory(watchHistory); 
                       }}
                       style={{
                         position: "relative",

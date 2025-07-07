@@ -91,7 +91,8 @@ KEYWORD_CLUSTER_END`;
   keywordResponse.split('KEYWORD_CLUSTER_START')
     .slice(1)
     .forEach((cluster: string, i: number) => {
-      const clusterText = cluster.split('KEYWORD_CLUSTER_END')[0]?.trim();
+      const clusterText = cluster.split('KEYWORD_CLUSTER_END')[0]?.replace(/\s*\(\d+회\)\s*$/, '').trim();
+
       if (!clusterText) return;
 
             // 현재는 키워드들만 나열되어 있으므로 전체 텍스트를 keyword_list로 사용
@@ -166,21 +167,21 @@ const analyzeClusterWithOpenAI = async (
 (1) 콘텐츠 관심 흐름
 (2) 시청 성향과 목적
 (3) 내면 가치 및 감정 흐름에 대해 깊이 있게 이해할 수 있는 전문가입니다.
-클러스터된 키워드들을 분석해 응답형식에 맞게 친절히 설명해주세요
+제공된 클러스터를 분석해 응답형식에 맞게 친절히 설명해주세요
 
 단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, 
 (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
 
-  키워드 클러스터:
   ${clustersWithVideos.map((cluster, i) => {
     const titles = cluster.related_videos?.slice(0, 8).map((video: any) => video.title).join(', ') || '없음';
-    return  `클러스터 ${i+1}: ${cluster.keyword_list}\n📹 관련 영상들: ${titles}`;
+    return  `클러스터 ${i+1}의 키워드들: ${cluster.keyword_list}\n📹 관련 영상들: ${titles}`;
   }).join('\n\n')}
 
+* 클러스터 ${clustersWithVideos.length}개 생성
 
 응답 형식:
 CLUSTER_START
-1.그룹의 재미있는 핵심 키워드 
+1.10자 이내 재밌는 핵심 키워드 
 2.콘텐츠 카테고리
 3.당신은 [관심 콘텐츠, 취향]에 관심을 가지고 있는 흐름이 보여요. [콘텐츠 특성/분위기]에 시선이 오래 머무는 성향을 가지고 있는 것 같아요.[시청스타일]한 스타일을 추구하고 [시청 성향]중요하게 여기는 모습이에요. 시청하신 영상들을 살펴보면서 당신의 [내면 감정/가치/연결]이 느껴졌어요.  
 4.감성과 태도 키워드 3-4개
@@ -428,7 +429,7 @@ export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any
 
     // 6단계: 유저 데이터 생성
     console.log('6단계: 유저 데이터 생성');
-    const userData = createUserData();
+    createUserData();
     console.log('6단계 결과: 유저 데이터 생성 완료'); 
 
     // 7단계: 리플랙션 데이터 생성
@@ -499,10 +500,7 @@ export const handleCluster = async (
     console.log('[handleCluster] 클러스터 설정:', newClusters);
 
     // ImageData 형식으로 변환
-    const profileImages = newClusters.map((cluster: any, index: number) => {
-      const imageUrl = cluster.thumbnailUrl || placeholderImage;
-      return transform(cluster, index, imageUrl);
-    });
+    
     //별명 생성
 
     useGenerateUserProfile({

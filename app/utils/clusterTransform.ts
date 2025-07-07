@@ -73,31 +73,26 @@ export const transform = (
 
 const placeholderImage = '/images/default_image.png';
 
-export function transformClustersToImageData(
-  clusters: any[],
-): ImageData[] {
-  const strengths = clusters.map(c => c.strength || c.metadata?.videoCount || 1);
+export function transformClustersToImageData(clusters: any[]): ImageData[] {
+  const clusterArray = Array.isArray(clusters) ? clusters : [clusters];
+
+  const strengths = clusterArray.map(c => c.strength || c.metadata?.videoCount || 1);
   const minStrength = Math.min(...strengths);
   const maxStrength = Math.max(...strengths);
 
-  console.log('받아온 클러스터', clusters);
+  console.log('✅ 받아온 클러스터', clusterArray);
 
-  
-
-  // 1. 이미지 기본 데이터 생성 (위치는 임시)
-  const initialImageData = clusters.map((cluster, index) => {
-    console.log('받아온 이미지', cluster.thumbnailUrl);
-    const imageUrl = cluster.thumbnailUrl || placeholderImage;
+  const initialImageData = clusterArray.map((cluster, index) => {
+    const imageUrl = cluster.thumbnailUrl || placeholderImage;  //thumbnailUrl 없으면 placeholderImage 사용
     return transform(cluster, index, imageUrl, minStrength, maxStrength);
   });
 
-  // 2. 자동 정렬 로직으로 위치 계산
   const containerWidth = 1000;
   const containerHeight = 680;
   const topMargin = 100;
+
   const newPositions = arrangeImagesInCenter(initialImageData, containerWidth, containerHeight, topMargin);
 
-  // 3. 계산된 위치를 각 이미지에 할당
   const finalImageData = initialImageData.map(image => {
     const position = newPositions[image.id] || { x: 0, y: 0 };
     return {
@@ -108,19 +103,14 @@ export function transformClustersToImageData(
     };
   });
 
-  console.log('✅ [transform] 3. Final transformed image data:', JSON.parse(JSON.stringify(finalImageData)));
-
-  //유상님✅ ClusterImages 저장   
   saveProfileImages(finalImageData);
-  //유상님✅ ClusterHistory 저장
-  const clusterHistoryResult = saveClusterHistory(finalImageData); 
-  //유상님✅ SliderHistory 저장
-  const sliderResult = saveSliderHistory(finalImageData); 
+  const clusterHistoryResult = saveClusterHistory(finalImageData);
+  const sliderResult = saveSliderHistory(finalImageData);
 
   if (clusterHistoryResult.success && sliderResult.success) {
     console.log('✨ 모든 히스토리 저장 성공!', { clusterHistoryResult, sliderResult });
   }
+
   return finalImageData;
 }
-
 

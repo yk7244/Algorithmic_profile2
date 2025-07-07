@@ -28,6 +28,7 @@ import { handleCluster} from './VideoAnalysis/videoCluster';
 import { fetchVideoInfo, handleKeyword } from './VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './hooks/useClusterStorage';
 import { createUserData } from '@/app/utils/save/saveUserData';
+import { saveWatchHistory_array } from '../utils/save/saveWatchHistory';
 
 // 기본 이미지를 데이터 URI로 정의
 const placeholderImage = '/images/default_image.png'
@@ -760,6 +761,9 @@ export default function Home() {
                   asChild 
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 transition-all px-16 py-8 text-2xl font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] text-white"
+                  onClick={() => {
+                    saveWatchHistory_array(watchHistory);
+                  }}  
                 >
                   <Link href="/my_profile">
                   (3)관리자용 버튼: DB 저장 후, my profile 이동 
