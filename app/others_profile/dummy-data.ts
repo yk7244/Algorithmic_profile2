@@ -183,7 +183,7 @@ export const images2: ImageData[] = [
         top: '250px',
         position: { x: 350, y: 250 },
         frameStyle: 'love',
-        created_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
     },
 ];
 
@@ -252,7 +252,7 @@ export const images4: ImageData[] = [
         description: '산과 강이 어우러진 멋진 풍경 이미지입니다.',
         category: '여행',
         sizeWeight: 0.03,
-        src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
+            src: 'https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?q=80&w=1974&auto=format&fit=crop',
         relatedVideos: [
         { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
         ],
@@ -493,12 +493,12 @@ export const images8: ImageData[] = [
         mood_keyword: '#차분한 #명상적인',
         description: '고요한 호숫가의 나무 데크입니다.',
         category: '휴식',
-        sizeWeight: 0.05,
+            sizeWeight: 0.05,
         src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
         relatedVideos: [
         { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
         ],
-        desired_self: false,
+            desired_self: false,
         desired_self_profile: null,
         metadata: {},
         rotate: 0,
@@ -527,7 +527,7 @@ export const images9: ImageData[] = [
         relatedVideos: [
         { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
         ],
-        desired_self: false,
+            desired_self: false,
         desired_self_profile: null,
         metadata: {},
         rotate: 0,
@@ -552,7 +552,7 @@ export const images9: ImageData[] = [
         relatedVideos: [
         { title: '고요한 호수 소리', embedId: 'm2-2B_2bL2E' }
         ],
-        desired_self: false,
+            desired_self: false,
         desired_self_profile: null,
         metadata: {},
         rotate: 0,
@@ -581,7 +581,7 @@ export const images10: ImageData[] = [
         relatedVideos: [
         { title: '아름다운 스위스 풍경', embedId: 'f3I0_z_b-F4' }
         ],
-        desired_self: false,
+            desired_self: false,
         desired_self_profile: null,
         metadata: {},
         rotate: 0,
@@ -694,5 +694,5 @@ export const profiles: ProfileData[] = [
     nickname: '여행 사진가',
     description: '여행하며 만난 순간을 사진으로 남깁니다.',
     created_at: new Date().toISOString(),
-  },
+},
 ];

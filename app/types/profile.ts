@@ -110,6 +110,23 @@ export interface ThumbnailData {
   src: string;
 }
 
+//[8] ReflectionData 테이블 
+export interface ReflectionData {
+  id: string;
+  user_id: string;
+  timestamp: string;
+  reflection1: boolean;
+  reflection2: boolean;
+  reflection1_answer:{
+    answer1: string;
+    answer2: string;
+    answer3: string;
+  }
+  reflection2_answer:{
+    answer1: string;
+    answer2: string;
+  }
+}
 export interface HistoryData {
   timestamp: number;
   frameStyles: Record<string, string>;

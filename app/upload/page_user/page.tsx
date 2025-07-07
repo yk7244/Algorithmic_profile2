@@ -154,9 +154,12 @@ useEffect(() => {
                 setError,
                 generateProfile,
                 //ClusterTransform에서 ClusterImages 저장함 
+                //userData 저장함 
+                //reflectionData 저장함 
                 
             );
             // 3단계: 별명만들기
+            
             
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 2000)); // 이미지 생성 시뮬레이션
