@@ -34,7 +34,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
                 }}
                 >
                     <Sparkles className="w-5 h-5" />
-                    알고리즘 탐색 리플랙션 하기
+                    알고리즘 탐색 감상 남기기
                 </button>
             ):(
                 <>
