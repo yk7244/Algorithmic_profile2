@@ -31,6 +31,8 @@ const steps = [
 export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, history }) => {
     const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
     const [activeStep, setActiveStep] = useState(0);
+    const [videoOpen, setVideoOpen] = useState(false);
+    const [descriptionOpen, setDescriptionOpen] = useState(false);
     useEffect(() => {
         //setWatchHistory(getWatchHistory() as WatchHistory[]);
 
@@ -49,6 +51,8 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
     const totalVideos = watchHistory.length;
     const allKeywords = watchHistory.flatMap((v) => v.keywords || []);
     const totalKeywords = allKeywords.length;
+    
+
 
     //console.log('현재 history', history);
 
@@ -141,13 +145,42 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
                         </div>
                         <div className="flex flex-col w-full overflow-y-auto mt-10">
                             {history.images.map((image, i) => (        
-                                <div key={image.id + i} className="bg-white rounded-xl p-4 mb-4">
+                                <div key={image.id + i} className="bg-white rounded-xl p-6 mb-4">
                                     <div className="flex flex-wrap gap-2 mb-2">
-                                        <span className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-sm font-semibold">{image.main_keyword}</span>
+                                        {image.keywords.map((kw, i) => (
+                                            <span key={kw + i} className="bg-gray-200 text-gray-700 rounded-full px-3 py-1 text-sm font-semibold">{kw}</span>
+                                        ))}
                                     </div>
-                                    <div className="text-gray-500 text-sm font-semibold">
-                                        포함된 영상: {image.relatedVideos.length}개
-                                    </div>
+                                    
+                                    {/* 포함된 영상 수 */}
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold">
+                                    <span>포함된 영상: {image.relatedVideos.length}개</span>
+                                    {image.relatedVideos.length > 0 && (
+                                        <button
+                                            onClick={() => setVideoOpen((prev) => !prev)}    
+                                            className="text-blue-500 underline text-xs focus:outline-none"
+                                        >
+                                            {videoOpen ? "숨기기" : "보기"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {videoOpen && (
+                                    <ul className="mt-2 space-y-1">
+                                        {image.relatedVideos.map((video: any, idx: number) => (
+                                            <li key={idx}>
+                                                <a
+                                                    href={video.url || video.link || `https://www.youtube.com/watch?v=${video.videoId}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:underline text-sm"
+                                                >
+                                                    {video.title || video.name || video.videoId}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                                 </div>
                             ))}
                         </div>
@@ -156,13 +189,179 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
                     {activeStep === 2 && (
                         // 3단계: 대표 표현 생성 결과 or 설명
                         <>
-                        ..
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex gap-8">
+                                <div className="text-gray-700 text-md">
+                                    총 키워드 묶음 개수: <span className="font-bold text-lg">{history.images.length}</span>
+                                </div>
+                            </div>
+                            <div className="text-blue-600 text-sm cursor-pointer hover:underline select-none">
+                                표현의 기준이 궁금해요 ?
+                            </div>
+                        </div>
+                        <div className="flex flex-col w-full overflow-y-auto mt-10">
+                            {history.images.map((image, i) => (        
+                                <div key={image.id + i} className="bg-white rounded-xl p-6 mb-4">
+                                    <div className="text-black text-xl font-bold mb-4">
+                                        #{image.main_keyword}
+                                    </div>
+                                    <div className="text-gray-500 text-sm font-medium mb-1">
+                                        <span className="font-bold text-black">카테고리:</span> {image.category}
+                                    </div>
+                                    <div className="text-gray-500 text-sm font-medium mb-1">
+                                        <span className="font-bold text-black">무드:</span> {image.mood_keyword}
+                                    </div>
+                                    <div className="text-gray-500 text-sm font-medium mb-1">
+                                        <span className="font-bold text-black">설명: </span> 
+                                        
+                                        {descriptionOpen ?   (
+                                            <>
+                                            {image.description}
+                                            <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>줄이기   </button>
+                                            </>
+                                        ):(
+                                            <>
+                                            {image.description.slice(0, 100)}...                                        
+                                            <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>더보기</button>
+                                            </>
+                                        )}
+                                        </div>
+                                    <div className="text-gray-500 text-sm mt-3 mb-3 flex flex-wrap gap-1">
+                                        <div className="font-bold text-black mr-1">키워드:</div> 
+                                        {image.keywords.map((kw, i) => (
+                                            <span key={kw + i} className="bg-gray-200 text-gray-700 rounded-full px-2 py-1 text-xs font-medium">{kw}</span>
+                                        ))}
+                                        
+                                    </div>
+                                    
+                                    
+                                    
+                                    {/* 포함된 영상 수 */}
+                                    <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold">
+                                    <span>포함된 영상: {image.relatedVideos.length}개</span>
+                                    {image.relatedVideos.length > 0 && (
+                                        <button
+                                            onClick={() => setVideoOpen((prev) => !prev)}    
+                                            className="text-blue-500 underline text-xs focus:outline-none"
+                                        >
+                                            {videoOpen ? "숨기기" : "보기"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {videoOpen && (
+                                    <ul className="mt-2 space-y-1">
+                                        {image.relatedVideos.map((video: any, idx: number) => (
+                                            <li key={idx}>
+                                                <a
+                                                    href={video.url || video.link || `https://www.youtube.com/watch?v=${video.videoId}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-blue-600 hover:underline text-sm"
+                                                >
+                                                    {video.title || video.name || video.videoId}
+                                                </a>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                </div>
+                            ))}
+                        </div>
                         </>
                     )}
                     {activeStep === 3 && (
                         // 4단계: 그룹 이미지화 결과 or 설명
                         <>
-                        //
+                        <div className="flex justify-between items-center mb-4">
+                            <div className="flex gap-8">
+                                <div className="text-gray-700 text-md">
+                                    총 키워드 묶음 개수: <span className="font-bold text-lg">{history.images.length}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col w-full overflow-y-auto mt-10">
+                            {history.images.map((image, i) => (        
+                                <div key={image.id + i} className="flex bg-white rounded-2xl shadow mb-6 w-full max-w-4xl gap-6 ">
+                                    <div className="w-[50%] h-full relative overflow-hidden rounded-l-2xl">
+                                        <img
+                                            src={image.src}
+                                            alt={image.main_keyword}
+                                            className="absolute inset-0 w-full h-full object-cover"
+                                        />
+                                    </div>
+                                    <div className="w-[50%] flex flex-col justify-start ">
+                                        <div key={image.id + i} className="bg-white rounded-xl p-6 mb-4">
+                                        <div className="text-black text-xl font-bold mb-4">
+                                            #{image.main_keyword}
+                                        </div>
+                                        <div className="text-gray-500 text-sm font-medium mb-1">
+                                            <span className="font-bold text-black">카테고리:</span> {image.category}
+                                        </div>
+                                        <div className="text-gray-500 text-sm font-medium mb-1">
+                                            <span className="font-bold text-black">무드:</span> {image.mood_keyword}
+                                        </div>
+                                        <div className="text-gray-500 text-sm font-medium mb-1">
+                                            <span className="font-bold text-black">설명: </span> 
+                                            
+                                            {descriptionOpen ?   (
+                                                <>
+                                                {image.description}
+                                                <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>줄이기   </button>
+                                                </>
+                                            ):(
+                                                <>
+                                                {image.description.slice(0, 100)}...                                        
+                                                <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>더보기</button>
+                                                </>
+                                            )}
+                                            </div>
+                                        <div className="text-gray-500 text-sm mt-3 mb-3 flex flex-wrap gap-1">
+                                            <div className="font-bold text-black mr-1">키워드:</div> 
+                                            {image.keywords.map((kw, i) => (
+                                                <span key={kw + i} className="bg-gray-200 text-gray-700 rounded-full px-2 py-1 text-xs font-medium">{kw}</span>
+                                            ))}
+                                            
+                                        </div>
+                                        
+                                        
+                                        
+                                        {/* 포함된 영상 수 */}
+                                        <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold">
+                                            <span>포함된 영상: {image.relatedVideos.length}개</span>
+                                            {image.relatedVideos.length > 0 && (
+                                                <button
+                                                    onClick={() => setVideoOpen((prev) => !prev)}    
+                                                    className="text-blue-500 underline text-xs focus:outline-none"
+                                                >
+                                                    {videoOpen ? "숨기기" : "보기"}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {videoOpen && (
+                                            <ul className="mt-2 space-y-1">
+                                                {image.relatedVideos.map((video: any, idx: number) => (
+                                                    <li key={idx}>
+                                                        <a
+                                                            href={video.url || video.link || `https://www.youtube.com/watch?v=${video.videoId}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-blue-600 hover:underline text-sm"
+                                                        >
+                                                            {video.title || video.name || video.videoId}
+                                                        </a>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
                         </>
                     )}
                 </div>
@@ -170,4 +369,4 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
             </div>
         </div>
     );
-}; 
+};
