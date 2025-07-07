@@ -29,9 +29,11 @@ export interface WatchHistory{
   timestamp: string;
 }
 //[1-2] WatchHistory_array 타입 정의 -> watchHistory 배열 저장용
+// (클러스터 분석 과정 살펴볼때 옛날꺼도 보여주기 위함)
 export interface WatchHistory_array{
   watchHistory: WatchHistory[];
   timestamp: string;
+  clusterHistory_id: string;
 }
 
 //[2] ClusterHistory 테이블 -> utils/saveClusterHistory.ts 에서 저장함

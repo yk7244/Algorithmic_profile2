@@ -28,9 +28,9 @@ import { handleCluster} from './VideoAnalysis/videoCluster';
 import { fetchVideoInfo, handleKeyword } from './VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './hooks/useClusterStorage';
 import { createUserData } from '@/app/utils/save/saveUserData';
-import { saveWatchHistory_array } from '../utils/save/saveWatchHistory';
+import { saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory_array';
 
-// 기본 이미지를 데이터 URI로 정의
+// 기본 이미지를 데이터 URI로 정의  
 const placeholderImage = '/images/default_image.png'
 
 // OpenAI 클라이언트 초기화 수정
@@ -762,7 +762,7 @@ export default function Home() {
                   size="lg" 
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 transition-all px-16 py-8 text-2xl font-semibold rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] text-white"
                   onClick={() => {
-                    saveWatchHistory_array(watchHistory);
+                    
                   }}  
                 >
                   <Link href="/my_profile">

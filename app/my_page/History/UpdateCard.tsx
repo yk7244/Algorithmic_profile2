@@ -14,7 +14,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
 
     const updateDate = isOneWeekPassed();
     const reflectionData = getReflectionData();
-    console.log('reflectionData', reflectionData);
+    //console.log('reflectionData', reflectionData);
     
     return (
     <div className="bg-[#E1E8FC] rounded-2xl shadow p-6 w-full">

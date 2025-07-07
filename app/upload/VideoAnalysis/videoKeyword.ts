@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { OpenAILogger } from '../../utils/init-logger';
-import { saveWatchHistory, saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory';  
+import { saveWatchHistory } from '@/app/utils/save/saveWatchHistory';  
+import { saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory_array';  
 import { getWatchHistory } from '@/app/utils/get/getWatchHistory';
 
 // OpenAI 클라이언트 초기화
@@ -202,7 +203,6 @@ const watchHistory_temp =[];
   }
   console.log('watchHistory_temp:', watchHistory_temp);
   saveWatchHistory(watchHistory_temp);
-  saveWatchHistory_array(watchHistory_temp);
   return processedItems;
 }
 
