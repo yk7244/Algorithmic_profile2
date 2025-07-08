@@ -5,11 +5,12 @@ import React, { useState, useEffect } from "react";
 import { getClusterHistory } from "@/app/utils/get/getClusterHistory";
 import { getWatchHistory } from "@/app/utils/get/getWatchHistory";
 import { AnalysisModal } from "@/app/my_page/Analysis/AnalysisModal";
-import { setReflectionData } from "@/app/utils/save/saveReflectionData";
+import { setReflectionData } from "@/app/utils/save/saveReflection";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { ReflectionData } from "@/app/types/profile";
 import { useRouter } from "next/navigation";
 import { saveWatchHistory_array } from "@/app/utils/save/saveWatchHistory_array";
+import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 
 // ClusterHistory 카드 컴포넌트
 export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boolean }> = ({ history, latest }) => {
@@ -49,7 +50,6 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                 onClick={() => {
                     setOpen(true);
                     setReflectionData();
-                    
                 }}
                 >
                     알고리즘 프로필 분석 과정 살펴보기

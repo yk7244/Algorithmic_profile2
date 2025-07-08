@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { useProfileStorage } from "./useProfileStorage";
+import { generateProfileId } from "../Hooks/useProfileStorage";
 import { ProfileData } from '../../../types/profile';
 import { saveProfileData } from "../../../utils/save/saveProfileData";
 
@@ -18,10 +18,7 @@ export function useGenerateUserProfile({
     }: UseGenerateUserProfileParams) {
     
     // localStorage 프로필 관리 훅 사용
-    const {
-        saveProfileToStorage,
-        generateProfileId,
-    } = useProfileStorage();
+    
 
     const generateProfile = async () => {
         try {

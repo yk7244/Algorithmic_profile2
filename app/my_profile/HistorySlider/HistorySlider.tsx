@@ -1,4 +1,5 @@
 import React from "react";
+import { getLatestProfileData } from "@/app/utils/get/getProfileData";
 
 interface HistorySliderProps {
     histories: any[];
@@ -7,6 +8,7 @@ interface HistorySliderProps {
     handlePlayHistory: () => void;
     handleHistoryClick: (index: number) => void;
     handleProfileImagesClick?: () => void;
+    changeProfile: (nickname: string, description: string) => void;
 }
 
 const HistorySlider: React.FC<HistorySliderProps> = ({
@@ -16,6 +18,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     handlePlayHistory,
     handleHistoryClick,
     handleProfileImagesClick,
+    changeProfile,
 }) => {
     //console.log('[HistorySlider] Received histories prop:', histories, 'Length:', histories.length);
     if (histories.length === 0 && currentHistoryIndex === -1) {
@@ -49,7 +52,15 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                                     className="w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center"
                                     onClick={() => {
                                         handleHistoryClick(index);
-                                        console.log(history);
+                                        //console.log('🔵history.nickname',history.nickname);
+                                        //console.log('🔵history.description',history.description);
+                                        changeProfile(history.nickname, history.description);
+                                        //console.log('index',index);
+                                        if(index === -1){
+                                            const tmp = getLatestProfileData();
+                                            console.log('🔵tmp',tmp);
+                                            changeProfile(tmp.nickname, tmp.description);
+                                        }
                                     }}
                                 >
                                     {hasDesiredSelf ? (
@@ -74,7 +85,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                     {/* 원본 ProfileImages 점 */}
                     <div className="relative group flex flex-col items-center">
                         <button
-                            className="w-4 h-4 rounded-full bg-black transition-all opacity-80 hover:opacity-100"
+                            className="w-4 h-4 rounded-full bg-blue-500 transition-all opacity-80 hover:opacity-100"
                             onClick={() => {
                                 console.log('🔵 파란색 점 클릭 - ProfileImages 로드');
                                 if (handleProfileImagesClick) {

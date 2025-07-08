@@ -51,6 +51,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                     ...img,
                     left: `${pos.x}px`,
                     top: `${pos.y}px`,
+                    position: { x: pos.x, y: pos.y },
                 };
             }
             return img;

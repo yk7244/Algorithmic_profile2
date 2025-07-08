@@ -3,6 +3,7 @@ import {
   HistoryData, 
   ImageData
 } from '../../../types/profile';
+import { getSliderHistory } from "@/app/utils/get/getSliderHistory";
 
 export function useHistorySlider({
     images,
@@ -13,8 +14,9 @@ export function useHistorySlider({
     setVisibleImageIds,
     setImages,
     placeholderImage,
-    handleBgColorChange,
+    onHistoryBgColorChange,
     originalBgColor,
+    changeProfile,
 }: {
     images: ImageData[];   
     positions: Record<string, {x: number, y: number}>;
@@ -24,8 +26,9 @@ export function useHistorySlider({
     setVisibleImageIds: (ids: Set<string>) => void;
     setImages: (images: ImageData[]) => void;
     placeholderImage: string;
-    handleBgColorChange: (color: string) => void;
+    onHistoryBgColorChange?: (color: string) => void;
     originalBgColor: string;
+    changeProfile: (nickname: string, description: string) => void;
 }) {
     const [histories, setHistories] = useState<HistoryData[]>([]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
@@ -33,12 +36,14 @@ export function useHistorySlider({
 
     // 히스토리 불러오기 (페이지 첫 로드 시)
     useEffect(() => {
+        
+        setCurrentHistoryIndex(-1); // 파란 점을 활성화
+
         // 1. SliderHistory (검은 점들)를 불러옵니다.
-        const savedHistoriesRaw = localStorage.getItem('SliderHistory');
-        if (savedHistoriesRaw) {
+        const SliderHistory = getSliderHistory();
+        if (SliderHistory) {
             try {
-                const parsedHistories = JSON.parse(savedHistoriesRaw);
-                const migratedHistories = parsedHistories.map((history: any) => ({
+                const migratedHistories = SliderHistory.map((history: any) => ({
                     ...history,
                     images: history.images || images // images는 props로 받은 초기 이미지
                 }));
@@ -48,71 +53,9 @@ export function useHistorySlider({
                 setHistories([]);
             }
         }
-
-        // 2. profileImages (파란 점)를 불러와 초기 뷰로 설정합니다.
-        const profileImagesRaw = localStorage.getItem('profileImages');
-        if (profileImagesRaw) {
-            try {
-                const profileImages = JSON.parse(profileImagesRaw);
-                let imageArray: ImageData[] = [];
-                if (Array.isArray(profileImages)) {
-                    imageArray = profileImages;
-                } else {
-                    imageArray = Object.values(profileImages);
-                }
-
-                // 페이지가 처음 열릴 때, 슬라이더의 기본 상태는 profileImages
-                setImages(imageArray);
-                
-                const positionsFromImages: Record<string, {x: number, y: number}> = {};
-                const frameStylesFromImages: Record<string, string> = {};
-
-                imageArray.forEach((img: ImageData) => {
-                    if (img.id && img.position) {
-                        positionsFromImages[img.id] = img.position;
-                    }
-                    if (img.id) {
-                        frameStylesFromImages[img.id] = img.frameStyle || 'healing';
-                    }
-                });
-                
-                setPositions(positionsFromImages);
-                setFrameStyles(frameStylesFromImages);
-                setVisibleImageIds(new Set<string>(imageArray.map((img) => img.id).filter(id => id)));
-                setCurrentHistoryIndex(-1); // 파란 점을 활성화
-            } catch (e) {
-                console.error("profileImages 파싱 에러:", e);
-                // 파싱 실패 시 아래의 fallback 로직을 타게 됨
-            }
-        } else if (savedHistoriesRaw) {
-             // profileImages가 없으면, SliderHistory의 마지막 상태를 로드합니다.
-            const histories = JSON.parse(savedHistoriesRaw);
-            if (histories.length > 0) {
-                const latestHistory = histories[histories.length - 1];
-                setImages(latestHistory.images || []);
-                const positionsFromImages: Record<string, {x: number, y: number}> = {};
-                (latestHistory.images || []).forEach((img: any) => {
-                    if (img.id && img.position) positionsFromImages[img.id] = img.position;
-                });
-                setPositions(positionsFromImages);
-                setFrameStyles(latestHistory.frameStyles || {});
-                setCurrentHistoryIndex(histories.length - 1);
-                setVisibleImageIds(new Set<string>((latestHistory.images || []).map((img: any) => img.id)));
-            }
-        } else {
-            // 아무 히스토리도 없으면 props로 받은 초기 상태로 설정
-            const initialHistory = {
-                timestamp: Date.now(),
-                positions: positions,
-                frameStyles: frameStyles,
-                images: images
-            };
-            setHistories([initialHistory] as unknown as HistoryData[]);
-            setCurrentHistoryIndex(0);
-            setVisibleImageIds(new Set<string>(images.map((img: any) => img.id)));
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    
 
     // 히스토리 재생 효과
     useEffect(() => {
@@ -214,63 +157,19 @@ export function useHistorySlider({
         
         // -1은 원본 ProfileImages 상태를 의미
         if (index === -1) {
-            handleBgColorChange(originalBgColor); // 원래 배경색으로 복원
-            //console.log('🔵 원본 ProfileImages 상태로 전환');
+            if (onHistoryBgColorChange) onHistoryBgColorChange(originalBgColor); // 원래 배경색으로 복원
             setCurrentHistoryIndex(-1);
-            
-            const profileImagesData = localStorage.getItem('profileImages');
-            
-            if (profileImagesData) {
-                try {
-                    const profileImages = JSON.parse(profileImagesData);
-                    //console.log('🖼️ ProfileImages 데이터 업데이트 중...');
-                    
-                    let imageArray: ImageData[] = [];
-                    if (Array.isArray(profileImages)) {
-                        imageArray = profileImages;
-                    } else {
-                        imageArray = Object.values(profileImages);
-                    }
-                    
-                    setImages(imageArray);
-                    
-                    const positionsFromImages: Record<string, {x: number, y: number}> = {};
-                    const frameStylesFromImages: Record<string, string> = {}; // frameStyles 추출용 객체
-
-                    imageArray.forEach((img: ImageData) => {
-                        if (img.id && img.position) {
-                            positionsFromImages[img.id] = img.position;
-                        } else {
-                            console.log(`❌ 이미지 ${img.id}에 position 없음`);
-                        }
-                        // 각 이미지의 frameStyle 값을 추출 (없으면 'healing' 기본값)
-                        if (img.id) {
-                            frameStylesFromImages[img.id] = img.frameStyle || 'healing'; 
-                        }
-                    });
-                    
-                    //console.log('📍 최종 positions:', positionsFromImages);
-                    setPositions(positionsFromImages);
-
-                    //console.log('🎨 최종 frameStyles:', frameStylesFromImages); // 추출된 frameStyles 로그
-                    setFrameStyles(frameStylesFromImages); // 추출된 frameStyles로 상태 업데이트
-                    console.log('🔵 ', imageArray);
-                    const imageIds = imageArray.map((img: ImageData) => img.id).filter(id => id);
-                    setVisibleImageIds(new Set<string>(imageIds));
-                    
-                    //console.log('✅ ProfileImages 로드 완료 (positions 및 frameStyles 포함)');
-                } catch (error) {
-                    console.error('ProfileImages 파싱 에러:', error);
-                }
-            } else {
-                console.log('❌ ProfileImages가 localStorage에 없습니다');
-            }
-            
+            //강제 새로고침
+            window.location.reload();
             return;
         }
+        // index가 -1이 아닐 때, 해당 히스토리의 배경색을 적용
+        if (onHistoryBgColorChange) onHistoryBgColorChange('bg-gray-400'); // 기본값
+            const selectedHistory = histories[index];
+
+        console.log('🔵selectedHistory',selectedHistory); 
+
         
-        handleBgColorChange('bg-gray-100'); // 히스토리 선택 시 배경색 변경
-        const selectedHistory = histories[index];
         //console.log('선택된 히스토리:', selectedHistory);
         //console.log('히스토리의 이미지 개수:', selectedHistory.images.length);
         

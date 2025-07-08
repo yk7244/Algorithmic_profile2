@@ -138,6 +138,7 @@ export interface HistoryData {
   timestamp: number;
   frameStyles: Record<string, string>;
   images: ImageData[];
+  bgColor?: string; // 히스토리별 배경색 (선택적)
 }
 
 /* 유상님이 만드신 테이블

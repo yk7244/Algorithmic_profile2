@@ -1,14 +1,15 @@
 import { getSliderHistory } from "../get/getSliderHistory";
 import { getLatestProfileData } from "../get/getProfileData";
+import { getProfileImages } from "../get/getImageData"; 
 
 // [5] SliderHistory 저장 함수
 export const saveSliderHistory = (
-    profileImages: any[], 
     localStorageObj: Storage = localStorage
     ) => {
     try {
         // [5] SliderHistory 배열에 새 데이터 push
         const existingSliderHistory = getSliderHistory();
+        const profileImages = getProfileImages();
     
         // ProfileData에서 nickname과 description 가져오기
         const savedProfileData = getLatestProfileData();

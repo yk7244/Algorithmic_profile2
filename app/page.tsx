@@ -22,9 +22,11 @@ import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/
 import { useAuth } from '@/context/AuthContext';
 import { useLoginHandlers } from "./login/hooks/useLoginHandlers";
 import { saveParseHistory } from './utils/save/savePraseHistory';
-import OverlayQuestion from "./reflection/reflection1/overlay/OverlayQuestion1";
+import OverlayQuestion from "./reflection/reflection2/overlay/OverlayQuestion2";
 import { getReflectionData } from './utils/get/getReflectionData';
-
+import { createUserData } from './utils/save/saveUserData';
+import { saveClusterHistory } from './utils/save/saveClusterHistory';
+import { saveProfileData } from './utils/save/saveProfileData';
 
 // OpenAI 클라이언트 초기화 수정
 const openai = new OpenAI({
@@ -105,8 +107,11 @@ const [dateRange, setDateRange] = useState<{
     if (upload_check === 1) {
         // 초기 유저: 오늘부터 4주 전
         return {
-            from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
-            to: today
+          //☑️TEST로 임의로 3일만 설정함
+          from: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000),
+
+          //from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
+          to: today
         };
     } else if (upload_check === 2) {
         // 두 번째 유저: 일주일
@@ -511,6 +516,7 @@ useEffect(() => {
                         if (isReflection2) {  // 리플렉션 2 여부 확인
                           setPendingUploadAction(() => () => fileInputRef.current?.click());
                           pendingUploadAction?.();
+                          setShowOverlayQuestion(false);
 
                         } else {
                           setShowOverlayQuestion(true);
@@ -752,8 +758,31 @@ useEffect(() => {
               >
                 <Image src="/images/github.png" alt="GitHub" width={22} height={22} className="mr-2" />
                 GitHub로 시작하기
-        </button>
+                </button>
+                {/*
+                <button onClick={() => {
+                  createUserData(); 
+                  const temp: any = {};
+
+                  saveProfileData(temp);
+                  const result = saveClusterHistory(temp, localStorage); 
+                  console.log('result', result);
+                }}
+                style={{
+                  marginTop: 10, 
+                  color: 'white',
+                  backgroundColor: 'black',
+                  border: '1px solid white',
+                  borderRadius: 10,
+                  padding: '10px 20px',
+                  fontSize: 16,
+                }}
+                >
+                  userdata 생성 테스트용
+                </button>
+                */}
             </div>
+            
           </>
         )}
       </div>

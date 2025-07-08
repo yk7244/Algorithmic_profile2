@@ -1,6 +1,7 @@
 "use client";
 
-import { setReflectionData_reflection1, setReflectionData_reflection2 } from "@/app/utils/save/saveReflectionData";
+import { setReflectionData_reflection1 } from "@/app/utils/save/saveReflection";
+import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -39,6 +40,22 @@ export default function ReflectionQuestionsPage() {
     };
 
     const handleNext = () => {
+        // Q1, Q3: 텍스트 답변 저장
+        if (currentIndex === 1 || currentIndex === 3) {
+            updateReflectionAnswer({
+                reflectionKey: "reflection1_answer",
+                answerKey: `answer${currentIndex}` as "answer1" | "answer2" | "answer3",
+                value: answers[currentIndex - 1]
+            });
+        }
+        // Q2: 슬라이더 값도 string으로 저장
+        if (currentIndex === 2) {
+            updateReflectionAnswer({
+                reflectionKey: "reflection1_answer",
+                answerKey: "answer2",
+                value: String(sliderValue)
+            });
+        }
         if (currentIndex < questions.length - 1) {
         setCurrentIndex(currentIndex + 1);
         } else {
@@ -110,7 +127,7 @@ export default function ReflectionQuestionsPage() {
                         style={{
                             background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(sliderValue - 1) * 23}%, #e5e7eb ${(sliderValue - 1) * 25}%, #e5e7eb 100%)
                             `
-                          }}    
+                        }}    
                     />
                     </div>
 

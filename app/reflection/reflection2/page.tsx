@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getUserData } from "@/app/utils/get/getUserData";
 import { getLatestProfileData, getProfileData } from "@/app/utils/get/getProfileData";
 import { useRouter } from "next/navigation";
-import { setReflectionData, setReflectionData_reflection1, setReflectionData_reflection2 } from "@/app/utils/save/saveReflectionData";
+import { setReflectionData, setReflectionData_reflection2, updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 
 const subQuestions = [
     "지난 한 주, 튜브렌즈에서의 경험은 어떠셨나요?",
@@ -36,13 +36,26 @@ export default function ReflectionQuestionsPage2() {
         updated[currentIndex - 1] = e.target.value; // 입력은 Q1~Q3 (index 1부터)
         setAnswers(updated);
     };
-
     const handleNext = () => {
         if (currentIndex < questions.length - 1) {
         setCurrentIndex(currentIndex + 1);
         } else {
         console.log("최종 답변:", answers);
         // router.push("/thanks") 가능
+        }
+        if (currentIndex === 1 ) {
+        updateReflectionAnswer({
+            reflectionKey: "reflection2_answer",
+                answerKey: "answer1",
+                value: answers[currentIndex - 1]
+            });
+        }
+        if (currentIndex === 2) {
+            updateReflectionAnswer({
+                reflectionKey: "reflection2_answer",
+                answerKey: "answer2",
+                value: answers[currentIndex - 1]
+            });
         }
     };
     const userData = getLatestProfileData();

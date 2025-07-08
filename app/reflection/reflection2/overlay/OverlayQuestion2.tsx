@@ -14,7 +14,7 @@ const OverlayQuestion2: React.FC<OverlayQuestionProps> = ({
         className="fixed inset-0 z-50 flex items-center justify-center"
         style={{
         background:
-            "rgba(0, 0, 0, 0.8)",
+            "rgba(56, 55, 55, 0.8)",
         }}
     >
         {/* 블루 glow */}

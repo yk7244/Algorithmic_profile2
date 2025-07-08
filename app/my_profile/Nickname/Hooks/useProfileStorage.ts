@@ -1,20 +1,10 @@
 import { ProfileData } from '../../../types/profile';
-
-export function useProfileStorage() {
-// localStorage에 프로필 저장
-const saveProfileToStorage = (profileData: ProfileData) => {
-    try {
-    localStorage.setItem('ProfileData', JSON.stringify(profileData));
-    console.log('프로필이 localStorage에 저장되었습니다:', profileData);
-    } catch (error) {
-    console.error('프로필 저장 중 오류:', error);
-    }
-};
+import { getUserData } from '../../../utils/get/getUserData';
 
 // localStorage에서 프로필 로드
 const loadProfileFromStorage = (): ProfileData | null => {
     try {
-    const stored = localStorage.getItem('ProfileData');
+    const stored = getUserData();
     if (stored) {
         const profileData = JSON.parse(stored) as ProfileData;
         //console.log('localStorage에서 프로필을 불러왔습니다:', profileData);
@@ -53,11 +43,4 @@ const deleteProfileFromStorage = () => {
     }
 };
 
-return {
-    saveProfileToStorage,
-    loadProfileFromStorage,
-    isProfileExpired,
-    generateProfileId,
-    deleteProfileFromStorage,
-};
-} 
+export { loadProfileFromStorage, isProfileExpired, generateProfileId, deleteProfileFromStorage };
