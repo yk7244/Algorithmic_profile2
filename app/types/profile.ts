@@ -20,7 +20,6 @@ export interface UserData {
 export interface WatchHistory{
   id: string;
   user_id: string;
-  
   videoId: string;
   title: string;
   description: string;
@@ -101,23 +100,13 @@ export interface SliderHistory{
   created_at: string; // timestamp - 저장 시점
 }
 
-//[6] ExploreWatchHistory 테이블 
-export interface ExploreWatchHistory{
-  id: string;
-  user_id: string;
-  videoId: string;
-  title: string;
-  description: string; 
-  timestamp: string;
-}
-
-//[7] ThumbnailData 테이블 
+//[6] ThumbnailData 테이블 
 export interface ThumbnailData {
   main_keyword: string;
   src: string;
 }
 
-//[8] ReflectionData 테이블 
+//[7] ReflectionData 테이블 
 export interface ReflectionData {
   id: string;
   user_id: string;
@@ -134,13 +123,38 @@ export interface ReflectionData {
     answer2: string;
   }
 }
+
+//[7-2] ReflectionData 이전 기록 테이블 
+export interface Reflection_answer{
+  id: string;
+  user_id: string;
+  reflection_data: ReflectionData[];
+  timestamp: string;
+}
+
+
+//[8] ParseHistory 테이블 
+export interface ParseHistory{
+  id: string;
+  channel: string;
+  date: string;
+  keyword: string[];
+  tags: string[];
+  title: string;
+  videoId: string;
+}
+
+//->프론트에서 쓰는 타입
 export interface HistoryData {
   timestamp: number;
   frameStyles: Record<string, string>;
   images: ImageData[];
+  bgColor?: string; // 히스토리별 배경색 (선택적)
 }
 
-/* 유상님이 만드신 테이블
+/* 
+
+유상님이 만드신 테이블
 Table videos { //캐싱 위한거
   id text [pk]
   title text

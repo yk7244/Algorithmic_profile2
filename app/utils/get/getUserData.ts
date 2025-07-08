@@ -2,8 +2,8 @@ import { users, profiles, userImages } from '@/app/others_profile/dummy-data';
 import { UserData, ProfileData, ImageData } from '@/app/types/profile';
 
 // user profile의 background_color를 불러오는 함수
-export function getUserBackgroundColor(userId: string): string | null {
-    const key = `user-profile-background-color-${userId}`;
+export function getUserBackgroundColor(user: UserData): string | null {
+    const key = `user-profile-background-color-${user.id}`;
     return localStorage.getItem(key);
 }
 
@@ -29,4 +29,16 @@ export function getUserData() {
       return null;
     }
   }
+}
+
+export function useProfileStorage() {
+  // localStorage에 프로필 저장
+  const saveProfileToStorage = (profileData: ProfileData) => {
+      try {
+      localStorage.setItem('ProfileData', JSON.stringify(profileData));
+      console.log('프로필이 localStorage에 저장되었습니다:', profileData);
+      } catch (error) {
+      console.error('프로필 저장 중 오류:', error);
+      }
+  };
 }

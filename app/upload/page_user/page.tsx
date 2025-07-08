@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import OpenAI from 'openai';
 import { transformClustersToImageData } from '../../utils/clusterTransform';      
 
@@ -125,10 +125,13 @@ useEffect(() => {
 
 const [current, setCurrent] = useState(0);
 const [total, setTotal] = useState(0);
-
+const hasRunRef = useRef(false);
  // 페이지가 처음 로드될 때 자동 분석 시작
 useEffect(() => {
     const startAnalysis = async () => {
+        if (hasRunRef.current) return; // 이미 실행되었으면 아무것도 안함
+        hasRunRef.current = true; // 처음이면 실행 기록
+
         setShowGeneratingDialog(true);
         setGeneratingStep(1);
         try {
@@ -137,6 +140,7 @@ useEffect(() => {
             const parseHistory = getParseHistory();
             console.log('parseHistory 불러오기:', parseHistory);
             console.log('fetchVideoInfo:', fetchVideoInfo);
+
             
             const result = await handleKeyword(parseHistory, fetchVideoInfo, 
                 (current, total) => {
@@ -147,6 +151,7 @@ useEffect(() => {
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             
+
             await new Promise(resolve => setTimeout(resolve, 2000)); // 클러스터 분석 시뮬레이션
 
             // 2단계: 클러스터 분석

@@ -89,7 +89,7 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
         saveProfileImages(imageList);
         
         // 슬라이더 히스토리에도 기록 추가
-        const sliderResult = saveSliderHistory(imageList);
+        const sliderResult = saveSliderHistory();
         if (sliderResult.success) {
             console.log('✅ 슬라이더 히스토리에 새로운 관심사 기록 추가됨');
         } else {

@@ -5,11 +5,12 @@ import React, { useState, useEffect } from "react";
 import { getClusterHistory } from "@/app/utils/get/getClusterHistory";
 import { getWatchHistory } from "@/app/utils/get/getWatchHistory";
 import { AnalysisModal } from "@/app/my_page/Analysis/AnalysisModal";
-import { setReflectionData } from "@/app/utils/save/saveReflectionData";
+import { setReflectionData } from "@/app/utils/save/saveReflection";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { ReflectionData } from "@/app/types/profile";
 import { useRouter } from "next/navigation";
 import { saveWatchHistory_array } from "@/app/utils/save/saveWatchHistory_array";
+import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 
 // ClusterHistory 카드 컴포넌트
 export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boolean }> = ({ history, latest }) => {
@@ -45,16 +46,24 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                 </div>
             </div>
             <div className="flex flex-row justify-end gap-2 p-4 ">
-                <button className="bg-black text-white rounded-full px-6 py-3 text-md font-bold shadow transition hover:bg-gray-900"
-                onClick={() => {
-                    setOpen(true);
-                    setReflectionData();
-                    
-                }}
-                >
-                    알고리즘 프로필 분석 과정 살펴보기
-                </button>
+                <div className="relative group">
+                    <button className="bg-black text-white rounded-full px-6 py-3 text-md font-bold shadow transition hover:bg-gray-900"
+                    onClick={() => {
+                        setOpen(true);
+                        setReflectionData();
+                    }}
+                    >
+                        알고리즘 프로필 분석 과정 살펴보기
+                    </button>
+                    <div className="absolute right-full mr-4 bottom-[1px] -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base 
+                        font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 
+                        after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]
+                        animate-bounce-slow">
+                        알고리즘이 나를 바라본 과정을 세부적으로 다 확인할 수 있어요
+                    </div>
+                </div>
                 {latest && ( !isDisabled ? (
+                    <div className="relative group">
                     <button className="bg-blue-600 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
                         onClick={() => {
                             router.push('/reflection/reflection1');         
@@ -63,15 +72,31 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                         <Sparkles className="w-5 h-5" />
                         알고리즘 프로필 감상 기록하기
                     </button>
+                    <div className="absolute right-full mr-4 bottom-[1px] -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-xl shadow-top-2xl text-base 
+                            font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 
+                            after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]
+                            animate-bounce-slow">
+                            업데이트 전, 알고리즘 탐색에 대한 여정의 감상을 남겨보세요.
+                        </div>
+                    </div>
                 ):(
-                    <button className="bg-blue-400 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
-                        onClick={() => {
-                            router.push('/reflection/reflection1');         
-                        }}
-                    >
-                        <Sparkles className="w-5 h-5" />
-                        알고리즘 프로필 감상 다시 남기기
-                    </button>
+                    <div className="relative group">
+
+                        <button className="bg-blue-400 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
+                                onClick={() => {
+                                    router.push('/reflection/reflection1');         
+                                }}
+                            >
+                                <Sparkles className="w-5 h-5" />
+                                알고리즘 프로필 감상 다시 남기기
+                        </button>
+                        <div className="absolute right-full mr-4 bottom-[1px] -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base 
+                            font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 
+                            after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]
+                            animate-bounce-slow">
+                            감상을 다시 남길 수 있어요.
+                        </div>
+                    </div>
                 ))}   
             </div>
             <AnalysisModal open={open} onClose={() => setOpen(false)} history={history} /> 

@@ -106,7 +106,7 @@ export function transformClustersToImageData(clusters: any[]): ImageData[] {
 
   saveProfileImages(finalImageData);
   const clusterHistoryResult = saveClusterHistory(finalImageData);
-  const sliderResult = saveSliderHistory(finalImageData);
+  const sliderResult = saveSliderHistory();
   const watchHistoryResult = saveWatchHistory_array();   
 
 

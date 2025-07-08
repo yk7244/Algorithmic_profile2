@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, RotateCcw } from "lucide-react";
 import { getLatestProfileData } from '@/app/utils/get/getProfileData';
@@ -11,6 +11,7 @@ interface ProfileHeaderProps {
     onSaveClick: () => void;
     onGenerateProfile: () => void;
     isOwner?: boolean;
+    changeProfile: (nickname: string, description: string) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -21,11 +22,15 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     onSaveClick,
     onGenerateProfile,
     isOwner = true,
+    changeProfile,
     }) => {
     const displayProfile = useMemo(() => getLatestProfileData(), []);
     
     //console.log('🔥 fallbackProfile:', displayProfile);
     //const displayProfile = profile || fallbackProfile;
+    useEffect(() => {
+        console.log('!! profile:', profile);
+    }, [profile]);
 
     return (
         <div className="absolute z-30 pl-8 max-w-[320px] space-y-6 pt-[40px]">
@@ -38,7 +43,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
             <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight">
-                {displayProfile?.nickname ? displayProfile.nickname : 'My 무드보드'}
+                {profile?.nickname ? profile.nickname : 'My 무드보드'}
             </h1>
             </div>
             {/* 닉네임 설명 */}

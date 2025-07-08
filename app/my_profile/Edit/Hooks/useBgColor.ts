@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getUserBackgroundColor } from '@/app/utils/get/getUserData';
+import { getUserBackgroundColor, getUserData } from '@/app/utils/get/getUserData';
 import { saveUserBackgroundColor } from '@/app/utils/save/saveUserData';
 
 // 오른쪽 색상에 대응하는 왼쪽 색상 매핑
@@ -33,8 +33,8 @@ export function useBgColor(defaultRightColor: string = 'bg-[#F2F2F2]') {
 
   useEffect(() => {
     // userId는 실제 환경에 맞게 전달 필요
-    const userId = 'user1';
-    const savedRightBgColor = getUserBackgroundColor(userId);
+    const user = getUserData();
+    const savedRightBgColor = getUserBackgroundColor(user);
     if (savedRightBgColor) {
       setBgColor(savedRightBgColor);
     }
@@ -45,14 +45,23 @@ export function useBgColor(defaultRightColor: string = 'bg-[#F2F2F2]') {
     
     setBgColor(bgColor);
     // userId는 실제 환경에 맞게 전달 필요
-    const userId = 'user1';
-    saveUserBackgroundColor(userId, bgColor);
+    const user = getUserData();
+    saveUserBackgroundColor(user, bgColor);
+  };
+
+  const handleBgColorChange = (colorClass: string) => {
+    const user = getUserData();
+    const bgColor = getUserBackgroundColor(user);
+    
+    setBgColor(bgColor || 'bg-[#F2F2F2]');
+    // userId는 실제 환경에 맞게 전달 필요
+    saveUserBackgroundColor(user, bgColor || 'bg-[#F2F2F2]');
   };
 
   return { 
     bgColor, 
-    handleColorChange,
+    setBgColor,
+    handleBgColorChange
     // 하위 호환성을 위해 기존 API도 유지
-    handleBgColorChange: handleColorChange
   };
 } 

@@ -1,6 +1,6 @@
 "use client";
 import OpenAI from "openai";
-import { useState, useEffect, useRef, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, useCallback } from 'react';
 import {DndContext} from '@dnd-kit/core';
 import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
 import { useSearchParams } from 'next/navigation';
@@ -8,31 +8,28 @@ import { useSearchParams } from 'next/navigation';
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
 import ColorPaletteBoard from './Edit/ColorPaletteBoard';
-import { useBgColor } from './Edit/Hooks/useBgColor';
+  import { useBgColor } from './Edit/Hooks/useBgColor';
 import HistorySlider from './HistorySlider/HistorySlider';
-import GeneratingDialog from './GeneratingDialog/GeneratingDialog';
 import { useHistorySlider } from './HistorySlider/Hooks/useHistorySlider';
 import { colorOptions } from './Edit/Hooks/colorOptions';
 import SearchModeUI from '../search/SearchMode/SearchModeUI';
 import { useSearchMode } from '../search/SearchMode/Hooks/useSearchMode';
 import ProfileHeader from './Nickname/ProfileHeader';
-import SearchFloatingButton from '../search/SearchMode/SearchFloatingButton';
 import BottomActionBar from './Edit/BottomActionBar';
 import { useMoodboardHandlers } from './useMoodboardHandlers';
 import { useImageDelete } from "./Edit/Hooks/Image/useImageDelete";
-import { useProfileStorage } from './Nickname/Hooks/useProfileStorage';
 import { useProfileImagesLoad } from '../utils/get/getImageData';     
 import { arrangeImagesInCenter } from '../utils/autoArrange';
 import { 
   ImageData,
   HistoryData,
+  ProfileData,
 } from '../types/profile';
 import useAutoArrange from './Edit/Hooks/useAutoArrange';
 import AutoArrangeButton from './Edit/AutoArrangeButton';
 import SearchHeader from "../search/SearchMode/SearchHeader";
-import { users } from '../others_profile/dummy-data';
 import { savePositions } from "./Edit/Hooks/savePosition";
-
+import { getLatestProfileData } from "../utils/get/getProfileData";
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -44,7 +41,6 @@ export default function MyProfilePage() {
   const [exploreAnimation, setExploreAnimation] = useState(false);
   // --- 상태 선언 ---
   const [visibleImageIds, setVisibleImageIds] = useState<Set<string>>(new Set());
-  const [profile, setProfile] = useState({ nickname: '', description: '' });
   const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
   const [images, setImages] = useState<ImageData[]>([]);
@@ -54,11 +50,32 @@ export default function MyProfilePage() {
   const [histories, setHistories] = useState<HistoryData[]>([]);  
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "../../../public/images/default_image.png"
-  
+
+  //  const [profile, setProfile] = useState({ nickname: "기본 닉네임", description: "기본 설명" });
+  const [profile, setProfile] = useState(() => {
+    const latestProfile = getLatestProfileData();
+    return {
+      nickname: latestProfile?.nickname || '',
+      description: latestProfile?.description || '',
+    };
+  });
+  // changeProfile 함수는 setProfile을 호출
+  const changeProfile = (nickname: string, description: string) => {
+    setProfile({ nickname, description });
+    console.log('🔵profile',profile);
+  };
+  useEffect(() => {
+    console.log('🔥 최신 profile 상태:', profile);
+  }, [profile]);
   // 임시: 실제 환경에서는 로그인 유저 id를 동적으로 받아야 함
-  const userId = 'user1';
-  const user = users.find(u => u.id === userId);
-  const { handleColorChange, bgColor, handleBgColorChange } = useBgColor(user?.background_color || 'bg-[#F2F2F2]');
+  // const user = getUserData();
+  // const bgColor = getUserBackgroundColor(user || '#F2F2F2') || 'bg-[#F2F2F2]';
+
+  // 배경색 상태 및 변경 함수
+  const { bgColor, setBgColor, handleBgColorChange } = useBgColor();
+
+  // 히스토리 클릭 시 배경색 변경 콜백
+  const handleHistoryBgColorChange = (color: string) => setBgColor(color);
 
   // [새로고침시] ProfileImages 로드 훅 사용
   useProfileImagesLoad({
@@ -78,8 +95,9 @@ export default function MyProfilePage() {
     setVisibleImageIds,
     setImages,
     placeholderImage,
-    handleBgColorChange,
-    originalBgColor: bgColor,
+    onHistoryBgColorChange: handleHistoryBgColorChange,
+    originalBgColor: bgColor || 'bg-[#F2F2F2]',
+    changeProfile, // changeProfile을 넘김
   });
   const {
     histories: sliderHistories,
@@ -114,6 +132,7 @@ export default function MyProfilePage() {
     setShowGeneratingDialog,
     setGeneratingStep,
     setProfile,
+    // changeProfile은 넘기지 않음 (setProfile만 넘김)
   });
 
   const {
@@ -139,11 +158,6 @@ export default function MyProfilePage() {
     setVisibleImageIds,
   });
 
-  // localStorage 프로필 관리 훅 사용
-  const { loadProfileFromStorage, isProfileExpired } = useProfileStorage();
-
-  
-
   const boardRef = useRef<HTMLDivElement>(null);
 
   const handleAutoArrange = useAutoArrange({
@@ -153,6 +167,8 @@ export default function MyProfilePage() {
     arrangeImagesInCenter,
   });
 
+
+  // 초기 위치 설정
   useEffect(() => {
     setPositions(prevPositions => {
       const newPositions = { ...prevPositions };
@@ -199,13 +215,19 @@ export default function MyProfilePage() {
     }
   }, [searchParams]);
 
+  //새로고침 시 배경 색 변경
+  
+
+  //console.log('🔥 bgColor:', bgColor);
+
   return (
-    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? bgColor : ''} transform transition-all duration-1000 ease-in-out`}>
+    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? 'bg-gray-100' : bgColor} transform transition-all duration-1000 ease-in-out`}>
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
       <div className={`flex flex-col px-4 py-12 backdrop-blur-lg z-10 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
         {!isSearchMode ? ( 
           <ProfileHeader
             profile={profile}
+            changeProfile={changeProfile}
             isEditing={isEditing}
             isGeneratingProfile={showGeneratingDialog}
             onEditClick={() => setIsEditing(true)}
@@ -242,6 +264,8 @@ export default function MyProfilePage() {
           toggleSearchMode={toggleSearchMode}
           setIsSearchMode={setIsSearchMode}
         />
+
+        
 
 
         {/* My_profile 페이지 이미지레이아웃 */}
@@ -292,6 +316,7 @@ export default function MyProfilePage() {
               isPlaying={sliderIsPlaying}
               handlePlayHistory={handlePlayHistory}
               handleHistoryClick={handleHistoryClick}
+              changeProfile={changeProfile}
             />
           </div>
         )}
@@ -300,7 +325,7 @@ export default function MyProfilePage() {
           <ColorPaletteBoard
             colorOptions={colorOptions}
             bgColor={bgColor}
-            onColorChange={handleColorChange}
+            onChange={handleBgColorChange}
           />
         )}
         {/* 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}

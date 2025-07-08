@@ -5,7 +5,10 @@ export function isOneWeekPassed(): number {
     //const clusterHistory = localStorage.getItem('ClusterHistory');
     const clusterHistory = getClusterHistory();
     //console.log('clusterHistory', !clusterHistory);
-    if (!clusterHistory) return 1; // 초기 유저
+    if (!clusterHistory){
+      console.log('클러스터가 없습니다 -> 초기유저 한달치 데이터 범위 설정')
+      return 1; // 초기 유저
+    } 
 
     const parsedHistory = clusterHistory; 
     if (!parsedHistory || !Array.isArray(parsedHistory) || parsedHistory.length === 0) return 1; // 초기 유저

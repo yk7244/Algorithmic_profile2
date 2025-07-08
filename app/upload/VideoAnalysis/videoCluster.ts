@@ -3,11 +3,12 @@ import { findBestThumbnail } from '../ImageSearch/YoutubeThumnail';
 import { transformClustersToImageData } from '@/app/utils/clusterTransform';
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';
 import { ProfileData } from '@/app/types/profile';
-import { useProfileStorage } from '@/app/my_profile/Nickname/Hooks/useProfileStorage';
+import { generateProfileId } from '@/app/my_profile/Nickname/Hooks/useProfileStorage';
 import { saveProfileData } from '@/app/utils/save/saveProfileData';
 import { createUserData } from '@/app/utils/save/saveUserData';
-import { setReflectionData } from '@/app/utils/save/saveReflectionData';  
+import { setReflectionData } from '@/app/utils/save/saveReflection';  
 import { saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory_array';
+import { updateReflectionAnswer } from '@/app/utils/save/saveReflection';
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
@@ -307,7 +308,7 @@ const addClusterImages = async (clusters: any[]) => {
 //STEP5. 별명 생성
 const generateNickname = async (clusters: any[], openai: any) => {
   console.log('---STEP5. 별명 생성 시작 ---');
-  const {generateProfileId} = useProfileStorage();
+  //const {generateProfileId} = useProfileStorage();
   
   const prompt = `
     당신은 사용자의 관심사와 성향을 분석하여 그들의 성격과 취향을 파악하는 전문가입니다.
@@ -423,21 +424,7 @@ export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any
     const finalClusters = await addClusterImages(clustersAnalysis);
     console.log('4단계 결과:', finalClusters);
 
-    // 5단계: 별명 생성
-    console.log('5단계: 별명 생성');
-    const nickname = await generateNickname(finalClusters, openai);
-    console.log('5단계 결과:', nickname);
-
-    // 6단계: 유저 데이터 생성
-    console.log('6단계: 유저 데이터 생성');
-    createUserData();
-    console.log('6단계 결과: 유저 데이터 생성 완료'); 
-
-    // 7단계: 리플랙션 데이터 생성
-    console.log('7단계: 리플랙션 데이터 생성'); 
-    setReflectionData();
-    console.log('7단계 결과: 리플랙션 데이터 생성 완료');
-
+    
     console.log('=== VideoCluster 완료 ===');
     
     return finalClusters;
@@ -501,15 +488,24 @@ export const handleCluster = async (
     console.log('[handleCluster] 클러스터 설정:', newClusters);
 
     // ImageData 형식으로 변환
-    
-    //별명 생성
 
-    useGenerateUserProfile({
-      openai,
-      setShowGeneratingDialog: () => {},
-      setGeneratingStep: () => {},
-      setProfile: () => {},
-    });
+    //별명 생성
+    // 5단계: 별명 생성
+    console.log('5단계: 별명 생성');
+    const nickname = await generateNickname(newClusters, openai);
+    console.log('5단계 결과:', nickname);
+
+    // 6단계: 유저 데이터 업데이트 -> updated_at 업데이트
+    console.log('6단계: 유저 데이터 생성');
+    createUserData();
+    console.log('6단계 결과: 유저 데이터 생성 완료'); 
+
+    // 7단계: 리플랙션 데이터 생성
+    console.log('7단계: 리플랙션 데이터 생성'); 
+    setReflectionData();
+    console.log('7단계 결과: 리플랙션 데이터 생성 완료');
+
+    
     //Transform 함수 호출
     transformClustersToImageData(newClusters);
     setShowAnalysis(true);

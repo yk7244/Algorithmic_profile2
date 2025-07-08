@@ -8,6 +8,13 @@ setFrameStyles: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 setPositions: React.Dispatch<React.SetStateAction<Record<string, {x: number, y: number}>>>;
 placeholderImage: string;
 }
+export function getProfileImages() {
+    const savedProfileImages = localStorage.getItem('profileImages');
+    if (savedProfileImages) {
+        const parsedImagesData = JSON.parse(savedProfileImages);
+        return parsedImagesData;
+    }
+}
 
 export function useProfileImagesLoad({
 setImages,

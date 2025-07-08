@@ -41,7 +41,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
         // clusterHistory_id 로 부터 watchHistory 배열 가져오기
         const getwatchHistory = getWatchHistory_by_clusterHistory_id(history);
 
-        console.log('가져왔나?getwatchHistory', getwatchHistory);
+        //console.log('가져왔나?getwatchHistory', getwatchHistory);
         // watchHistory 배열 펼치기
         setWatchHistory(getwatchHistory);     
     }, []);
