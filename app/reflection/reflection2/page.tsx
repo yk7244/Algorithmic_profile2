@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getUserData } from "@/app/utils/get/getUserData";
 import { getLatestProfileData, getProfileData } from "@/app/utils/get/getProfileData";
 import { useRouter } from "next/navigation";
-import { setReflectionData, setReflectionData_reflection2, updateReflectionAnswer } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData, setReflectionData_reflection2, updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 
 const subQuestions = [
     "지난 한 주, 튜브렌즈에서의 경험은 어떠셨나요?",
@@ -38,12 +38,17 @@ export default function ReflectionQuestionsPage2() {
     };
     const handleNext = () => {
         if (currentIndex < questions.length - 1) {
+
         setCurrentIndex(currentIndex + 1);
         } else {
         console.log("최종 답변:", answers);
         // router.push("/thanks") 가능
         }
         if (currentIndex === 1 ) {
+            if (answers[currentIndex - 1].length <= 25){
+                alert("25자 이상 작성해주세요.");
+                return;
+            }
         updateReflectionAnswer({
             reflectionKey: "reflection2_answer",
                 answerKey: "answer1",
@@ -51,15 +56,23 @@ export default function ReflectionQuestionsPage2() {
             });
         }
         if (currentIndex === 2) {
+            if (answers[currentIndex - 1].length <= 25){
+                alert("25자 이상 작성해주세요.");
+                return;
+            }
             updateReflectionAnswer({
                 reflectionKey: "reflection2_answer",
                 answerKey: "answer2",
                 value: answers[currentIndex - 1]
             });
         }
+
+        if (currentIndex === questions.length - 2) {
+            setReflection_answer(); //계속 스택으로 쌓임
+        }
     };
     const userData = getLatestProfileData();
-    console.log('userData', userData);
+    //console.log('userData', userData);
 
     return (
         <div className="relative min-h-screen bg-black text-white flex flex-col overflow-hidden">

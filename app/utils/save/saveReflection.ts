@@ -1,5 +1,5 @@
 import { ReflectionData } from "@/app/types/profile";
-import { getReflectionData } from "../get/getReflectionData";
+import { getReflection_answer, getReflectionData } from "../get/getReflectionData";
 
 // 전체 ReflectionData를 저장 (덮어쓰기)
 export function setReflectionData() {
@@ -14,6 +14,20 @@ export function setReflectionData() {
         };
     console.log('🔵reflectionData',reflectionData);
     localStorage.setItem("reflectionData", JSON.stringify(reflectionData));
+}
+
+// 리플렉션 답변 계속 쌓기
+export function setReflection_answer() {
+    const reflection_answer = getReflection_answer();
+    const reflection = getReflectionData();
+    console.log('🔵가져온 reflection_answer',reflection_answer);
+    const new_reflection_answer = {
+        id: "0",
+        user_id: "0",
+        timestamp: new Date().toISOString(),
+        reflection_data: reflection,
+    }
+    localStorage.setItem("reflection_answer", JSON.stringify([...reflection_answer, new_reflection_answer]));
 }
 
 // 특정 답변만 업데이트 (reflection1/2, answer1/2/3)
@@ -81,3 +95,5 @@ export function setReflectionData_reflection2() {
     localStorage.setItem('reflectionData', JSON.stringify(reflectionData_reflection2));
     return reflectionData_reflection2;
 }
+
+

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { CheckCircle2, UserPlus, UserX } from 'lucide-react';
-import { ExploreWatchHistory, WatchHistory } from '../types/profile';
+import { Reflection_answer, WatchHistory } from '../types/profile';   
 import { getClusterHistory } from '@/app/utils/get/getClusterHistory';
 import { ClusterHistory } from '@/app/types/profile';
 import { ClusterHistoryCard } from './History/ClusterHistoryCard';  
@@ -18,14 +18,11 @@ import { getUserData } from '@/app/utils/get/getUserData';
 
 // 실제 페이지 이름으로 함수 이름을 변경하세요. (예: UpdatePage, SearchMapPage)
 export default function MyPage() {
-  const { logout } = useAuth();
-  const [isProfilePublic, setIsProfilePublic] = useState(true);
+const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'open_setting'>('profile');
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [profileImages, setProfileImages] = useState<any[]>([]);
-  const [profileImageUrl, setProfileImageUrl] = useState<string>('images/default.png');
-  const [watchHistory, setWatchHistory] = useState<ExploreWatchHistory[]>([]);
   const [clusterHistory, setClusterHistory] = useState<ClusterHistory[]>([]);
+  const [reflection_answer, setReflection_answer] = useState<Reflection_answer[]>([]);
 
 
 
@@ -49,7 +46,7 @@ export default function MyPage() {
 
   // 공개 상태 토글 핸들러
   const handleToggle = () => {
-    console.log('userData', userData);
+    //console.log('userData', userData);
     if (!userData) return;
     const updated = { ...userData, open_to_connect: !userData.open_to_connect };
     handleToggleOpenToConnect(userData.id);

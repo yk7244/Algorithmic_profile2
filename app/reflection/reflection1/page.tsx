@@ -1,6 +1,6 @@
 "use client";
 
-import { setReflectionData_reflection1 } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData_reflection1 } from "@/app/utils/save/saveReflection";
 import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -41,7 +41,14 @@ export default function ReflectionQuestionsPage() {
 
     const handleNext = () => {
         // Q1, Q3: 텍스트 답변 저장
+        console.log('🔵currentIndex',currentIndex);
+        console.log('questions.length - 1',questions.length - 1);
+        
         if (currentIndex === 1 || currentIndex === 3) {
+            if (answers[currentIndex - 1].length <= 25){
+                alert("25자 이상 작성해주세요.");
+                return;
+            }
             updateReflectionAnswer({
                 reflectionKey: "reflection1_answer",
                 answerKey: `answer${currentIndex}` as "answer1" | "answer2" | "answer3",
@@ -61,6 +68,9 @@ export default function ReflectionQuestionsPage() {
         } else {
         console.log("최종 답변:", answers);
         // router.push("/thanks") 가능
+        }
+        if (currentIndex === questions.length - 2) {
+            setReflection_answer(); //계속 스택으로 쌓임
         }
     };
 

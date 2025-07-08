@@ -485,7 +485,6 @@ useEffect(() => {
                         setScrollToGuide(true);
                         console.log("분석 시작");
                         router.push('/upload/page_user');
-                        saveParseHistory(watchHistory); 
                       }}
                       style={{
                         position: "relative",
