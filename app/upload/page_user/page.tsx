@@ -15,7 +15,7 @@ import { useClusterStorage } from '../hooks/useClusterStorage';
 import { useRouter } from 'next/navigation';    
 
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
-import { getParseHistory } from '@/app/utils/get/getpraseHistory';
+import { getParseHistory } from '@/app/utils/get/getparseHistory';
 
 
 // 기본 이미지를 데이터 URI로 정의
@@ -173,9 +173,9 @@ useEffect(() => {
                 //ClusterTransform에서 ClusterImages 저장함 
                 //userData 저장함 
                 //reflectionData 저장함 
+                //nickname 저장함 
                 
             );
-            // 3단계: 별명만들기
             
             
             setGeneratingStep(3);
