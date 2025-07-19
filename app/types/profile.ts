@@ -5,6 +5,7 @@
 //[4] ProfileData 테이블 (유저 닉네임,설명 정보)
 //[5] SliderHistory 테이블 (슬라이더 이미지 기록)
 
+
 //[0] users 테이블 
 export interface UserData {
   id: string;
@@ -124,7 +125,7 @@ export interface ReflectionData {
   }
 }
 
-//[7-2] ReflectionData 이전 기록 테이블 
+//[7-2] ReflectionData answer 이전 기록 테이블 
 export interface Reflection_answer{
   id: string;
   user_id: string;

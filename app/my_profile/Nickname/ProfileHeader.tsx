@@ -29,7 +29,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     //console.log('🔥 fallbackProfile:', displayProfile);
     //const displayProfile = profile || fallbackProfile;
     useEffect(() => {
-        console.log('!! profile:', profile);
+        console.log('컴포넌트 profile:', profile);
     }, [profile]);
 
     return (
