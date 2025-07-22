@@ -55,14 +55,16 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                     >
                         알고리즘 프로필 분석 과정 살펴보기
                     </button>
-                    <div className="absolute right-full mr-4 bottom-[1px] -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base 
+                    <div className="absolute right-full mr-4 top-[22px] -translate-y-1/2 bg-gray-100 text-black px-6 py-3 rounded-2xl shadow-lg text-base 
                         font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 
                         after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]
                         animate-bounce-slow">
                         알고리즘이 나를 바라본 과정을 세부적으로 다 확인할 수 있어요
                     </div>
                 </div>
+                {/*
                 {latest && ( !isDisabled ? (
+                    
                     <div className="relative group">
                     <button className="bg-blue-600 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
                         onClick={() => {
@@ -79,8 +81,11 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                             업데이트 전, 알고리즘 탐색에 대한 여정의 감상을 남겨보세요.
                         </div>
                     </div>
-                ):(
+                    */}
+                {/* }):( */}
+                    
                     <div className="relative group">
+                        {/*
 
                         <button className="bg-blue-400 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
                                 onClick={() => {
@@ -96,8 +101,11 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                             animate-bounce-slow">
                             감상을 다시 남길 수 있어요.
                         </div>
+                         */} 
                     </div>
-                ))}   
+                    
+                {/* }))}  */}
+               
             </div>
             <AnalysisModal open={open} onClose={() => setOpen(false)} history={history} /> 
         </div>

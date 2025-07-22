@@ -1,6 +1,7 @@
 import React from 'react';
 import { VideoData } from '../../Draggable/DraggableImage';
 import { CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface VideoListProps {
     videos: VideoData[];
@@ -11,6 +12,10 @@ interface VideoListProps {
     onRetry?: () => void;
     emptyMessage?: string;
     isError?: boolean;
+    // 추가
+    isAiRecommended?: boolean;
+    nextPageToken?: string;
+    fetchAndSetVideos?: (isLoadMore?: boolean) => void;
 }
 
 const VideoList: React.FC<VideoListProps> = ({
@@ -21,7 +26,11 @@ const VideoList: React.FC<VideoListProps> = ({
     titlePrefix,
     onRetry,
     emptyMessage = "영상을 찾을 수 없습니다.",
-    isError
+    isError,
+    // 추가
+    isAiRecommended = false,
+    nextPageToken,
+    fetchAndSetVideos
 }) => {
     if (isLoading) {
         return (
@@ -50,9 +59,9 @@ const VideoList: React.FC<VideoListProps> = ({
     }
     
     return (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-4 overflow-x-auto items-center">
             {videos.map((video, idx) => (
-                <div key={`${video.embedId}-${idx}`} className="space-y-2">
+                <div key={`${video.embedId}-${idx}`} className="space-y-2 min-w-[220px]">
                     <a
                         href={`https://www.youtube.com/watch?v=${video.embedId}`}
                         target="_blank"
@@ -81,6 +90,17 @@ const VideoList: React.FC<VideoListProps> = ({
                     </h5>
                 </div>
             ))}
+            {/* AI 추천 영상일 때만 더보기 버튼 */}
+            {isAiRecommended && nextPageToken && (
+                <div className="flex items-center min-w-[120px]">
+                    <Button
+                        onClick={() => fetchAndSetVideos && fetchAndSetVideos(true)} 
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transition-all duration-300"
+                    >
+                        더보기
+                    </Button>
+                </div>
+            )}
         </div>
     );
 };

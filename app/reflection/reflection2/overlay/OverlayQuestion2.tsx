@@ -35,17 +35,12 @@ const OverlayQuestion2: React.FC<OverlayQuestionProps> = ({
             </span>
         </div>
         <div className="flex gap-16 text-xl font-bold">
-            <button
-            className="text-gray-500 hover:text-black transition"
-            onClick={onLeftClick}
-            >
-            아니요 다음에요 ✗
-            </button>
+            
             <button
             className="text-blue-600 hover:underline flex items-center transition"
             onClick={onRightClick}
             >
-            네 시작할게요 <span className="ml-2">→</span>
+            시작하기 <span className="ml-2">→</span>
             </button>
         </div>
         </div>

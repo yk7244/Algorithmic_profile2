@@ -44,7 +44,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         const router = useRouter();
         const { handleAddAsInterest } = useAddAsInterest(setShowDetails);
         const { isLoading: isLoadingAiVideos, videos: aiRecommendedVideos, fetchAndSet: fetchAndSetVideos, nextPageToken } = useRecommend(image);
-
+        const [descriptionOpen, setDescriptionOpen] = useState(false);
+        
         useEffect(() => {
             if (showDetails && image.main_keyword && (isOwner || image.desired_self)) {
                 fetchAndSetVideos();
@@ -157,10 +158,10 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                         {isOwner && !image.desired_self && (
                         <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
                             <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
-                            flex items-center text-base font-medium transition-all duration-300 "
+                            flex items-center text-sm font-medium transition-all duration-300 "
                             
                             >
-                                이 키워드는 당신의 추천 알고리즘에&nbsp;
+                                이 알고리즘 정체성 키워드는 당신의 추천 알고리즘에 &nbsp;
                                 <span className={`rounded-full font-bold animate-pulse duration-1000`}
                                 style={{
                                     animation: 'pulse 1s ease-in-out infinite'
@@ -191,11 +192,11 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                 {/* 페이지 2: 영상과 상세 분석 */}
                 {currentPage === 2 && (
-                    <>
+                    <div className="overflow-y-auto">
                         {/* 헤더 - 전체 이미지 배경 */}
-                        <div className="relative w-full flex-shrink-0 overflow-hidden"
+                        <div className="relative w-full flex-shrink-0 "
                         style={{
-                            backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.3), rgba(0,0,0,0)), url(${image.src})`,
+                            backgroundImage: `linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0.6), rgba(0,0,1,0.3), rgba(0,0,0,1)), url(${image.src})`,
                             backgroundSize: "cover",
                             backgroundPosition: "center",
                             backgroundRepeat: "no-repeat",
@@ -219,15 +220,44 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                 <h1 className="text-2xl font-bold mb-6 text-white">
                                     #{image.main_keyword}
                                 </h1>
+
+                                {/* 설명 */}
+                                <div className="text-left mb-8 max-w-2xl mx-auto">
+                                    <p className="text-[12px] leading-relaxed text-white/40 mb-2">
+                                        {descriptionOpen ?   (
+                                            <>
+                                            {image.description}
+
+                                            <br />
+                                            <br />
+                                            <span className="text-white/90 font-bold"> #{image.main_keyword} </span>
+                                            와 관련된 키워드는 
+                                            {image.keywords.map((keyword: string) => (
+                                                <span key={keyword} className="text-blue-200 font-bold "> #{keyword} </span>
+                                            ))}
+                                            이 있어요.
+                                            <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>줄이기   </button>
+
+                                            </>
+                                        ):(
+                                            <>
+                                            {image.description.slice(0, 100)}...                                        
+                                            <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>더보기</button>
+                                            </>
+                                        )}
+                                        
+                                    </p>
+                                </div>
+
                                 {/* 설명 텍스트 */}
                                 {isOwner && !image.desired_self && (
                                 <div className="text-left max-w-2xl text-white/90">
-                                    <p className="backdrop-blur-sm bg-black/30 text-white px-6 py-3 rounded-3xl 
-                                    text-sm font-medium transition-all duration-300"
+                                    <p className="backdrop-blur-sm bg-black/90 text-white px-6 py-3 rounded-3xl 
+                                    text-xs font-medium transition-all duration-300"
                                     style={{
                                         animation: 'pulse 4s ease-in-out infinite'
                                     }}>
-                                        이 키워드는 당신의 추천 알고리즘에&nbsp;
+                                        이 알고리즘 정체성 키워드는 당신의 추천 알고리즘에&nbsp;
                                         <span className={`ml-1 font-bold`}>
                                             {image.sizeWeight >= 1.2 ? '큰 영향' : image.sizeWeight >= 0.8 ? '중간 영향' : '작은 영향'}
                                         </span>
@@ -239,8 +269,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             
                         </div>
 
-                        {/* 스크롤 가능한 영상 콘텐츠 영역 */}
-                        <div className="flex-grow overflow-y-auto bg-gray-50">
+                        {/* 영상 영역 */}
+                        <div className="flex-grow bg-gray-50">
                             <div className="px-8 py-6">
                                 <div className="">
                                     {/* 내 프로필일 때 */}
@@ -249,7 +279,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             {/* 일반 클러스터 */}
                                             {!image.desired_self ? (
                                                 <>
-                                                <p className="mb-4 text-md text-gray-600 font-bold"> 아래의 {image.relatedVideos.length}개의 시청 기록들이 알고리즘에 반영되었어요.</p>
+                                                <p className="mt-8 mb-4 text-md text-black font-bold"> 아래의 {image.relatedVideos.length}개의 시청 기록들이 <br/> 알고즘 정체성 키워드에 반영되었어요.</p>
                                     
                                                 {!showWatchHistory && (
                                                     <Button
@@ -268,8 +298,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                     />
                                                 )}
                                                 
-                                                <p className="mt-10 mb-4 text-md text-gray-600 font-bold">
-                                                    앞으로 아래와 같은 영상들을 추천받게 될거에요.
+                                                <p className="mt-16 mb-4 text-md text-black font-bold">
+                                                    이 영상들을 기반으로 유튜브 추천 알고리즘은 <br/> 아래와 같은 영상을 계속 추천하게 될거에요.
                                                 </p>
                                                 {!showRecommendations && (
                                                     <Button
@@ -291,17 +321,11 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                             isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
                                                             emptyMessage="AI 추천 영상을 가져올 수 없습니다."
                                                             onRetry={fetchAndSetVideos}
+                                                            isAiRecommended={true}
+                                                            nextPageToken={nextPageToken}
+                                                            fetchAndSetVideos={fetchAndSetVideos}
                                                         />
-                                                        {nextPageToken && (
-                                                            <div className="flex justify-center mt-4">
-                                                                <Button
-                                                                    onClick={() => fetchAndSetVideos(true)}
-                                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transition-all duration-300"
-                                                                >
-                                                                    더보기
-                                                                </Button>
-                                                            </div>
-                                                        )}
+                                                        
                                                     </>
                                                 )}
                                                 </>
@@ -350,17 +374,10 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                                 isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
                                                                 emptyMessage="AI 추천 영상을 가져올 수 없습니다."
                                                                 onRetry={fetchAndSetVideos}
+                                                                isAiRecommended={true}
+                                                                nextPageToken={nextPageToken}
+                                                                fetchAndSetVideos={fetchAndSetVideos}
                                                             />
-                                                            {nextPageToken && (
-                                                                <div className="flex justify-center mt-4">
-                                                                    <Button
-                                                                        onClick={() => fetchAndSetVideos(true)}
-                                                                        className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transition-all duration-300"
-                                                                    >
-                                                                        더보기
-                                                                    </Button>
-                                                                </div>
-                                                            )}
                                                         </>
                                                     )}
                                                 </div>
@@ -389,15 +406,18 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 isError={!isLoadingAiVideos && (!aiRecommendedVideos || aiRecommendedVideos.length === 0)}
                                                 emptyMessage="AI 추천 영상을 가져올 수 없습니다."
                                                 onRetry={fetchAndSetVideos}
+                                                isAiRecommended={true}
+                                                nextPageToken={nextPageToken}
+                                                fetchAndSetVideos={fetchAndSetVideos}
                                             />
                                         </>
                                     )}
                                 </div>
                             </div>
                         </div>
-                    </>
+                    </div>
                 )}
-            </DialogContent>
+            </DialogContent>    
         </Dialog>
     );
 };

@@ -29,6 +29,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
             </div>
             {reflectionData?.reflection2 === false ? (
                 <div className="relative group">
+                    {/*
                     <button className="items-right bg-blue-600 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
                     onClick={() => {
                         router.push('/reflection/reflection2');         
@@ -43,9 +44,11 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
                     animate-bounce-slow">
                     탐색하기 전, 알고리즘 프로필 감상을 남겨보세요.
                     </div>
+                     */} 
                 </div>
             ):(
                 <>
+                {/*
                 <div className="relative group">
                     <button className="items-right bg-blue-400 text-white rounded-full px-6 py-3 text-md font-bold shadow flex items-center gap-2 transition hover:bg-blue-700"
                     onClick={() => {
@@ -62,7 +65,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
                         감상을 다시 남길 수 있어요.
                     </div>
                 </div>
-
+                */}
                 {/* 업로드 버튼 
                 <div className="relative group">
                         <button

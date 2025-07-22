@@ -279,6 +279,33 @@ useEffect(() => {
         position: "relative",
       }}
     >
+      {/* Animated background blobs */}
+      <div className="absolute inset-0 overflow-hidden z-10 pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden z-2 pointer-events-none">
+          <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
+          <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
+        </div>
+        {/*
+        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[120px] animate-wave-horizontal" />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#6776AF] blur-[120px] animate-wave-horizontal-delay-2" />
+        <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#6791FF] blur-[170px] animate-wave-horizontal-delay-4" />
+        
+        <div className="absolute bottom-[10%] left-[10%] w-[25%] h-[30%] rounded-full bg-[#B5C7FF] blur-[100px] animate-wave-horizontal-delay-2" />
+        <div className="absolute top-[30%] right-[5%] w-[20%] h-[40%] rounded-full bg-[#A0B6E2] blur-[140px] animate-wave-horizontal-delay-4" />
+        <div className="absolute bottom-[25%] right-[30%] w-[30%] h-[15%] rounded-full bg-[#C7D8FF] blur-[90px] animate-wave-horizontal" />
+        <div className="absolute -bottom-[20%] right-[10%] w-[30%] h-[60%] rounded-[43%] bg-[#6776AF] blur-[120px] animate-drift-4" />
+        <div className="absolute -bottom-[20%] left-[20%] w-[30%] h-[60%] rounded-[43%] bg-[#6776AF] blur-[120px] animate-drift-4" />
+        <div className="absolute -bottom-[20%] right-[10%] w-[30%] h-[60%] rounded-[43%] bg-[#6776AF] blur-[120px] animate-drift-4" />
+         vw 단위 wave 3개 
+         
+        
+        <div className="absolute bottom-500 w-[120vw] h-[120vw] ml-[-10vw] z-1 animate-drift-10" style={{ borderRadius: '40%', background: '#0af', opacity: 0.5 }} />
+        <div className="absolute bottom-500 w-[120vw] h-[120vw] ml-[-10vw] z-1 animate-drift-13" style={{ borderRadius: '40%', background: '#fde047', opacity: 0.2 }} />
+        <div className="absolute bottom-500 w-[120vw] h-[120vw] ml-[-10vw] z-1 animate-drift-11" style={{ borderRadius: '40%', background: '#f472b6', opacity: 0.2 }} />
+      */}
+        </div>
+
 
     {/* 눈동자 커서 추적용 상태 및 ref */}
     <>

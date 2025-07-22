@@ -222,8 +222,8 @@ return (
     {/* 하단 퍼지는 블러 애니메이션 배경 */}
     {showCompletePage ? (
         <div
-          className={`scroll-none min-h-screen bg-[#0C0C0C] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
-          style={{
+            className={`scroll-none min-h-screen bg-[#0C0C0C] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
+            style={{
             backgroundImage: "url('/images/upload_bg2.svg')",
             backgroundSize: 'contain',
             backgroundPosition: 'top',
@@ -233,7 +233,7 @@ return (
             opacity: showBgFade ? 1 : 0,
             transition: 'opacity 0.4s ease-in-out',
             animation: 'fadeIn 2s ease-in-out',            
-          }}>
+            }}>
             <div className="relative -bottom-[30%] -left-[-20%] w-[40%] h-[60%] rounded-full bg-[#6776AF] blur-[220px] animate-blob" style={{ animationDelay: '1s' }} />
             <div className="relative -bottom-[-20%] -right-[60%] w-[20%] h-[20%] rounded-full bg-white blur-[220px] animate-blob" style={{ animationDelay: '1s' }} />
         </div>
