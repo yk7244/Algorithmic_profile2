@@ -75,7 +75,7 @@ export default function ReflectionQuestionsPage2() {
     //console.log('userData', userData);
 
     return (
-        <div className="relative min-h-screen bg-black text-white flex flex-col overflow-hidden">
+        <div className="relative min-h-screen bg-gray-300 text-white flex flex-col overflow-hidden">
         {/* 배경 */}
         <div className="absolute left-[10%] top-[20%] w-[80%] h-[60%] rounded-full bg-white blur-[120px] animate-blob animation-delay-200" />
 
@@ -123,17 +123,7 @@ export default function ReflectionQuestionsPage2() {
             ):(
                 <>  
                 <div className="flex flex-row gap-4">  
-                    <button
-                        className="mt-10 text-gray-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
-
-                        onClick={() => {
-                            router.push("/my_page"); 
-                            setReflectionData_reflection2();
-                        }}
-                        >
-                        마이페이지로 돌아가기
-                        <ArrowRight className="ml-1 w-5 h-5" />
-                    </button>
+                    
                     <button
                         className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
@@ -142,7 +132,7 @@ export default function ReflectionQuestionsPage2() {
                             setReflectionData_reflection2();
                         }}
                         >
-                        알고리즘 프로필 업데이트하기
+                        알고리즘 자화상 업데이트 하러 가기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                 </div>
