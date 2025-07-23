@@ -6,7 +6,7 @@ import { AutoAwesome } from "@mui/icons-material";
 import { isOneWeekPassed } from "@/app/utils/uploadCheck";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 
-export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) {  
+const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {  
   if (isSearchMode) return null;
   const [taskOpen, setTaskOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -29,25 +29,25 @@ export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) 
   
 
   return (
-    <div className="z-[150]">      
-      <div className="absolute top-8 left-4 z-[10]">
+    <div className="z-50">      
+      <div className="absolute top-8 left-4">
         {/* [1]week 안내 */}
         <div className="ml-3 mt-10 flex flex-row ">
           <div className="flex-row items-center text-blue-600 font-semibold text-sm">
-            <Notifications fontSize="small" className="text-gray-400 mb-1" />
+            <Notifications fontSize="inherit" className="text-gray-300 mb-1" />
           </div>
           <div className="text-gray-400 text-xs pl-2">
-            <span className="font-bold text-gray-500 mr-2" >Week1.</span>
+            <span className="font-bold text-gray-400 mr-2" >Week1.</span>
             새로운 주차까지 <span className="font-bold text-blue-600">{upload_check}일 </span>남았습니다.
           </div>
         </div>
 
         {/* [2]Task 진행상황 */}
-        <div className="ml-3 mt-2 flex flex-col text-xs">
+        <div className="ml-3 flex flex-col text-xs">
           <div className="flex flex-row items-center">
             <div className="flex flex-row items-center cursor-pointer" >
-              <CheckCircle className="text-gray-400" fontSize="small"/>
-              <div className="text-xs text-gray-500 font-bold ml-2">
+              <CheckCircle className="text-gray-300" fontSize="inherit"/>
+              <div className="text-xs text-gray-400 font-bold ml-2">
                 Task 진행상황: <span className="font-bold text-blue-600">{num}/3</span> 완료
               </div>
               {/* 진행상황 드롭다운 버튼 */}
@@ -112,7 +112,7 @@ export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) 
         {/* 모달 */}
         {guideOpen && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-lg"
             onClick={() => setGuideOpen(false)}
           >
             <div
@@ -140,3 +140,4 @@ export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) 
     </div>
   );
 } 
+export default TaskGuide;
