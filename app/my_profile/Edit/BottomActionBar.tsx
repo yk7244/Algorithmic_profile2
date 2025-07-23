@@ -81,7 +81,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                         
                         <Pen className="w-5 h-5 text-black group-hover:text-white transition-colors" />
                     </button>
-                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
+                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
                         무드보드 이미지나 위치가 이상한가요? 직접 조정해보세요
                     </div>
                 </div>
@@ -95,7 +95,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                     >
                     <AutoAwesomeIcon className="w-5 h-5 text-black group-hover:text-white transition-colors" />
                     </button>
-                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
+                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg  text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
                     나의 알고리즘 자화상에 대한 첫인상을 남겨보세요
                     </div>
                 </div>
@@ -149,7 +149,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
                     </button>
-                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
+                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
                         {isReflection1 
                             ? '다른 사람의 알고리즘이 궁금한가요? 다른 사람들의 알고리즘 자화상을 탐색해보세요! '
                             : '알고리즘 자화상 첫인상 남기기(2번)을 먼저 완료해주세요.'

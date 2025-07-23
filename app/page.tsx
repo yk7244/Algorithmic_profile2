@@ -27,6 +27,7 @@ import { getReflectionData } from './utils/get/getReflectionData';
 import { createUserData } from './utils/save/saveUserData';
 import { saveClusterHistory } from './utils/save/saveClusterHistory';
 import { saveProfileData } from './utils/save/saveProfileData';
+import OverlayQuestion2 from './reflection/reflection2/overlay/OverlayQuestion2';
 
 // OpenAI 클라이언트 초기화 수정
 const openai = new OpenAI({
@@ -97,6 +98,8 @@ const [countdown, setCountdown] = useState(200000000);
 const upload_check_test = 2;
 const upload_check = useMemo(() => isOneWeekPassed(), []);
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
+const [showOverlayQuestion, setShowOverlayQuestion] = useState(false);
+
 const [dateRange, setDateRange] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -121,10 +124,14 @@ const [dateRange, setDateRange] = useState<{
         };
     } else {
         // 거짓(0): 기본값 (일주일)
+        if(!isReflection2){
+            setShowOverlayQuestion(true);
+        }
         return {
             from: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
             to: today
         };
+
     }
 });
 
@@ -182,7 +189,6 @@ useEffect(() => {
   // 버튼 1초 후 노출용 상태
   const [showButton, setShowButton] = useState(false);
 
-  const [showOverlayQuestion, setShowOverlayQuestion] = useState(false);
   const [pendingUploadAction, setPendingUploadAction] = useState<null | (() => void)>(null);
 
   useEffect(() => {
@@ -542,10 +548,10 @@ useEffect(() => {
                         if (isReflection2) {  // 리플렉션 2 여부 확인
                           setPendingUploadAction(() => () => fileInputRef.current?.click());
                           pendingUploadAction?.();
-                          setShowOverlayQuestion(false);
+                          //setShowOverlayQuestion(false);
 
                         } else {
-                          setShowOverlayQuestion(true);
+                          //setShowOverlayQuestion(true);
                         }
                       }}
                       className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
@@ -814,14 +820,14 @@ useEffect(() => {
       </div>
       </div>
       {showOverlayQuestion && (
-      <OverlayQuestion
-        onLeftClick={() => setShowOverlayQuestion(false)}
-        onRightClick={() => {
-          setShowOverlayQuestion(false);
-          router.push('/reflection/reflection2');
-        }}
-      />
-    )}
+        <OverlayQuestion2
+          onLeftClick={() => setShowOverlayQuestion(false)}
+          onRightClick={() => {
+            setShowOverlayQuestion(false);
+            router.push('/reflection/reflection2');
+          }}
+        />
+      )}
     </main>
   );
 
