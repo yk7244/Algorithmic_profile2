@@ -27,7 +27,7 @@ const OverlayQuestion2: React.FC<OverlayQuestionProps> = ({
         <div className="relative flex flex-col items-center top-[-10%]">
         <div className="text-center text-xl font-medium mb-12 leading-relaxed">
             <span className="block">
-            내 알고리즘 프로필을 업데이트하기 전에,
+            내 알고리즘 자화상을 업데이트하기 전에,
             </span>
             <span className="block mt-2">
             지금까지 있었던 튜브렌즈에서의 여정을 <b>잠시 돌아보는 시간</b>이 필요해요.<br />

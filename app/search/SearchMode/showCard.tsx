@@ -78,9 +78,9 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards }) => {
                 {isCenter && (
                     <div className="text-left mt-6 w-72">
                     <div className="font-bold text-sm text-white ">{profile?.nickname || '이름 없음'} 님과</div>
-                    {/* 유상님✅ 비슷한 알고리즘 프로필 유사도*/}
+                    {/* 유상님✅ 비슷한 알고리즘 자화상 유사도*/}
                     <div className="font-bold text-sm text-white">52% 비슷한 알고리즘이예요.</div>
-                    </div>
+                    </div>      
                 )}
                 </div>
             );

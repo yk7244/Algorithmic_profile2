@@ -77,7 +77,7 @@ export function Navbar() {
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`
               
               }>
-                  <Link href="/my_profile">나의 알고리즘 프로필</Link>
+                  <Link href="/my_profile">나의 알고리즘 자화상 </Link>
                 </Button>
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
                 onClick={() => {
@@ -88,7 +88,7 @@ export function Navbar() {
                   }
                 }}
                 >
-                  <span>다른 알고리즘 탐색</span>
+                  <span>다른 사람의 알고리즘 자화상 탐색</span>
                 </Button>
                 
                 {/* 언어 선택 버튼 
@@ -155,10 +155,10 @@ export function Navbar() {
                       </Button>
 
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile">나의 알고리즘 프로필</Link>
+                        <Link href="/my_profile">나의 알고리즘 자화상</Link>    
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile?explore=1">다른 알고리즘 탐색</Link>
+                        <Link href="/my_profile?explore=1">다른 사람의 알고리즘 자화상 탐색</Link>
                       </Button>
                       
                       
@@ -172,7 +172,7 @@ export function Navbar() {
                       {isMainPage && (
                         <div className="px-4 pt-5 flex items-center gap-1.5 text-gray-400 border-t border-gray-700 mt-1.5 rounded-[20px]">
                           <HelpCircle className="w-5 h-5" />
-                          <span className="text-base">TubeReframe이 궁금하신가요?</span>
+                          <span className="text-base">TubeLens가 궁금하신가요?</span>
                         </div>
                       )}
                     </>
