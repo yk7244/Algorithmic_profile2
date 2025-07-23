@@ -72,6 +72,7 @@ return (
                 onSaveClick={() => {}}   // 동작 안 함
                 onGenerateProfile={() => {}} // 동작 안 함
                 isOwner={false} // 본인 프로필이 아님을 명시
+                changeProfile={() => {}} // 동작 안 함
             />
                 
             </div>
@@ -84,7 +85,6 @@ return (
                     bg-[length:200%_100%] 
                     bg-clip-text text-transparent animate-gradient-move from-gray-700 via-gray-200 to-gray-700`}
                 >
-                {profile.nickname ? `${profile.nickname}의` : ''} 알고리즘 프로필 무드보드
                 {mainKeyword && (
                     <div className="mt-2 text-lg text-blue-700 drop-shadow font-semibold"># {mainKeyword}</div>
                 )}

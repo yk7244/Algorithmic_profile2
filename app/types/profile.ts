@@ -114,6 +114,7 @@ export interface ReflectionData {
   timestamp: string;
   reflection1: boolean;
   reflection2: boolean;
+  searched: boolean; // 검색 모드 사용 여부
   reflection1_answer:{
     answer1: string;
     answer2: string;

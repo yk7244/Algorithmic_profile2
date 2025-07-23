@@ -1,5 +1,7 @@
+
+import { setReflectionData_searched } from "@/app/utils/save/saveReflection";
 import { MousePointer2Icon, MousePointerClick } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 
 interface SearchModeUIProps {
     isSearchMode: boolean;
@@ -63,11 +65,14 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
                     
                     )}
                     <button
-                        onClick={handleSearch}
-                        className="bg-white text-black font-bold py-3 px-10 rounded-full border-2 border-white/70 
+                        onClick={()=>{
+                            handleSearch();
+                            setReflectionData_searched();
+                        }}
+                        className="bg-white text-black font-bold py-3 px-10 rounded-full 
                         transition-all duration-300 hover:scale-105 shadow-2xl text-xl hover:bg-black hover:text-white"
                         >
-                        Search
+                        탐색하기
                     </button>
                 </div>
             </div>

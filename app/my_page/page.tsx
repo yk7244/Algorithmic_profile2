@@ -63,13 +63,13 @@ const { logout } = useAuth();
             className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'profile' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
             onClick={() => setActiveTab('profile')}
           >
-            내 알고리즘 프로필 히스토리
+            내 알고리즘 자화상 히스토리
           </button>
           <button
             className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'open_setting' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
             onClick={() => setActiveTab('open_setting')}
           >
-            내 알고리즘 공개 설정
+            내 알고리즘 자화상 공개 설정
           </button>
         </nav>
         <div className="w-full px-8 pb-20 mb-10">
@@ -118,8 +118,8 @@ const { logout } = useAuth();
               </div>
               <div className="text-gray-500 text-sm">
                 {userData?.open_to_connect
-                  ? "다른 사용자가 내 알고리즘 프로필을 둘러볼 수 있도록 허용할게요."
-                  : "다른 사용자가 내 알고리즘 프로필을 볼 수 없도록 할게요."}
+                  ? "다른 사용자가 내 알고리즘 자화상을 둘러볼 수 있도록 허용할게요."
+                  : "다른 사용자가 내 알고리즘 자화상을 볼 수 없도록 할게요."}
               </div>
             </div>
             {/* 스위치 */}

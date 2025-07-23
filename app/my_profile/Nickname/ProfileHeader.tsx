@@ -41,12 +41,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
             <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight">
-                {profile?.nickname ? profile.nickname : 'My 무드보드'}
+                {profile?.nickname ? profile.nickname : 'My 알고리즘 자화상'}
             </h1>
             </div>
             {/* 닉네임 설명 */}
             <div className="text-gray-700 text-sm leading-relaxed mt-2">
-            {displayProfile?.description || '나만의 알고리즘 프로필을 생성해보세요.'}
+            {displayProfile?.description || '나만의 알고리즘 자화상을 생성해보세요.'}
             </div>
             
             {/* 별명 생성 버튼 (isOwner가 true일 때만 렌더링) 

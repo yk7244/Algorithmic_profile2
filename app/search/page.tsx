@@ -103,7 +103,7 @@ export default function SearchPage() {
             </div>
           ) : searchResults.length > 0 ? (
             <>
-            <h2 className="text-lg text-white/80 mb-4">비슷한 알고리즘 프로필을 {searchResults.length}개 발견했어요</h2>
+            <h2 className="text-lg text-white/80 mb-4">비슷한 알고리즘 자화상을 {searchResults.length}개 발견했어요</h2>
             <CardStack3D cards={searchResults} />
             </>
           ) : (

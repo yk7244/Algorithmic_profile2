@@ -45,7 +45,7 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
             <h1 className="text-2xl font-bold tracking-tight text-white
             transform transition-transform duration-1000 ease-in-out">
             당신의 관심사로 <br/>
-            다른 알고리즘 프로필을 <br/>
+            다른 알고리즘 자화상을 <br/>
             탐색해보세요.
             </h1>
             </div>
@@ -53,7 +53,7 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
             <div className="text-white text-sm leading-relaxed mt-2
             transform transition-transform duration-1000 ease-in-out
             ">
-            궁금한 키워드를 선택하면 당신과 유사한 알고리즘 프로필을 확인할 수 있어요.
+            궁금한 키워드를 선택하면 당신과 유사한 알고리즘 자화상을 확인할 수 있어요.
             </div>
             
             

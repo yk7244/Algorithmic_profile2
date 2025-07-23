@@ -25,7 +25,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
         {updateDate !== 2 ? (   
         <div className="flex flex-row justify-between items-center"> 
             <div className="flex flex-col pl-2  text-md">
-                <div className="text-black mb-7 font-bold">새로운 알고리즘 프로필 업데이트가 가능해요</div>
+                <div className="text-black mb-7 font-bold">새로운 알고리즘 자화상 업데이트가 가능해요</div>
             </div>
             {reflectionData?.reflection2 === false ? (
                 <div className="relative group">
@@ -42,9 +42,9 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
                     font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 
                     after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]
                     animate-bounce-slow">
-                    탐색하기 전, 알고리즘 프로필 감상을 남겨보세요.
+                    탐색하기 전, 알고리즘 자화상 감상을 남겨보세요.
                     </div>
-                     */} 
+                     */}    
                 </div>
             ):(
                 <>
@@ -92,7 +92,7 @@ export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) =
             
         ) : (
             <div className="flex flex-col pl-2">
-                <div className="text-black mb-7 font-bold">다음 알고리즘 프로필 업데이트는 위 날짜에 예정되어 있어요</div>
+                <div className="text-black mb-7 font-bold">다음 알고리즘 자화상 업데이트는 위 날짜에 예정되어 있어요</div>
             </div>
         )}
     </div>

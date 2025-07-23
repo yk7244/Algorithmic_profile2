@@ -255,8 +255,8 @@ return (
                     style={{
                         animation: 'fadeIn 2s ease-in-out',
                     }}>
-                        알고리즘이 본 당신의 프로필 무드보드가 완성되었습니다. <br/>
-                        {countdown}초 뒤 나의 알고리즘 프로필로 이동할게요.
+                        알고리즘이 본 당신의 알고리즘 자화상이 완성되었습니다. <br/>
+                        {countdown}초 뒤 나의 알고리즘 자화상으로 이동할게요. 
                     </h1>
                 </div>
             </div>

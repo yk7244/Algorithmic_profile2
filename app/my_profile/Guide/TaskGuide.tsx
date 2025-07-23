@@ -19,10 +19,14 @@ export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) 
   const reflectionData = getReflectionData();
   console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
   const isReflection1 = reflectionData?.reflection1 !== false;
-  useEffect(() => {
-    setNum(isReflection1 ? num+1 : num);
-  }, [isReflection1]);
+  const isSearched = reflectionData?.searched !== false;
 
+  useEffect(() => {
+    const nextNum = isReflection1 ? (isSearched ? 3 : 2) : 1;
+    if (num !== nextNum) setNum(nextNum);
+  }, [isReflection1, isSearched, num]);
+
+  
 
   return (
     <div className="z-[150]">      
@@ -81,8 +85,12 @@ export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) 
                 </div>
                 <div className="flex flex-row items-center">
                   <SearchIcon className="mr-1 w-3 h-3 mr-2"  />
-                  <span className="text-gray-400 font-semibold mr-2">미완</span>
-                  <span className="text-gray-400">3. 타인의 알고리즘 자화상에서 새로운 관심사 나의 알고리즘 자화상에 추가하기</span>
+                  {isSearched ? (
+                    <span className="text-blue-600 font-semibold mr-2">완료</span>
+                  ):(
+                    <span className="text-gray-400 font-semibold mr-2">미완</span>
+                  )}
+                  <span className={`${isSearched ? 'text-gray-500' : 'text-gray-400'}`}>3. 타인의 알고리즘 자화상에서 새로운 관심사 나의 알고리즘 자화상에 추가하기</span>
                 </div>
               </div>
           )}
