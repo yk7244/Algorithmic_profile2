@@ -69,7 +69,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
         <>
             
             {!isEditing ? (
-            <div className="fixed right-20 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 z-50 bg-white/70 
+            <div className="fixed right-20 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3 z-20 bg-white/70 
             backdrop-blur-lg rounded-full py-6 px-3 shadow-xl transition-all duration-10000">
                 {/* 1번 버튼 : 수정하기/저장 */}
                 <div className="relative group flex flex-row items-center justify-center">

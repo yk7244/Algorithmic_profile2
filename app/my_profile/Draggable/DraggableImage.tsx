@@ -156,7 +156,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 }}
                 className={`group ${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""}`}
             >
-                {/* 이미지 */}
+                {/* 이미지 묶음 */}
                 <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                 >
                     {/* 메인키워드 */}
@@ -166,33 +166,40 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         fontSize: `${fontSize}px`,
                         }}
                     >
-                        <div 
-                        className="py-4"
-                        >
-                        
-                        <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
-                            #{image.main_keyword}
-                        </span>
+                        <div className="group relative y-4">
+                            <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
+                                #{image.main_keyword}
+                            </span>
+                            {/* 호버 툴팁 */}
+                            <div
+                                className="z-50 absolute left-1/2 bottom-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-gray-800 px-6 py-3 rounded-2xl shadow-lg text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
+                                after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:-translate-x-1/2 after:translate-y-full after:border-8 after:border-x-transparent after:border-t-white after:border-b-0"
+                                style={{ zIndex: 9999 }}
+                                >
+                                {/*<span className="font-semibold font-gray-800">#알고리즘 정체성 키워드</span>와 시청하신 영상의 <span className="font-semibold font-gray-800">썸네일</span>이예요,<br/>*/}
+                                이미지를 클릭해 알고리즘 설명을 확인해보세요!
+                            </div>
                         </div>
+                        
                     </div>
 
                     {/* 이미지 */}
                     <SheetTrigger asChild>
                         <div 
-                        className={`rrelative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
+                        className={`group relative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                         >
                         <div
                             style={{
                             ...getClipPath(),
                             }}
-                            className={`relative w-full h-full ${getFrameStyle()} overflow-hidden ${
+                            className={`group hover:scale-105 transition-transform duration-300 relative w-full h-full ${getFrameStyle()} overflow-hidden ${
                                 isSelected ? 'ring-2 ring-white ring-opacity-70 shadow-xl' : ''
                             }`}
                         >
                             <img
                                 src={imageLoadError ? "/images/default_image.png" : image.src}
                                 alt={image.main_keyword}
-                                className={`w-full h-full object-cover shadow-xl transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
+                                className={`group w-full h-full object-cover shadow-xl transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isEditing && isSearchMode) {
@@ -203,7 +210,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 }}
                                 onError={() => setImageLoadError(true)}
                             />
-                            
+                            {/* 호버 툴팁 */}
+                            <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]" style={{zIndex: 9999}}>
+                                이미지를 클릭해 알고리즘 설명을 확인해보세요!
+                            </div>
                         </div>
                         
                         {/* 키워드를 이미지 하단에 배치 

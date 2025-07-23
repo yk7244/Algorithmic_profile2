@@ -34,6 +34,7 @@ import { getLatestProfileData } from "../utils/get/getProfileData";
 import { Bell, ChevronDownIcon, ChevronUpIcon, EditIcon, Pen, SearchIcon, SparklesIcon } from "lucide-react";
 import { AutoAwesome } from "@mui/icons-material";
 import TaskGuide from "./Guide/TaskGuide";  
+import Tutorial from "./Tutorial/Tutorial";
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -54,6 +55,7 @@ export default function MyProfilePage() {
   const [histories, setHistories] = useState<HistoryData[]>([]);  
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "../../../public/images/default_image.png"
+  const [showTutorial, setShowTutorial] = useState(true);
 
   //  const [profile, setProfile] = useState({ nickname: "기본 닉네임", description: "기본 설명" });
   const [profile, setProfile] = useState(() => {
@@ -222,14 +224,11 @@ export default function MyProfilePage() {
   //새로고침 시 배경 색 변경
   
 
-  //console.log('🔥 bgColor:', bgColor);
-  const [taskOpen, setTaskOpen] = useState(true);
-
 
   return (
-    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? 'bg-gray-100' : bgColor} transform transition-all duration-1000 ease-in-out`}>
+    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-100wh h-screen overflow-y-hidden ${!isSearchMode ? 'bg-gray-100' : bgColor} transform transition-all duration-1000 ease-in-out`}>
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
-      <div className={`flex flex-col px-4 py-12 backdrop-blur-lg z-10 justify-center pb-18 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
+      <div className={`z-30  shadow-2xl flex flex-col px-4 py-12 backdrop-blur-lg z-10 justify-center pb-18 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
         {!isSearchMode ? ( 
           <ProfileHeader
             profile={profile}
@@ -248,113 +247,108 @@ export default function MyProfilePage() {
       </div>
       {/* 오른쪽: 무드보드/이미지/카드 등 */}
       <div className={`relative flex flex-col h-full w-full ${!isSearchMode ? bgColor : ''} ${exploreAnimation ? 'animate-fadeIn' : ''}`} ref={boardRef}>
-        {/* 프로필 무드보드 텍스트 */}
-        <div
-          className={`absolute left-1/2 -translate-x-1/2 top-24 text-center text-black text-md font-bold bg-gradient-to-r 
-            bg-[length:200%_100%] 
-            bg-clip-text text-transparent animate-gradient-move 
-            transition-all duration-1000 ease-in-out
-            transform transition-transform duration-1000 ease-in-out
-            ${!isSearchMode ? 'from-gray-700 via-gray-200 to-gray-700' : 'from-white via-[#3B71FE] to-white bg-[length:200%_100%] '}`}
-        >
-          {/*
-          {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 
-          */}
-        </div>
+        {/* 튜토리얼 영역 */}
+        <Tutorial show={showTutorial} onClose={() => setShowTutorial(false)} />
+        {/* 나머지 메인 UI는 튜토리얼이 닫혔을 때만 렌더링 */}
 
-        {/* 가이드 안내 영역 */}
-        <TaskGuide 
-          isSearchMode={isSearchMode}
-        />
+          <>
+            {!showTutorial && (
+              <>
+                {/* 가이드 안내 영역 */}
+                  <TaskGuide 
+                  isSearchMode={isSearchMode} 
+                />
+              </>
+            )}
 
-        {/* 검색 모드 UI -> SearchModeUI.tsx */}
-        <SearchModeUI
-          isSearchMode={isSearchMode}
-          selectedImage={selectedImage}
-          selectedImages={selectedImages}
-          handleSearch={handleSearch}
-          toggleSearchMode={toggleSearchMode}
-          setIsSearchMode={setIsSearchMode}
-        />
+            
 
-        
-
-
-        {/* My_profile 페이지 이미지레이아웃 */}
-        <div className="flex-1 flex flex-col items-center justify-start w-full">
-          <div className="fixed w-full h-full mx-auto mt-8">
-            <DndContext
-              onDragEnd={handleDragEnd}
-              modifiers={[restrictToContainer]}
-            >
-              {images.map((image) => (
-                <div
-                  key={image.id || Math.random().toString()}
-                  className={`transition-all duration-500 ${
-                    isEditing || (image.id && visibleImageIds.has(image.id))
-                      ? 'opacity-100 scale-100'
-                      : 'opacity-0 scale-95 pointer-events-none'
-                  }`}
-                >
-                  <DraggableImage
-                    image={image}
-                    position={positions[image.id] || image.position}
-                    isEditing={isEditing && !isSearchMode}
-                    frameStyle={image.desired_self ? 'cokie' : (frameStyles[image.id] || 'normal')}
-                    onFrameStyleChange={handleFrameStyleChange}
-                    onImageChange={handleImageChange}
-                    onImageSelect={handleImageSelect}
-                    isSelected={selectedImages.some(img => img.id === image.id)}
-                    isSearchMode={isSearchMode}
-                    onImageDelete={handleImageDelete}
-                  />
-                </div>
-              ))}
-            </DndContext>
-          </div>
-          {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
-          <AutoArrangeButton 
-            isEditing={isEditing}
-            onAutoArrange={handleAutoArrange}
-          />
-          
-        </div>
-        {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
-        {!isEditing && !isSearchMode && (
-          <div className="w-full">
-            <HistorySlider
-              histories={sliderHistories}
-              currentHistoryIndex={sliderCurrentHistoryIndex}
-              isPlaying={sliderIsPlaying}
-              handlePlayHistory={handlePlayHistory}
-              handleHistoryClick={handleHistoryClick}
-              changeProfile={changeProfile}
+            {/* 검색 모드 UI -> SearchModeUI.tsx */}
+            <SearchModeUI
+              isSearchMode={isSearchMode}
+              selectedImage={selectedImage}
+              selectedImages={selectedImages}
+              handleSearch={handleSearch}
+              toggleSearchMode={toggleSearchMode}
+              setIsSearchMode={setIsSearchMode}
             />
-          </div>
-        )}
-        {/* 컬러 팔레트 보드 (편집 모드일 때만 표시)->ColorPaletteBoard.tsx */}
-        {isEditing && !isSearchMode && (
-          <ColorPaletteBoard
-            colorOptions={colorOptions}
-            bgColor={bgColor}
-            onChange={handleBgColorChange}
-          />
-        )}
-        {/* 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}
-        {!isSearchMode && (
-          <BottomActionBar
-            isEditing={isEditing}
-            isGeneratingProfile={showGeneratingDialog}
-            onEditClick={() => setIsEditing(true)}
-            images={images}
-            positions={positions}
-            onGenerateProfile={generateProfile}
-            sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
-            isSearchMode={isSearchMode}
-            toggleSearchMode={toggleSearchMode}
-            offEditClick={() => setIsEditing(false)}
-          />
-        )}
+
+            {/* My_profile 페이지 이미지레이아웃 */}
+            <div className="flex-1 flex flex-col items-center justify-start w-full">
+              <div className="fixed w-full h-full mx-auto mt-8">
+                <DndContext
+                  onDragEnd={handleDragEnd}
+                  modifiers={[restrictToContainer]}
+                >
+                  {images.map((image) => (
+                    <div
+                      key={image.id || Math.random().toString()}
+                      className={`transition-all duration-500 ${
+                        isEditing || (image.id && visibleImageIds.has(image.id))
+                          ? 'opacity-100 scale-100'
+                          : 'opacity-0 scale-95 pointer-events-none'
+                      }`}
+                    >
+                      <DraggableImage
+                        image={image}
+                        position={positions[image.id] || image.position}
+                        isEditing={isEditing && !isSearchMode}
+                        frameStyle={image.desired_self ? 'cokie' : (frameStyles[image.id] || 'normal')}
+                        onFrameStyleChange={handleFrameStyleChange}
+                        onImageChange={handleImageChange}
+                        onImageSelect={handleImageSelect}
+                        isSelected={selectedImages.some(img => img.id === image.id)}
+                        isSearchMode={isSearchMode}
+                        onImageDelete={handleImageDelete}
+                      />
+                    </div>
+                  ))}
+                </DndContext>
+              </div>
+              {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
+              <AutoArrangeButton 
+                isEditing={isEditing}
+                onAutoArrange={handleAutoArrange}
+              />
+            </div>
+            {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
+            {!isEditing && !isSearchMode && (
+              <div className="w-full">
+                <HistorySlider
+                  histories={sliderHistories}
+                  currentHistoryIndex={sliderCurrentHistoryIndex}
+                  isPlaying={sliderIsPlaying}
+                  handlePlayHistory={handlePlayHistory}
+                  handleHistoryClick={handleHistoryClick}
+                  changeProfile={changeProfile}
+                />
+              </div>
+            )}
+            {/* 컬러 팔레트 보드 (편집 모드일 때만 표시)->ColorPaletteBoard.tsx */}
+            {isEditing && !isSearchMode && (
+              <ColorPaletteBoard
+                colorOptions={colorOptions}
+                bgColor={bgColor}
+                onChange={handleBgColorChange}
+              />
+            )}
+            {/* 액션 버튼들 - 검색 모드가 아닐 때만 표시 */}
+            {!isSearchMode && !showTutorial && (
+              <BottomActionBar
+                isEditing={isEditing}
+                isGeneratingProfile={showGeneratingDialog}
+                onEditClick={() => setIsEditing(true)}
+                images={images}
+                positions={positions}
+                onGenerateProfile={generateProfile}
+                sliderCurrentHistoryIndex={sliderCurrentHistoryIndex}
+                isSearchMode={isSearchMode}
+                toggleSearchMode={toggleSearchMode}
+                offEditClick={() => setIsEditing(false)}
+              />
+            )}
+          </>
+        
       </div>
     </div>
   );
