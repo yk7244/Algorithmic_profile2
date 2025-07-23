@@ -157,7 +157,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 className={`group ${isEditing ? "cursor-move" : isSearchMode ? "cursor-pointer" : ""}`}
             >
                 {/* 이미지 묶음 */}
-                <div className={`absolute inset-0 transform ${!isEditing && isSearchMode ? 'transition-all duration-300 hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
+                <div className={`absolute inset-0  ${!isEditing && isSearchMode ? 'transition-all duration-300 hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                 >
                     {/* 메인키워드 */}
                     <div 
@@ -171,14 +171,19 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 #{image.main_keyword}
                             </span>
                             {/* 호버 툴팁 */}
+                            {!isEditing && (
                             <div
-                                className="z-50 absolute left-1/2 bottom-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-gray-800 px-6 py-3 rounded-2xl shadow-lg text-sm font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
-                                after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:-translate-x-1/2 after:translate-y-full after:border-8 after:border-x-transparent after:border-t-white after:border-b-0"
-                                style={{ zIndex: 9999 }}
-                                >
-                                {/*<span className="font-semibold font-gray-800">#알고리즘 정체성 키워드</span>와 시청하신 영상의 <span className="font-semibold font-gray-800">썸네일</span>이예요,<br/>*/}
-                                이미지를 클릭해 알고리즘 설명을 확인해보세요!
+                            className="fixed z-[9999] left-1/2 bottom-1/2 -translate-x-1/2 -translate-y-1/2 
+                                        bg-white text-gray-800 px-6 py-3 rounded-2xl shadow-lg text-sm font-medium 
+                                        whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none
+                                        after:content-[''] after:absolute after:left-1/2 after:bottom-0 after:-translate-x-1/2 after:translate-y-full 
+                                        after:border-8 after:border-x-transparent after:border-t-white after:border-b-0
+                                        text-center
+                                        "
+                            >
+                            이미지를 클릭해 <br/>알고리즘 설명을 확인해보세요!
                             </div>
+                            )}
                         </div>
                         
                     </div>

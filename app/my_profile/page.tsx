@@ -35,6 +35,7 @@ import { Bell, ChevronDownIcon, ChevronUpIcon, EditIcon, Pen, SearchIcon, Sparkl
 import { AutoAwesome } from "@mui/icons-material";
 import TaskGuide from "./Guide/TaskGuide";  
 import Tutorial from "./Tutorial/Tutorial";
+import DragNotice from "./Edit/DragNotice";
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -309,6 +310,10 @@ export default function MyProfilePage() {
               <AutoArrangeButton 
                 isEditing={isEditing}
                 onAutoArrange={handleAutoArrange}
+              />
+              <DragNotice 
+                showDragNotice={!showTutorial}
+                isEditing={isEditing}
               />
             </div>
             {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}

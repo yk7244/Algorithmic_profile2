@@ -6,7 +6,7 @@ import { AutoAwesome } from "@mui/icons-material";
 import { isOneWeekPassed } from "@/app/utils/uploadCheck";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 
-export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) {  
+const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {  
   if (isSearchMode) return null;
   const [taskOpen, setTaskOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -140,3 +140,4 @@ export default function TaskGuide({ isSearchMode }: { isSearchMode?: boolean }) 
     </div>
   );
 } 
+export default TaskGuide;

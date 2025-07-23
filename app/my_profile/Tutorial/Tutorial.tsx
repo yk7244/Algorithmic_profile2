@@ -12,7 +12,7 @@ const Tutorial: React.FC<TutorialProps> = ({ show, onClose }) => {
     return (
         <div className="z-20 absolute inset-y-0 right-0 mr-0 w-full h-full flex items-center justify-center bg-white/20  backdrop-blur-[30px]">
             <div className="relative w-full h-full flex flex-col items-center justify-center">
-                {isClicked ? (
+                {!isClicked ? (
                     <>
                     <button 
                     className=" top-8 right-8 px-6 py-3 bg-black/80 text-white rounded-full 
@@ -55,6 +55,7 @@ const Tutorial: React.FC<TutorialProps> = ({ show, onClose }) => {
                                 클수록 큰 이미지로 표현돼요.
                             </div>
                         </div>
+                        
                     </div>
 
                     <div className="mt-10 text-sm text-black opacity-20 text-center font-semibold">

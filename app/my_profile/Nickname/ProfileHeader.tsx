@@ -33,7 +33,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }, [profile]);
 
     return (
-        <div className="relative group pl-8 max-w-[320px] space-y-6 pt-[40px]">
+        <div className="relative group pl-8 max-w-[320px] space-y-6 pt-[40px] mb-20">
             {/* 호버 툴팁 */}
             
             {/* 닉네임 */}
