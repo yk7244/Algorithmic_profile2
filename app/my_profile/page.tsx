@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, useCall
 import {DndContext} from '@dnd-kit/core';
 import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
 import { useSearchParams } from 'next/navigation';
-
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 //Refactoring
 import DraggableImage from './Draggable/DraggableImage';
 import ColorPaletteBoard from './Edit/ColorPaletteBoard';
@@ -30,6 +31,9 @@ import AutoArrangeButton from './Edit/AutoArrangeButton';
 import SearchHeader from "../search/SearchMode/SearchHeader";
 import { savePositions } from "./Edit/Hooks/savePosition";
 import { getLatestProfileData } from "../utils/get/getProfileData";
+import { Bell, ChevronDownIcon, ChevronUpIcon, EditIcon, Pen, SearchIcon, SparklesIcon } from "lucide-react";
+import { AutoAwesome } from "@mui/icons-material";
+import TaskGuide from "./Guide/TaskGuide";  
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -219,11 +223,13 @@ export default function MyProfilePage() {
   
 
   //console.log('🔥 bgColor:', bgColor);
+  const [taskOpen, setTaskOpen] = useState(true);
+
 
   return (
     <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden ${!isSearchMode ? 'bg-gray-100' : bgColor} transform transition-all duration-1000 ease-in-out`}>
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
-      <div className={`flex flex-col px-4 py-12 backdrop-blur-lg z-10 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
+      <div className={`flex flex-col px-4 py-12 backdrop-blur-lg z-10 justify-center pb-18 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
         {!isSearchMode ? ( 
           <ProfileHeader
             profile={profile}
@@ -251,9 +257,15 @@ export default function MyProfilePage() {
             transform transition-transform duration-1000 ease-in-out
             ${!isSearchMode ? 'from-gray-700 via-gray-200 to-gray-700' : 'from-white via-[#3B71FE] to-white bg-[length:200%_100%] '}`}
         >
+          {/*
           {profile.nickname ? `${profile.nickname}` : 'My 무드보드'} 
-          {isSearchMode ? '알고리즘 프로필 무드보드에서 궁금한 키워드를 선택해주세요' : '의 알고리즘 프로필 무드보드'}
+          */}
         </div>
+
+        {/* 가이드 안내 영역 */}
+        <TaskGuide 
+          isSearchMode={isSearchMode}
+        />
 
         {/* 검색 모드 UI -> SearchModeUI.tsx */}
         <SearchModeUI
