@@ -170,7 +170,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
                                 #{image.main_keyword}
                             </span>
-                            {/* 호버 툴팁 */}
+                            {/* 호버 툴팁 
                             {!isEditing && (
                             <div
                             className="fixed z-[9999] left-1/2 bottom-1/2 -translate-x-1/2 -translate-y-1/2 
@@ -183,7 +183,9 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             >
                             이미지를 클릭해 <br/>알고리즘 설명을 확인해보세요!
                             </div>
+                            
                             )}
+                            */}
                         </div>
                         
                     </div>
@@ -215,10 +217,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 }}
                                 onError={() => setImageLoadError(true)}
                             />
-                            {/* 호버 툴팁 */}
+                            {/* 호버 툴팁 
                             <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-white after:border-r-transparent after:ml-[-1px]" style={{zIndex: 9999}}>
                                 이미지를 클릭해 알고리즘 설명을 확인해보세요!
                             </div>
+                            */}
                         </div>
                         
                         {/* 키워드를 이미지 하단에 배치 
