@@ -24,8 +24,21 @@ export function isOneWeekPassed(): number {
     updated.setHours(0, 0, 0, 0);
     now.setHours(0, 0, 0, 0);
 
-    const diffDays = (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24);
+    const nextUpdateDate = latestEntry.created_at
+    ? new Date(new Date(latestEntry.created_at).getTime() + 7 * 24 * 60 * 60 * 1000)
+    : null;
+    console.log('nextUpdateDate', nextUpdateDate);
     
+    // 오늘 날짜와 다음 업데이트 날짜를 0시로 맞추기
+    if (nextUpdateDate) {
+      nextUpdateDate.setHours(0, 0, 0, 0);
+    }
+    now.setHours(0, 0, 0, 0);
+    
+    // 남은 날짜 계산 (음수면 이미 지남)
+    const diffDays = nextUpdateDate ? Math.ceil((nextUpdateDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    console.log('diffDays', diffDays);
+      
     return diffDays >= 7 ? 2 : diffDays; // 일주일 지났으면 2(두번째 유저), 안 지났으면 diffDays(거짓)
   } catch (error) {
     console.error('ClusterHistory 확인 중 오류:', error);

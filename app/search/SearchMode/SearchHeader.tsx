@@ -20,23 +20,24 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
 
     return (
         <div className="absolute z-30 pl-8 max-w-[320px] space-y-6 pt-[40px] 
-        transform transition-transform duration-1000 ease-in-out">
-            {/* 닉네임 */}
-            <div className="flex flex-row items-center">
-                <Button
+        transform transition-transform duration-1000 ease-in-out mb-20">
+            <Button
                 variant="ghost"
                 size="icon"
-                onClick={onBack}
-                className="text-white hover:bg-white/10"
+                onClick={()=>{
+                    router.push('/my_profile');
+                }}
+                className=" top-0 left-0 text-white hover:bg-white/10"
                 >
                 <ArrowLeft className="h-2 w-2" />
+
+            </Button>
+            {/* 닉네임 */}
+
+            <div className="flex flex-row items-center">
                 
-                </Button>
-                <div className="text-black text-md font-bold bg-gradient-to-r 
-                from-white via-[#3B71FE] to-white bg-[length:200%_100%] 
-                bg-clip-text text-transparent animate-gradient-move 
-                transform transition-transform duration-1000 ease-in-out">
-                    탐색모드로 전환되었어요...
+                <div className="text-white text-sm font-bold bg-blue-600 w-fit px-4 py-1 rounded-full backdrop-blur-sm">
+                탐색모드로 전환되었어요...
                 </div>
             </div>
 
