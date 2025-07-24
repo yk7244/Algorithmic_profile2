@@ -38,7 +38,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
           </div>
           <div className="text-gray-400 text-xs pl-2">
             <span className="font-bold text-gray-400 mr-2" >Week1.</span>
-            새로운 주차까지 <span className="font-bold text-blue-600">{upload_check}일 </span>남았습니다.
+            새로운 주차까지 <span className="font-bold text-blue-600">{7-upload_check}일 </span>남았습니다.
           </div>
         </div>
 
