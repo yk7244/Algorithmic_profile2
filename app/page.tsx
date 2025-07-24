@@ -111,9 +111,9 @@ const [dateRange, setDateRange] = useState<{
         // 초기 유저: 오늘부터 4주 전
         return {
           //☑️TEST로 임의로 3일만 설정함
-          from: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000),
+          //from: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000),
 
-          //from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
+          from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
           to: today
         };
     } else if (upload_check === 2) {
