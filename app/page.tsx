@@ -107,7 +107,7 @@ const [dateRange, setDateRange] = useState<{
     const today = new Date();
     console.log('upload_check', upload_check);
     
-    if (upload_check === 1) {
+    if (upload_check === -1) { //첫번째 업데이트
         // 초기 유저: 오늘부터 4주 전
         return {
           //☑️TEST로 임의로 3일만 설정함
@@ -116,14 +116,13 @@ const [dateRange, setDateRange] = useState<{
           from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
           to: today
         };
-    } else if (upload_check === 2) {
+    } else if (upload_check == -2) { // 두번째 이상 업데이트 
         // 두 번째 유저: 일주일
         return {
             from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 일주일 전
             to: today
         };
-    } else {
-        // 거짓(0): 기본값 (일주일)
+    } else { // 0~7 양수 
         if(!isReflection2){
             setShowOverlayQuestion(true);
         }
@@ -134,6 +133,7 @@ const [dateRange, setDateRange] = useState<{
 
     }
 });
+
 
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [isFileUploaded, setIsFileUploaded] = useState(false);
@@ -451,7 +451,7 @@ useEffect(() => {
         {isLoggedIn ? (
           <>
             {/* 1-1 로그인O => 업데이트 여부 확인 */}  
-            {(upload_check === 2 || upload_check === 1 || upload_check_test === 2) ? (
+            {(upload_check === -1 || upload_check === -2) ? (
               
               isFileUploaded ? (
                 <>  

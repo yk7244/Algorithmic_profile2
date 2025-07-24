@@ -41,7 +41,7 @@ export function Navbar() {
   const [isLocked, setIsLocked] = useState(false);
   
   useEffect(() => {
-    if(isOneWeekPassed()<1){  //업데이트 날짜 지난 경우 -값이 나옴
+    if(isOneWeekPassed()<0){  //업데이트 날짜 지난 경우 -값이 나옴
       setIsLocked(true); // 락 걸림
     }else{
       setIsLocked(false); 
