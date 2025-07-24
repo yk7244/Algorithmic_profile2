@@ -20,7 +20,7 @@ const DragNotice = ({ isEditing, showDragNotice }: DragNoticeProps) => {
         <>
         {showDragNotice && (
         <div
-        className={`z-1 mt-[100px] bg-white/20 backdrop-blur-sm text-black px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-fadeIn z-50`}
+        className={`z-1 mt-[100px] bg-white/80 backdrop-blur-lg text-black px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-fadeIn z-50`}
         role="alert"
         aria-live="polite"
         >

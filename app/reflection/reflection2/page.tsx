@@ -130,6 +130,7 @@ export default function ReflectionQuestionsPage2() {
                         onClick={() => {
                             router.push("/"); 
                             setReflectionData_reflection2();
+                            
                         }}
                         >
                         알고리즘 자화상 업데이트 하러 가기
