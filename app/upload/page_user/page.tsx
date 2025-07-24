@@ -126,6 +126,13 @@ useEffect(() => {
 const [current, setCurrent] = useState(0);
 const [total, setTotal] = useState(0);
 const hasRunRef = useRef(false);
+
+const bgColorByStep: Record<number, string> = {
+    1: "bg-[#0C0C0C]",
+    2: "bg-linear-gradient(180deg, #0C0C0C 0%, white 100%)",
+    3: "bg-linear-gradient(180deg, #8F8F8F 0%, white 57%)",
+};
+
  // 페이지가 처음 로드될 때 자동 분석 시작
 useEffect(() => {
     const startAnalysis = async () => {
@@ -137,7 +144,7 @@ useEffect(() => {
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
-            const parseHistory = getParseHistory();
+            const parseHistory = getParseHistory() || [];
             console.log('parseHistory 불러오기:', parseHistory);
             console.log('fetchVideoInfo:', fetchVideoInfo);
 
@@ -217,14 +224,20 @@ useEffect(() => {
 
 
 return (
-    <main className="flex min-h-screen items-center p-4 py-40 relative overflow-hidden scroll-none">
+    <main className={`flex min-h-screen items-center p-4 py-40 relative overflow-hidden scroll-none 
+        ${
+        showCompletePage
+        ? " " // showCompletePage가 true면 이 색
+        : bgColorByStep[generatingStep] || "bg-[#777E90]" // 아니면 step에 따라
+    }`}
+    >  
     
     {/* 하단 퍼지는 블러 애니메이션 배경 */}
     {showCompletePage ? (
         <div
-            className={`scroll-none min-h-screen bg-[#0C0C0C] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
+            className={`scroll-none min-h-screen bg-[#777E90] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
             style={{
-            backgroundImage: "url('/images/upload_bg2.svg')",
+            backgroundImage: "url('/images/upload_bg.svg')",
             backgroundSize: 'contain',
             backgroundPosition: 'top',
             border: 'none',
@@ -234,16 +247,18 @@ return (
             transition: 'opacity 0.4s ease-in-out',
             animation: 'fadeIn 2s ease-in-out',            
             }}>
-            <div className="relative -bottom-[30%] -left-[-20%] w-[40%] h-[60%] rounded-full bg-[#6776AF] blur-[220px] animate-blob" style={{ animationDelay: '1s' }} />
-            <div className="relative -bottom-[-20%] -right-[60%] w-[20%] h-[20%] rounded-full bg-white blur-[220px] animate-blob" style={{ animationDelay: '1s' }} />
+            <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
+            <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
+            <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />      
         </div>
     ):(
-    <div className="bg-[#0C0C0C] absolute inset-0 overflow-hidden -z-20 pointer-events-none">
-        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#6165C9] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#6776AF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-white blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
+    <div className="absolute inset-0 overflow-hidden z-2 pointer-events-none">
+        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
     </div>
     )}
+
     <div className="flex flex-col items-center space-y-8 relative z-10 w-full">
         <div className="w-full max-w-[900px] ">  
         {showCompletePage ? (
@@ -251,7 +266,7 @@ return (
             <div className="w-full max-h-screen relative text-center">
                 {/* 메인 완료 메시지 - 상단 고정 */}
                 <div className="absolute left-1/2 -translate-x-1/2" style={{ top: '-100px', width: '100%' , transition: 'opacity 4s ease-in-out',}}>
-                    <h1 className="text-xl font-bold text-white text-center"
+                    <h1 className="text-xl font-bold text-black text-center"
                     style={{
                         animation: 'fadeIn 2s ease-in-out',
                     }}>
@@ -314,7 +329,7 @@ return (
                     <div className="space-y-4" style={{marginTop: '300px'}}>
                         
                         <p
-                            className="mt-200 text-gray-300 text-2xl font-bold mx-auto text-center "
+                            className="mt-200 text-black text-2xl font-bold mx-auto text-center "
                             style={{
                                 opacity: showStepText ? 1 : 0,
                                 transition: 'opacity 0.4s ease-in-out',
@@ -324,7 +339,7 @@ return (
                             
                         </p>
                         {generatingStep === 1 &&(
-                            <p className="mt-200 text-gray-300 text-md font-bold mx-auto text-center">
+                            <p className="mt-200 text-black text-md font-bold mx-auto text-center">
                                 {Math.round((current / total) * 100)}% 진행 중
                             </p>
                         )}

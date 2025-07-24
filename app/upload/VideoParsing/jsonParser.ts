@@ -1,6 +1,7 @@
 //import { fetchVideoInfo } from '../VideoAnalysis/fetchVideoInfo';
 import {fetchVideoInfo} from '../VideoAnalysis/videoKeyword';
 import { OpenAILogger } from '../../utils/init-logger';
+import { saveParseHistory } from '../../utils/save/saveParseHistory';
 
 // Define types for JSON watch history
 interface JSONWatchHistoryItem {
@@ -109,6 +110,7 @@ export const parseJSONWatchHistory = async (
     const selectedItems = Object.values(groupedByDate).flat();
     console.log(`3)그룹화 및 제한 후 영상 수: ${selectedItems.length}개`);
     console.log('selectedItems:', selectedItems);
+    saveParseHistory(selectedItems);
 
     return selectedItems;
     

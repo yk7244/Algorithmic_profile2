@@ -68,7 +68,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
           
           {/* 진행상황 드롭다운 영역 */}
           {taskOpen && (
-              <div className="mt-2 ml-6 flex flex-col gap-1">
+              <div className="mt-2 ml-6 flex flex-col gap-1 bg-white/80 backdrop-blur-lg rounded-lg p-2">
                 <div className="flex flex-row items-center">
                   <Pen className="w-3 h-3 mr-2 text-black group-hover:text-white transition-colors" />
                   <span className="text-blue-600 font-semibold mr-2">완료</span>
@@ -97,7 +97,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
         </div>
 
         {/* [3] 사용방법 알아보기 */}
-        <div className="flex flex-row items-center mt-2 px-4 py-2 backdrop-blur-sm text-blue-700 rounded-full 
+        <div className="flex flex-row items-center mt-2 px-4 py-2 bg-white/80 backdrop-blur-sm text-blue-700 rounded-full 
           text-xs font-semibold transition w-fit">
             <div className="w-[14px] h-[14px] rounded-full bg-[#3B71FE] blur-[4px] animate-pulse mr-2" />
             <div className="ml-1 text-xs text-black"> 사용방법 알아보기 ?</div>
