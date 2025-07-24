@@ -1,3 +1,4 @@
+import { setReflectionData_tutorial } from "../../utils/save/saveReflection";
 import { LucideMousePointerClick, MousePointer2Icon, MousePointerClick, MousePointerClickIcon } from "lucide-react";
 import React, { useState } from "react";
 
@@ -5,6 +6,7 @@ interface TutorialProps {
     show: boolean;
     onClose: () => void;
 }
+
 
 const Tutorial: React.FC<TutorialProps> = ({ show, onClose }) => {
     if (!show) return null;
@@ -65,7 +67,10 @@ const Tutorial: React.FC<TutorialProps> = ({ show, onClose }) => {
                     <button
                     className="mt-10 top-8 right-8 px-6 py-2 bg-black/80 text-white rounded-full 
                     font-bold text-base z-10 hover:bg-black/80 hover:scale-105 transition"
-                    onClick={onClose}
+                    onClick={() => {
+                        onClose();
+                        setReflectionData_tutorial();
+                    }}
                 >
                     확인하기
                     </button>
