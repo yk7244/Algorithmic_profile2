@@ -10,6 +10,7 @@ export function setReflectionData() {
         reflection1: false,
         reflection2: false,
         searched: false,
+        tutorial: false,
         reflection1_answer: { answer1: "", answer2: "", answer3: "" },
         reflection2_answer: { answer1: "", answer2: "" }
         };
@@ -18,14 +19,23 @@ export function setReflectionData() {
 }
 export function setReflectionData_searched() {
     const reflectionData = getReflectionData();
-    console.log('🔵setReflectionData_searched 전    : ', reflectionData?.searched);
+    //console.log('🔵setReflectionData_searched 전    : ', reflectionData?.searched);
 
     if (reflectionData) {
         reflectionData.searched = true;
         localStorage.setItem("reflectionData", JSON.stringify(reflectionData));
     }
-    console.log('🔵setReflectionData_searched 후    : ', reflectionData?.searched);
+    //console.log('🔵setReflectionData_searched 후    : ', reflectionData?.searched);
 }
+
+export function setReflectionData_tutorial() {
+    const reflectionData = getReflectionData();
+    if (reflectionData) {
+        reflectionData.tutorial = true;
+        localStorage.setItem("reflectionData", JSON.stringify(reflectionData));
+    }
+}
+
 // 리플렉션 답변 계속 쌓기
 export function setReflection_answer() {
     const reflection_answer = getReflection_answer();
@@ -36,6 +46,7 @@ export function setReflection_answer() {
         user_id: "0",
         timestamp: new Date().toISOString(),
         searched: reflection?.searched,
+        tutorial: reflection?.tutorial,
         reflection_data: reflection,
     }
     localStorage.setItem("reflection_answer", JSON.stringify([...reflection_answer, new_reflection_answer]));
@@ -64,6 +75,7 @@ export function updateReflectionAnswer({
             reflection1: false,
             reflection2: false,
             searched: false,
+            tutorial: false,
             reflection1_answer: { answer1: "", answer2: "", answer3: "" },
             reflection2_answer: { answer1: "", answer2: "" }
         };
@@ -87,6 +99,7 @@ export function setReflectionData_reflection1() {
         reflection1: true,
         reflection2: reflectionData?.reflection2,
         searched: reflectionData?.searched,
+        tutorial: reflectionData?.tutorial,
         reflection1_answer: reflectionData?.reflection1_answer,
         reflection2_answer: reflectionData?.reflection2_answer,
     }   
@@ -103,6 +116,7 @@ export function setReflectionData_reflection2() {
         reflection1: reflectionData?.reflection1,
         reflection2: true,
         searched: reflectionData?.searched,
+        tutorial: reflectionData?.tutorial,
         reflection1_answer: reflectionData?.reflection1_answer,
         reflection2_answer: reflectionData?.reflection2_answer,
     }   

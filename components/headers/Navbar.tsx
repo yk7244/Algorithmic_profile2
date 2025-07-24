@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 import Link from "next/link";
@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { getReflectionData } from '@/app/utils/get/getReflectionData';
 import OverlayQuestion1 from '@/app/reflection/reflection1/overlay/OverlayQuestion1';
 import OverlayQuestion2 from '@/app/reflection/reflection2/overlay/OverlayQuestion2';
+import { isOneWeekPassed } from '@/app/utils/uploadCheck';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -30,13 +31,22 @@ export function Navbar() {
   const router = useRouter();
   const [showOverlayQuestion1, setShowOverlayQuestion1] = useState(false);
   const [showOverlayQuestion2, setShowOverlayQuestion2] = useState(false);
-
+  
   const reflectionData = getReflectionData();
   const isReflection1 = reflectionData?.reflection1 !== false;
   const isReflection2 = reflectionData?.reflection2 !== false;
   const handleLanguageToggle = () => {
     setLanguage(prevLang => prevLang === "KO" ? "EN" : "KO");
   };
+  const [isLocked, setIsLocked] = useState(false);
+  
+  useEffect(() => {
+    if(isOneWeekPassed()<1){  //업데이트 날짜 지난 경우 -값이 나옴
+      setIsLocked(true); // 락 걸림
+    }else{
+      setIsLocked(false); 
+    }
+  }, []);
 
   const userName = "daisy";
 
@@ -71,7 +81,7 @@ export function Navbar() {
           </div>
 
           <nav className="hidden md:flex items-center gap-x-4 md:pr-0">
-            {isLoggedIn ? (
+            {isLoggedIn && !isLocked ? (
               <>
                 
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`

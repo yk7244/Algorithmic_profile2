@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 interface DragNoticeProps {
     isEditing: boolean;
     showDragNotice: boolean;
+    isSearchMode: boolean;
 }
 
-const DragNotice = ({ isEditing, showDragNotice }: DragNoticeProps) => {
+const DragNotice = ({ isEditing, showDragNotice, isSearchMode }: DragNoticeProps) => {
     const [show, setShow] = useState(true);
     useEffect(() => {
         if (isEditing) {
@@ -18,7 +19,7 @@ const DragNotice = ({ isEditing, showDragNotice }: DragNoticeProps) => {
 
     return (
         <>
-        {showDragNotice && (
+        {showDragNotice && !isSearchMode && (
         <div
         className={`z-1 mt-[100px] bg-white/80 backdrop-blur-lg text-black px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-fadeIn z-50`}
         role="alert"

@@ -36,6 +36,7 @@ import { AutoAwesome } from "@mui/icons-material";
 import TaskGuide from "./Guide/TaskGuide";  
 import Tutorial from "./Tutorial/Tutorial";
 import DragNotice from "./Guide/DragNotice";
+import { getReflectionData } from "../utils/get/getReflectionData";
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -56,7 +57,16 @@ export default function MyProfilePage() {
   const [histories, setHistories] = useState<HistoryData[]>([]);  
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "../../../public/images/default_image.png"
-  const [showTutorial, setShowTutorial] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const reflectionData = getReflectionData();
+  useEffect(() => {
+    if(reflectionData?.tutorial){
+      setShowTutorial(false);
+    }else{
+      setShowTutorial(true);
+    }
+  }, [reflectionData]);
+  console.log('🔵showTutorial',showTutorial);
 
   //  const [profile, setProfile] = useState({ nickname: "기본 닉네임", description: "기본 설명" });
   const [profile, setProfile] = useState(() => {
@@ -249,11 +259,11 @@ export default function MyProfilePage() {
       {/* 오른쪽: 무드보드/이미지/카드 등 */}
       <div className={`relative flex flex-col h-full w-full ${!isSearchMode ? bgColor : ''} ${exploreAnimation ? 'animate-fadeIn' : ''}`} ref={boardRef}>
         {/* 튜토리얼 영역 */}
-        <Tutorial show={showTutorial} onClose={() => setShowTutorial(false)} />
+        <Tutorial show={showTutorial} onClose={() => setShowTutorial(false)}/>  
         {/* 나머지 메인 UI는 튜토리얼이 닫혔을 때만 렌더링 */}
 
           <>
-            {!showTutorial && (
+            {!showTutorial && !isSearchMode && (
               <>
                 {/* 가이드 안내 영역 */}
                   <TaskGuide 
@@ -314,7 +324,7 @@ export default function MyProfilePage() {
               <DragNotice 
                 showDragNotice={!showTutorial}
                 isEditing={isEditing}
-                isSearching={isSearchMode}
+                isSearchMode={isSearchMode}
               />
             </div>
             {/* 히스토리 슬라이더 (검색 모드가 아닐 때만 표시)->HistorySlider.tsx */}
