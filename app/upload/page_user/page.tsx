@@ -253,7 +253,7 @@ return (
         </div>
     ):(
     <div className="absolute inset-0 overflow-hidden z-2 pointer-events-none">
-        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
+        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[120px] animate-blob" style={{ animationDelay: '0s' }} />
         <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
         <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
     </div>

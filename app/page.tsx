@@ -100,39 +100,32 @@ const upload_check = useMemo(() => isOneWeekPassed(), []);
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
 const [showOverlayQuestion, setShowOverlayQuestion] = useState(false);
 
-const [dateRange, setDateRange] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-}>(() => {
-    const today = new Date();
-    console.log('upload_check', upload_check);
-    
-    if (upload_check === -1) { //첫번째 업데이트
-        // 초기 유저: 오늘부터 4주 전
-        return {
-          //☑️TEST로 임의로 3일만 설정함
-          //from: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000),
-
-          from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 4주 전
-          to: today
-        };
-    } else if (upload_check == -2) { // 두번째 이상 업데이트 
-        // 두 번째 유저: 일주일
-        return {
-            from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 일주일 전
-            to: today
-        };
-    } else { // 0~7 양수 
-        if(!isReflection2){
-            setShowOverlayQuestion(true);
-        }
-        return {
-            from: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
-            to: today
-        };
-
-    }
+const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+  from: undefined,
+  to: undefined,
 });
+
+useEffect(() => {
+  const today = new Date();
+  if (upload_check === -1) {
+    setDateRange({
+      from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000),
+      to: today,
+    });
+  } else if (upload_check === -2) {
+    setDateRange({
+      from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
+      to: today,
+    });
+  } else {
+    setShowOverlayQuestion(false);
+    setDateRange({
+      from: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
+      to: today,
+    });
+  }
+}, [upload_check]);
+
 
 
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
@@ -819,7 +812,7 @@ useEffect(() => {
         )}
       </div>
       </div>
-      {showOverlayQuestion && (
+      {isLoggedIn && showOverlayQuestion && (
         <OverlayQuestion2
           onLeftClick={() => setShowOverlayQuestion(false)}
           onRightClick={() => {
