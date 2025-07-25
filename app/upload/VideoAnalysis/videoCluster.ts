@@ -173,7 +173,7 @@ const analyzeClusterWithOpenAI = async (
 
 단, (1) 과하게 일반화 하지 말고 기억에 남는 표현을 사용 할 것, 
 (2) 사람들에게 공감이 되고 적극적으로 재사용할 수 있도록 세련되고 참신한 표현을 쓸 것
-(3) 핵심키워드의 프레임: [시청취향을 반영한 성향]+ [콘텐츠명, 인물, 채널] (예: 뉴진스 성장 서사, 무도 감정 편집본)
+(3) 핵심키워드의 프레임: [흥미 대상]에 [행동/성향]을 가진 [사람형 표현] (예: 도시 관찰러, 밈 헌터)
 
   ${clustersWithVideos.map((cluster, i) => {
     const titles = cluster.related_videos?.slice(0, 8).map((video: any) => video.title).join(', ') || '없음';
