@@ -90,7 +90,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                   ):(
                     <span className="text-gray-400 font-semibold mr-2">미완</span>
                   )}
-                  <span className={`${isSearched ? 'text-gray-500' : 'text-gray-400'}`}>3. 타인의 알고리즘 자화상에서 새로운 관심사 나의 알고리즘 자화상에 추가하기</span>
+                  <span className={`${isSearched ? 'text-gray-500' : 'text-gray-400'}`}>3. 다른 사람의 알고리즘 자화상에서 새로운 관심사 탐색하기</span>
                 </div>
               </div>
           )}
