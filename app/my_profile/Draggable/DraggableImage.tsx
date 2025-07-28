@@ -161,12 +161,12 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 >
                     {/* 메인키워드 */}
                     <div 
-                        className="absolute -top-10 z-20 whitespace-nowrap"
+                        className="absolute -top-6 z-20 whitespace-nowrap"
                         style={{
                         fontSize: `${fontSize}px`,
                         }}
                     >
-                        <div className="group relative y-4">
+                        <div className="group relative y-2">
                             <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
                                 #{image.main_keyword}
                             </span>

@@ -39,11 +39,11 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     }, [showToast]);
     
     return (
-    <div className="relative z-1 max-w-[680px] flex flex-col items-center mx-auto pb-10">
+    <div className="relative z-1 max-w-[680px] flex flex-col items-center mx-auto pb-10 ">
             {/* 3초간 보여주는 안내 메시지 */}
             {showToast && (
-                <div className="relative flex items-center justify-center mt-4 bg-black/80 text-white px-6 py-3 rounded-xl shadow-lg z-50 animate-fadeIn text-base">
-                    {currentHistoryIndex === -1 ? '현재 자화상' : new Date(histories[currentHistoryIndex].timestamp).toLocaleDateString('ko-KR', {
+                <div className="relative flex items-center justify-center mt-4 bg-black/80 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fadeIn text-base mb-5">
+                    {currentHistoryIndex === -1 ? '현재 자화상' : new Date(histories[currentHistoryIndex].created_at).toLocaleDateString('ko-KR', {
                         month: 'long',
                         day: 'numeric',
                         hour: '2-digit',
@@ -52,9 +52,9 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                 </div>
             )}
             
-        <div className="relative bg-white/50 backdrop-blur-lg rounded-full w-full h-16 flex items-center justify-center px-10 mb-10">
+        <div className="relative bg-white/50 backdrop-blur-lg rounded-full w-full h-18 flex items-center justify-center px-10 mb-10">
             {/* 슬라이더 선과 점 */}
-            <div className="relative w-full h-16 flex items-center ">
+            <div className="relative w-full h-16 flex flex-col items-center ">
                 {/* 왼쪽: 화살표 + 텍스트 (선 바로 바깥) */}
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center select-none z-10 "
                 style={{
@@ -157,14 +157,17 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
 
                 })()}
                 {/* 재생 버튼 
-                <button
-                    className="mt-2 text-gray-500 text-base font-normal hover:underline absolute top-1/2 -translate-y-1/2 right-10 flex"
-                    onClick={handlePlayHistory}
-                    disabled={isPlaying}
-                >
-                    재생하기
-                </button>
+                <div className="flex justify-center items-center w-full " >
+                    <button
+                        className="relative items-center flex mt-2 text-gray-500 text-sm bg-white/50 backdrop-blur-lg rounded-full px-4 py-2 shadow-lg font-normal hover:underline"
+                        onClick={handlePlayHistory}
+                        disabled={isPlaying}
+                    >
+                        연속으로 재생하기
+                    </button>
+                </div>
                 */}
+                
             </div>
             
         </div>

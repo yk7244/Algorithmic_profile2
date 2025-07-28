@@ -17,13 +17,6 @@ interface ProfileHeaderProps {
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     profile,
-    isEditing,
-    isGeneratingProfile,
-    onEditClick,
-    onSaveClick,
-    onGenerateProfile,
-    isOwner = true,
-    changeProfile,
     isSearchMode,
     }) => {
     const displayProfile = useMemo(() => getLatestProfileData(), []);
@@ -45,7 +38,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             
             <div className={`relative flex flex-col group pl-8 space-y-6 pt-[40px] mb-20 shadow-2xl 
                 px-10 py-12 z-10 justify-center h-full
-                ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'} backdrop-blur-lg`} style={{height: '100vh', width: '70vw' }}>
+                ${isSearchMode ? 'bg-blue-600/80' : 'bg-white/70'} backdrop-blur-lg`} style={{height: '100vh', width: '70vw' }}>
                 {/* 호버 툴팁 */}
                 
                 {/* 닉네임 */}
