@@ -237,9 +237,9 @@ export default function MyProfilePage() {
 
 
   return (
-    <div className={`grid grid-cols-[minmax(320px,380px)_1fr] w-100wh h-screen overflow-y-hidden ${!isSearchMode ? 'bg-gray-100' : bgColor} transform transition-all duration-1000 ease-in-out`}>
+    <div className={`grid grid-cols-[minmax(300px,360px)_1fr] w-screen h-screen overflow-y-hidden ${!isSearchMode ? 'bg-gray-100' : bgColor} transform transition-all duration-1000 ease-in-out`}>
       {/* 왼쪽: 프로필/설명/닉네임 등 */}
-      <div className={`z-30  shadow-2xl flex flex-col px-4 py-12 backdrop-blur-lg z-10 justify-center pb-18 ${isSearchMode ? 'bg-[#0a1833]/80' : 'bg-white/70'}`}>
+      <div className={`z-30`}>
         {!isSearchMode ? ( 
           <ProfileHeader
             profile={profile}
@@ -249,6 +249,7 @@ export default function MyProfilePage() {
             onEditClick={() => setIsEditing(true)}
             onSaveClick={() => savePositions(images, positions)}
             onGenerateProfile={generateProfile}
+            isSearchMode={isSearchMode}
           />
         ):(
             <>
@@ -263,6 +264,7 @@ export default function MyProfilePage() {
         {/* 나머지 메인 UI는 튜토리얼이 닫혔을 때만 렌더링 */}
 
           <>
+            
             {!showTutorial && !isSearchMode && (
               <>
                 {/* 가이드 안내 영역 */}
@@ -270,6 +272,7 @@ export default function MyProfilePage() {
                   isSearchMode={isSearchMode} 
                 />
               </>
+
             )}
 
             

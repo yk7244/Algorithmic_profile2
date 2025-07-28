@@ -37,6 +37,8 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
                 
                 {/* 검색 버튼 - 선택된 이미지가 있을 때만 표시 */}
                 <div className="flex flex-col items-center gap-4 ">
+                    {/* 안내 문구 */}
+                    <div className="text-xs text-gray-300 mb-1">키워드는 한 개만 선택할 수 있어요</div>
                     {selectedImages.length === 0 ? (
                     <div    
                         className={`flex transition-all duration-700 ease-in-out`}
@@ -48,7 +50,7 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
                         </div>
                         
                     </div>
-                    ):(
+                    ):selectedImages.length == 1 ? (
                         <div className="flex flex-row gap-4 items-end">
                         {selectedImages.map((img) => (
                             <div 
@@ -62,15 +64,20 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
                             </div>
                             ))}
                         </div>
-                    
+                    ):(
+                        <div className="flex flex-row gap-4 items-end">
+                        </div>
                     )}
                     <button
-                        onClick={()=>{
-                            handleSearch();
-                            setReflectionData_searched();
+                        onClick={() =>{
+                            if(selectedImages.length === 1){
+                                handleSearch();
+                                setReflectionData_searched();
+                            }
                         }}
-                        className="bg-white text-black font-bold py-3 px-10 rounded-full 
-                        transition-all duration-300 hover:scale-105 shadow-2xl text-xl hover:bg-black hover:text-white"
+                        className={`bg-white text-black font-bold py-3 px-10 rounded-full 
+                        transition-all duration-300 hover:scale-105 shadow-2xl text-xl hover:bg-black hover:text-white ${selectedImages.length !== 1 ? 'opacity-50 pointer-events-none' : ''}`}
+                        disabled={selectedImages.length !== 1}
                         >
                         탐색하기
                     </button>
