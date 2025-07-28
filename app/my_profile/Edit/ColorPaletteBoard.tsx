@@ -12,8 +12,7 @@ interface ColorPaletteBoardProps {
 }
 
 const ColorPaletteBoard = ({ colorOptions, bgColor, onChange }: ColorPaletteBoardProps) => (
-  <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm pr-10 pl-10 py-4 rounded-[60px] shadow-lg z-50">
-    <div className="flex flex-col items-center gap-1">
+<div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-auto bg-white/90 backdrop-blur-sm pr-10 pl-10 py-4 rounded-[60px] shadow-lg z-50">    <div className="flex flex-col items-center gap-1">
       <p className="text-gray-700 text-sm">배경색 변경</p>
       <div className="flex items-center gap-3">
         {colorOptions.map((color) => (

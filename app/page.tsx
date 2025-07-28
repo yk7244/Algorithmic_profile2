@@ -109,7 +109,7 @@ useEffect(() => {
   const today = new Date();
   if (upload_check === -1) {
     setDateRange({
-      from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000),
+      from: new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000),
       to: today,
     });
   } else if (upload_check === -2) {
