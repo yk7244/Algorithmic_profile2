@@ -32,76 +32,106 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
     return (
         <div className="relative z-1 max-w-[680px] flex flex-col items-center mx-auto pb-10">
             {/* 슬라이더 선과 점 */}
-            <div className="relative w-full h-4 flex items-center">
-                {/* 선 */}
-                <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gray-300 -translate-y-1/2 opacity-50 rounded-full" />
-                {/* 점들 */}
-                <div className="relative w-full flex justify-center gap-x-8 items-center z-10 ">
-                    
-                    
-                    {/* 기존 히스토리 점들 */}
-                    {histories.map((history, index) => {
-                        // desired_self가 true인 이미지가 포함된 히스토리인지 확인
-                        const hasDesiredSelf = history.images && history.images.some((img: any) => img.desired_self === true);
-                        // 현재 선택된 히스토리인지 확인
-                        const isSelected = currentHistoryIndex === index;
-                        
-                        return (
-                            <div key={index} className="relative group flex flex-col items-center">
-                                <button
-                                    className="w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center"
-                                    onClick={() => {
-                                        handleHistoryClick(index);
-                                        //console.log('🔵history.nickname',history.nickname);
-                                        //console.log('🔵history.description',history.description);
-                                        changeProfile(history.nickname, history.description);
-                                        //console.log('index',index);
-                                        if(index === -1){
-                                            const tmp = getLatestProfileData();
-                                            console.log('🔵tmp',tmp);
-                                            changeProfile(tmp.nickname, tmp.description);
-                                        }
-                                    }}
-                                >
-                                    {hasDesiredSelf ? (
-                                        <svg width="16" height="16" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M0 0L9.32795 3.45455L19 0L15.5455 9.5L19 19L9.32795 16.4091L0 19L3.71431 9.5L0 0Z" fill={isSelected ? "#3B82F6" : "#000000"}/>
-                                        </svg>
-                                    ) : (
-                                        <div className={`w-4 h-4 rounded-full transition-colors ${isSelected ? 'bg-blue-500' : 'bg-black'}`} />
-                                    )}
-                                </button>
-                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                                    {new Date(history.timestamp).toLocaleDateString('ko-KR', {
-                                        month: 'long',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </span>
-                            </div>
-                        );
-                    })}
-                    {/* 원본 ProfileImages 점 */}
-                    <div className="relative group flex flex-col items-center">
-                        <button
-                            className="w-4 h-4 rounded-full bg-blue-500 transition-all opacity-80 hover:opacity-100"
-                            onClick={() => {
-                                console.log('🔵 파란색 점 클릭 - ProfileImages 로드');
-                                if (handleProfileImagesClick) {
-                                    handleProfileImagesClick();
-                                }
-                                // 히스토리 상태를 원본으로 리셋
-                                handleHistoryClick(-1); // -1은 원본 상태를 의미
-                            }}
-                        />
-                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                            꾸민 Profile Images
-                        </span>
-                    </div>
+            <div className="relative w-full h-16 flex items-center">
+                {/* 왼쪽: 화살표 + 텍스트 (선 바로 바깥) */}
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center select-none z-10 "
+                style={{
+                    left: `${100 / (histories.length + 3) -11}%`,
+                }}>
+                    <span className="text-sm font-semibold text-gray-800 ml-1">과거 자화상</span>
+                    <svg display="block" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 19l-7-7 7-7" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
+                {/* 오른쪽: 화살표 + 텍스트 (선 바로 바깥) */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center select-none z-10"
+                style={{
+                    right: `${100 / (histories.length + 3) -11}%`,
+                }}>
+                    <svg display="block" width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="text-sm font-semibold text-gray-800 mr-1">현재 자화상</span>
+                </div>
+                {/* 선 */}
+                <div
+                    className="absolute top-1/2 h-[2px] bg-gray-600 -translate-y-1/2 opacity-50 rounded-full"
+                    style={{
+                        left: `${100 / (histories.length + 3)}%`,
+                        right: `${100 / (histories.length + 3)}%`,
+                    }}
+                />
+                {/* 점들: 선의 시작~끝(offset~100-offset%) 안에서만 등간격 배치 */}
+                {(() => {
+                    const totalDots = histories.length + 1; // 히스토리 개수 + 1 (파란 점)
+                    const offset = 120 / (totalDots + 1);
+                    const span = 100 - 2 * offset;
+                    return [
+                        ...histories.map((history, index) => {
+                            const hasDesiredSelf = history.images && history.images.some((img: any) => img.desired_self === true);
+                            const isSelected = currentHistoryIndex === index;
+                            // 점 위치: 선의 시작~끝(offset~100-offset%) 안에서 등간격
+                            const leftPercent = totalDots > 1
+                                ? offset + (index / (totalDots - 1)) * span
+                                : 20;
+                            return (
+                                <div
+                                    key={index}
+                                    className="absolute flex flex-col items-center group"
+                                    style={{ left: `${leftPercent}%`, transform: 'translate(-50%, -50%)', top: '50%' }}
+                                >
+                                    <button
+                                        className="w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center"
+                                        onClick={() => {
+                                            handleHistoryClick(index);
+                                            changeProfile(history.nickname, history.description);
+                                            if (index === -1) {
+                                                const tmp = getLatestProfileData();
+                                                changeProfile(tmp.nickname, tmp.description);
+                                            }
+                                        }}
+                                    >
+                                        {hasDesiredSelf ? (
+                                            <svg width="16" height="16" viewBox="0 0 19 19" fill="none">
+                                                <path d="M0 0L9.32795 3.45455L19 0L15.5455 9.5L19 19L9.32795 16.4091L0 19L3.71431 9.5L0 0Z" fill={isSelected ? "#3B82F6" : "#000000"} />
+                                            </svg>
+                                        ) : (
+                                            <div className={`w-4 h-4 rounded-full transition-colors ${isSelected ? 'bg-blue-500' : 'bg-black'}`} />
+                                        )}
+                                    </button>
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                        {new Date(history.timestamp).toLocaleDateString('ko-KR', {
+                                            month: 'long',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </span>
+                                </div>
+                            );
+                        }),
+                        // 파란 점: 항상 오른쪽 끝 (offset 만큼 떨어진 위치)
+                        (() => {
+                            const rightPercent = 100 - offset;
+                            return (
+                                <div
+                                    key="profile-dot"
+                                    className="absolute flex flex-col items-center group"
+                                    style={{ left: `${rightPercent}%`, transform: 'translate(-50%, -50%)', top: '50%' }}
+                                >
+                                    <button
+                                        className="w-4 h-4 rounded-full bg-blue-500 transition-all opacity-80 hover:opacity-100"
+                                        onClick={() => {
+                                            if (handleProfileImagesClick) handleProfileImagesClick();
+                                            handleHistoryClick(-1);
+                                        }}
+                                    />
+                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
+                                        꾸민 Profile Images
+                                    </span>
+                                </div>
+                            );
+                        })()
+                    ];
+                })()}
             </div>
-            {/* 재생하기 텍스트 */}
+            {/* 재생 버튼 */}
             <button
                 className="mt-2 text-gray-500 text-base font-normal hover:underline"
                 onClick={handlePlayHistory}
@@ -109,7 +139,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
             >
                 재생하기
             </button>
-        </div>
+        </div>  
     );
 };
 

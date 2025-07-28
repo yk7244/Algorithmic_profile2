@@ -59,7 +59,7 @@ export const useAddAsInterest = (setShowDetails: (show: boolean) => void) => {
             left: `${randomPosition.x}px`,
             top: `${randomPosition.y}px`,
             position: { x: randomPosition.x, y: randomPosition.y },
-            sizeWeight: 0.7,
+            sizeWeight: 0.2,
             rotate: 0,
             user_id: '',
             created_at: new Date().toISOString(),
