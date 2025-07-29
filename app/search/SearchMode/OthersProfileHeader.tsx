@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, RotateCcw } from "lucide-react";
-import { getLatestProfileData } from '@/app/utils/get/getProfileData';
+import { getLatestProfileData } from '@/app/utils/get/getProfileData'; 
 
 interface ProfileHeaderProps {
     profile: { nickname: string; description: string };
@@ -13,11 +13,13 @@ interface ProfileHeaderProps {
     isOwner?: boolean;
     changeProfile: (nickname: string, description: string) => void;
     isSearchMode: boolean;
+    searchKeyword: string;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     profile,
     isSearchMode,
+    searchKeyword,
     }) => {
     const displayProfile = useMemo(() => getLatestProfileData(), []);
     const [showTaskGuide, setShowTaskGuide] = useState(false);
@@ -43,7 +45,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 
                 {/* 닉네임 */}
                 <div className="group text-white text-sm font-bold bg-black/60 w-fit px-4 py-1 rounded-full backdrop-blur-sm relative">
-                    알고리즘이 본 당신은...
+                    {searchKeyword}과 비슷한 <br/> 알고리즘 정체성 키워드를 가진 알고리즘 자화상...
                     
                 </div>
 
@@ -51,7 +53,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     <h1 className="text-2xl font-bold tracking-tight">
                         {profile?.nickname ? profile.nickname : 'My 알고리즘 자화상'}
                         <div
-                            className="justify-center absolute left-80 ml-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-r-white after:border-l-transparent after:mr-[-1px]"
+                            className="justify-center absolute left-full mr-50 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-r-white after:border-l-transparent after:mr-[-1px]"
                             style={{ zIndex: 9999 }}
                         >
                             당신의 시청 성향을 종합적으로 분석해 <br/> 재밌는 동물로 표현해봤어요.

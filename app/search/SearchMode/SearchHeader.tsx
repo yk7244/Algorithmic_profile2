@@ -22,7 +22,7 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
         <div className="
         relative flex flex-col group pl-8 space-y-6 pt-[40px] mb-20 shadow-2xl 
                 px-10 py-12 z-10 justify-center h-full
-                bg-[#0a1833]/80 backdrop-blur-lg">
+                bg-black/40 backdrop-blur-sm">
             <Button
                 variant="ghost"
                 size="icon"

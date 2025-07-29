@@ -35,13 +35,13 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
         {taskOpen ? (
           <div className="flex flex-row items-start">
             {/* TaskGuide 내용 */}
-            <div className="bg-white/20 backdrop-blur-lg rounded-r-lg p-4 shadow-lg ">
+            <div className="bg-white/80 backdrop-blur-lg rounded-r-lg p-4 shadow-lg ">
               {/* [1]week 안내 */}
               <div className="ml-3 flex flex-row ">
                 <div className="flex-row items-center text-blue-600 font-semibold text-sm">
-                  <Notifications fontSize="inherit" className="text-gray-300 mb-1" />
+                  <Notifications fontSize="small" className="text-gray-300 mb-1" />
                 </div>
-                <div className="text-gray-400 text-xs pl-2">
+                <div className="text-gray-400 text-sm pl-2 font-bold  ">
                   <span className="font-bold text-gray-400 mr-2" >Week1.</span>
                   새로운 주차까지 <span className="font-bold text-blue-600">{7-upload_check}일 </span>남았습니다.
                 </div>
@@ -51,8 +51,8 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
               <div className="ml-3 flex flex-col text-xs mt-2">
                 <div className="flex flex-row items-center">
                   <div className="flex flex-row items-center cursor-pointer" >
-                    <CheckCircle className="text-gray-300" fontSize="inherit"/>
-                    <div className="text-xs text-gray-400 font-bold ml-2 ">
+                    <CheckCircle className="text-gray-300" fontSize="small"/>
+                    <div className="text-sm text-gray-400 font-bold ml-2 ">
                       Task 진행상황: <span className="font-bold text-blue-600">{num}/3</span> 완료
                     </div>
                     {/* 진행상황 드롭다운 버튼 */}
@@ -73,7 +73,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                 
                 {/* 진행상황 드롭다운 영역 */}
                 {taskContentOpen && (
-                    <div className="mt-2 ml-6 flex flex-col gap-1 bg-white/10 backdrop-blur-lg rounded-lg p-4">
+                    <div className="mt-2 ml-6 flex flex-col gap-1 bg-white/10 backdrop-blur-lg rounded-lg p-4 text-sm">
                       <div className="flex flex-row items-center">
                         <Pen className="w-3 h-3 mr-2 text-black group-hover:text-white transition-colors" />
                         <span className="text-blue-600 font-semibold mr-2">완료</span>
@@ -105,8 +105,8 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
               <div className="flex flex-row items-center mt-2 px-4 py-2 text-blue-700 rounded-full
                 text-xs font-semibold transition w-fit">
                   <div className="w-[10px] h-[10px] rounded-full bg-[#3B71FE] blur-[4px] animate-pulse mr-2" />
-                  <div className="ml-1 text-xs text-gray-500"> 사용방법 알아보기 ?</div>
-                  <button className="text-[10px] text-white bg-blue-600  ml-2 rounded-full px-2 z-30 hover:bg-blue-400 transition"
+                  <div className="ml-1 text-sm text-gray-500"> 사용방법 알아보기 ?</div>
+                  <button className="text-xs text-white bg-blue-600  ml-2 rounded-full px-3 py-1 z-30 hover:bg-blue-400 transition"
                     onClick={() => {
                       setGuideOpen(true);
                       console.log("사용방법 알아보기 버튼 클릭");

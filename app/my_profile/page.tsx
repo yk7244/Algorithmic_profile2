@@ -91,7 +91,7 @@ export default function MyProfilePage() {
 
   // 배경색 상태 및 변경 함수
   //const { bgColor, setBgColor, handleBgColorChange } = useBgColor();
-  const [bgColor, setBgColor] = useState('#F2F2F2');
+  const [bgColor, setBgColor] = useState('#000000');
   useEffect(() => {
     console.log('🔥 bgColor', bgColor);
   }, [bgColor]);
@@ -255,7 +255,7 @@ useEffect(() => {
 }, [bgColor]);
 
   return (
-    <div className={`relative ${!isSearchMode ? 'bg-gray-100' : ''}`}>
+    <div className={`relative ${!isSearchMode ? 'bg-white' : ''}`}>
       {/* 검색 모드일 때 배경 그라데이션 추가 */}
       {!isSearchMode && (
         <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
