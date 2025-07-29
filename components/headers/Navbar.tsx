@@ -65,13 +65,14 @@ export function Navbar() {
               <div className="h-5 w-5 flex items-center justify-center">
                 <Image src="/images/logo.png" alt="TubeLens Logo" width={18} height={18} />
               </div>
-              <span className={`${pathname === "/my_profile" ? "text-black" : "text-white"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
+              <span className={`${pathname === "/my_profile" ? "text-black" : pathname === "/search" ? "text-black" : "text-white"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
                 TubeLens
               </span>
             </Link>
             <HoverCard openDelay={100} closeDelay={200}>
               <HoverCardTrigger asChild>
-                <Link href="/introduction" className="hidden md:flex items-center gap-1 text-gray-300 hover:text-white transition-colors ml-3">
+                <Link href="/introduction" className={`hidden md:flex items-center gap-1 transition-colors ml-3 
+                  ${pathname === "/my_profile" ? "text-gray-700 hover:text-white" : pathname === "/search" ? "text-gray-700 hover:text-white" : "text-gray-300 hover:text-black"}`}>
                   <span className="text-xs font-medium">TubeLens 프로젝트가 궁금하신가요?</span>
                   <HelpCircle className="w-4 h-4" />
                 </Link>

@@ -164,7 +164,7 @@ export function useHistorySlider({
             return;
         }
         // index가 -1이 아닐 때, 해당 히스토리의 배경색을 적용
-        if (onHistoryBgColorChange) onHistoryBgColorChange('bg-gray-400'); // 기본값
+        if (onHistoryBgColorChange) onHistoryBgColorChange('#858585'); // 기본값
             const selectedHistory = histories[index];
 
         console.log('🔵selectedHistory',selectedHistory); 

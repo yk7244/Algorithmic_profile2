@@ -25,8 +25,8 @@ const useAutoArrange = ({ boardRef, images, setPositions, arrangeImagesInCenter 
     
     const containerWidth = boardRef.current.offsetWidth;
     const containerHeight = boardRef.current.offsetHeight;
-    const topMargin = 130; // 제목 영역을 위한 상단 여백
-    const bottomMargin = 50; // 하단 여백
+    const topMargin = 50; // 제목 영역을 위한 상단 여백
+    const bottomMargin = 300; // 하단 여백
     
     //console.log('컨테이너 크기:', { containerWidth, containerHeight, topMargin });
     
@@ -45,7 +45,7 @@ const useAutoArrange = ({ boardRef, images, setPositions, arrangeImagesInCenter 
     Object.keys(newPositions).forEach(imageId => {
       adjustedPositions[imageId] = {
         x: newPositions[imageId].x + leftOffset,
-        y: newPositions[imageId].y
+        y: newPositions[imageId].y ,
       };
     });
     

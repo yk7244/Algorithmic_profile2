@@ -51,7 +51,7 @@ credit?: {
 };
 
 const steps = [
-    { id: 1, title: "키워드 추출", description: "당신의 알고리즘은 무엇을 학습했을지 살펴보고 있어요... " },
+    { id: 1, title: "키워드 추출", description: "유튜브 알고리즘이 당신에 대해 무엇을 학습했을지 살펴보고 있어요... " },
     { id: 2, title: "클러스터 분석", description: "흥미로운 시각을 발견했어요!" },
     { id: 3, title: "이미지 생성", description: "이제 알고리즘이 생각한 당신의 모습을 보여줄게요." },
 ];

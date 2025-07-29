@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import DraggableImage from '@/app/my_profile/Draggable/DraggableImage';
-import ProfileHeader from '@/app/my_profile/Nickname/ProfileHeader';
+import ProfileHeader from '@/app/search/SearchMode/OthersProfileHeader';
 //유상님✅ 더미 데이터로 가져옴
 import { profiles, userImages, users } from '@/app/others_profile/dummy-data';
 import { 
@@ -60,9 +60,26 @@ if (!profile) {
 const handleDragEnd = () => {};
 
 return (
-    <main className="grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden" style={{ backgroundColor: bgColor }}>
+    <>
+    <div className={`relative`}>
+        {/* 검색 모드일 때 배경 그라데이션 추가 */}
+        
+            <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
+            <div className="absolute -top-[10%] left-[10%] w-[40%] h-[30%] rounded-full blur-[130px] animate-blob"
+            style={{
+                backgroundColor: bgColor,
+            }}
+            />
+            <div className="absolute -bottom-[10%] -right-[5%] w-[40%] h-[40%] rounded-full blur-[130px] animate-blob animation-delay-20"
+            style={{
+                backgroundColor: bgColor,
+            }} />
+            
+            </div>
+        </div>
+    <div className="grid grid-cols-[minmax(320px,380px)_1fr] w-full h-screen overflow-y-hidden" >
             {/* 왼쪽: 프로필/설명/닉네임 등 */}
-            <div className={`flex flex-col px-4 py-12 backdrop-blur-sm z-10 bg-black/20 z-70`}>
+            <div className={`flex flex-col backdrop-blur-sm z-10 bg-black/20 z-70`}>
 
                 <ProfileHeader
                 profile={profile}
@@ -73,6 +90,8 @@ return (
                 onGenerateProfile={() => {}} // 동작 안 함
                 isOwner={false} // 본인 프로필이 아님을 명시
                 changeProfile={() => {}} // 동작 안 함
+                isSearchMode={false}
+                searchKeyword={mainKeyword || ''}
             />
                 
             </div>
@@ -124,8 +143,7 @@ return (
                 
                 
             </div>
-        
-            
-    </main>
+        </div>
+    </>
 );
 } 

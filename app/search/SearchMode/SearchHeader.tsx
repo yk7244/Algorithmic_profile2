@@ -19,8 +19,10 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
     };
 
     return (
-        <div className="absolute z-30 pl-8 max-w-[320px] space-y-6 pt-[40px] 
-        transform transition-transform duration-1000 ease-in-out mb-20">
+        <div className="
+        relative flex flex-col group pl-8 space-y-6 pt-[40px] mb-20 shadow-2xl 
+                px-10 py-12 z-10 justify-center h-full
+                bg-black/40 backdrop-blur-sm">
             <Button
                 variant="ghost"
                 size="icon"

@@ -12,9 +12,9 @@ export function useSearchMode(images: ImageData[]) {
         setSelectedImage(image);
         const isAlreadySelected = selectedImages.some(img => img.id === image.id);
         if (isAlreadySelected) {
-        setSelectedImages(prev => prev.filter(img => img.id !== image.id));
+            setSelectedImages([]); // 이미 선택된 이미지를 다시 클릭하면 해제
         } else {
-        setSelectedImages(prev => [...prev, image]);
+            setSelectedImages([image]); // 항상 한 개만 선택
         }
     };
 
