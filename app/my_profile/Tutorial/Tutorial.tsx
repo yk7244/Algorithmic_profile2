@@ -25,16 +25,14 @@ const Tutorial: React.FC<TutorialProps> = ({ show, onClose }) => {
                     </>
                 ):(
                     <>
-                    <div className="text-sm text-black opacity-20 text-center font-semibold">
+                    <div className="text-sm text-black opacity-40 text-center font-semibold">
                         잠깐, 결과를 확인 하기 전,<br/>   
                         간단한 알고리즘 자화상에 대한 설명이예요
                     </div>
                     <div className="text-lg text-black/80 opacity-80 text-center font-semibold mt-4">
-                        알고리즘 자화상은 업로드한 시청기록을 바탕으로, <br/>
-                        <span className="font-extrabold text-black/90">유튜브 추천 알고리즘이 본 나의 시청성향</span>을
-                        키워드와 썸네일로 시각화한 
-                        <span className="font-extrabold text-black/90"> 이미지 콜라주</span>이예요. <br/>
-                        이미지를 클릭하면 구체적인 추천 알고리즘 설명도 볼 수 있어요.
+                        알고리즘 자화상은 내가 본 유튜브 영상 기록으로 만든 
+                        <span className="font-extrabold text-black/90">‘내 모습을 비춘 이미지 콜라주’</span>이에요. <br/>
+                        유튜브 속 나의 모습을 거울처럼 다시 표현했어요.
                     </div>
                     <div className="mt-2 flex flex-col items-center group">
                         <div className="pl-30 flex flex-col items-center absolute">
@@ -59,8 +57,11 @@ const Tutorial: React.FC<TutorialProps> = ({ show, onClose }) => {
                         </div>
                         
                     </div>
+                    <div className="text-lg text-black/80 opacity-80 text-center font-semibold mt-14">
+                    이미지를 클릭하면 추천 알고리즘의 구체적인 설명도 볼 수 있어요.
+                    </div>
 
-                    <div className="mt-10 text-sm text-black opacity-20 text-center font-semibold">
+                    <div className="mt-3 text-sm text-black opacity-40 text-center font-semibold">
                     지금, 유튜브 속 ‘당신’은 어떤 모습일까요? <br/>
                     당신의 알고리즘 자화상을 거울처럼 가볍게 들여다 보세요.
                     </div>

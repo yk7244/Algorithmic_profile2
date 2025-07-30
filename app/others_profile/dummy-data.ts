@@ -8,7 +8,7 @@ export const users: UserData[] = [
     {
         id: 'user1',
         email: 'user1@example.com',
-        background_color: '#f0f0f0',
+        background_color: '#B9DEFF',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
     },
@@ -91,7 +91,7 @@ export const images: ImageData[] = [
         ],
         mood_keyword: "유쾌함, 긍정, 즐거움, 공감",
         description: "당신은 유머와 즐거움에 대한 깊은 애정을 가지고 있는 흐름이 보여요. 경쾌한 웃음과 기분 좋은 순간에 시선이 오래 머무는 성향을 가지고 있는 것 같아요. 짧고 강렬한 재미를 추구하며, 웃음의 소중함을 중요하게 여기는 모습이에요. 시청하신 영상들을 살펴보면서 당신의 긍정적인 에너지와 유머에 대한 갈증이 느껴졌어요.",
-        category: "코미디, 쇼츠",
+        category: "코미디",
         sizeWeight: 0.035,
         src: "https://img.youtube.com/vi/OG-BS05HWZw/maxresdefault.jpg",
         relatedVideos: [
@@ -126,7 +126,8 @@ export const images: ImageData[] = [
         top: "100px",
         position: { x: 430.2830667824887, y: 100 },
         frameStyle: "normal",
-        created_at: "2025-07-24T02:44:01.939Z"
+        created_at: "2025-07-24T02:44:01.939Z",
+        similarity: 0.7,
     },
     {
         id: 'dummy1-2',
@@ -135,7 +136,7 @@ export const images: ImageData[] = [
         keywords: ['호수', '데크', '새벽', '안개'],
         mood_keyword: '#차분한 #명상적인',
         description: '고요한 호숫가의 나무 데크입니다.',
-        category: '휴식',
+        category: '코미디',
         sizeWeight: 0.05,
         src: 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?q=80&w=2070&auto=format&fit=crop',
         relatedVideos: [
@@ -152,6 +153,7 @@ export const images: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
 
@@ -182,6 +184,7 @@ export const images2: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy2-2',
@@ -207,6 +210,7 @@ export const images2: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
     created_at: new Date().toISOString(),
+    similarity: 0.7,
     },
 ];
 
@@ -236,6 +240,7 @@ export const images3: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy3-2',
@@ -261,6 +266,7 @@ export const images3: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
 
@@ -290,6 +296,7 @@ export const images4: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy2-2',
@@ -315,6 +322,7 @@ export const images4: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
 
@@ -344,6 +352,7 @@ export const images5: ImageData[] = [
             position: { x: 50, y: 100 },
             frameStyle: 'healing',
             created_at: new Date().toISOString(),
+            similarity: 0.7,
         },
         {
             id: 'dummy2-2',
@@ -369,6 +378,7 @@ export const images5: ImageData[] = [
             position: { x: 350, y: 250 },
             frameStyle: 'love',
             created_at: new Date().toISOString(),
+            similarity: 0.7,
         },
 ];
 
@@ -398,6 +408,7 @@ export const images6: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy6-2',
@@ -423,6 +434,7 @@ export const images6: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
 
@@ -453,6 +465,7 @@ export const images7: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy7-2',
@@ -478,6 +491,7 @@ export const images7: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
   
@@ -507,6 +521,7 @@ export const images8: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy8-2',
@@ -532,6 +547,7 @@ export const images8: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
   
@@ -561,6 +577,7 @@ export const images9: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
         id: 'dummy9-2',
@@ -586,6 +603,7 @@ export const images9: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
   
@@ -615,6 +633,7 @@ export const images10: ImageData[] = [
         position: { x: 50, y: 100 },
         frameStyle: 'healing',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
     {
     id: 'dummy10-2',
@@ -640,6 +659,7 @@ export const images10: ImageData[] = [
         position: { x: 350, y: 250 },
         frameStyle: 'love',
         created_at: new Date().toISOString(),
+        similarity: 0.7,
     },
 ];
 

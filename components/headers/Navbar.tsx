@@ -41,12 +41,30 @@ export function Navbar() {
   const [isLocked, setIsLocked] = useState(false);
   
   useEffect(() => {
-    if(isOneWeekPassed()<0){  //업데이트 날짜 지난 경우 -값이 나옴
-      setIsLocked(true); // 락 걸림
+    if(isOneWeekPassed()==-2){  //업데이트 날짜 지난 경우, 두번째 업데이트 유저
+      
+      console.log('두번째 업데이트 유저 메뉴바 락 되었습니다. 업데이트 후, 사용가능합니다.');
+
+      if(isReflection2){
+        setShowOverlayQuestion2(false); //리플랙션2 했으면 안보여줌.
+      }else{ 
+        setShowOverlayQuestion2(true); //리플랙션1 안했으면 보여줌.
+      }
+
+      if(isReflection1){
+        setIsLocked(false); //업데이트 하면 리플랙션 테이블 초기화되니까 락 해제
+      }else{ 
+        setIsLocked(true); // 락 걸림
+      }
+    }else if(isOneWeekPassed()==-1){  //업데이트 날짜 지난 경우, 첫번째 업데이트 유저
+      console.log('첫번째 업데이트 유저 메뉴바 락 해제되었습니다. 업데이트 후, 사용가능합니다.');
+      setIsLocked(false); // 락 걸림
     }else{
       setIsLocked(false); 
     }
   }, []);
+
+
 
   const userName = "daisy";
 
@@ -54,9 +72,9 @@ export function Navbar() {
     <>
         <header
         className={`absolute top-0 z-50 w-full ${
-          pathname === "/my_profile" || pathname === "/search"
-            ? "bg-white/30 text-black backdrop-blur-lg"
-            : "bg-black text-white"
+          pathname === "/" || pathname === "/upload"
+            ? "bg-black text-white"
+            : "bg-white/30 text-black backdrop-blur-lg"
         }`}
       >
         <div className="w-full flex h-12 items-center justify-between px-4 md:px-8">
@@ -65,14 +83,14 @@ export function Navbar() {
               <div className="h-5 w-5 flex items-center justify-center">
                 <Image src="/images/logo.png" alt="TubeLens Logo" width={18} height={18} />
               </div>
-              <span className={`${pathname === "/my_profile" ? "text-black" : pathname === "/search" ? "text-black" : "text-white"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
+              <span className={`${pathname === "/" ? "text-white" : pathname === "/upload" ? "text-black" : "text-black"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
                 TubeLens
               </span>
             </Link>
             <HoverCard openDelay={100} closeDelay={200}>
               <HoverCardTrigger asChild>
                 <Link href="/introduction" className={`hidden md:flex items-center gap-1 transition-colors ml-3 
-                  ${pathname === "/my_profile" ? "text-gray-700 hover:text-white" : pathname === "/search" ? "text-gray-700 hover:text-white" : "text-gray-300 hover:text-black"}`}>
+                  ${pathname === "/" ? "text-gray-300 hover:text-white" : pathname === "/upload" ? "text-gray-700 hover:text-black" : "text-gray-300 hover:text-black"}`}>
                   <span className="text-xs font-medium">TubeLens 프로젝트가 궁금하신가요?</span>
                   <HelpCircle className="w-4 h-4" />
                 </Link>
@@ -85,12 +103,12 @@ export function Navbar() {
             {isLoggedIn && !isLocked ? (
               <>
                 
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black " : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white " : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`
               
               }>
                   <Link href="/my_profile">나의 알고리즘 자화상 </Link>
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
                 onClick={() => {
                   if (isReflection1) {
                     router.replace('/my_profile?explore=1');
@@ -107,7 +125,7 @@ export function Navbar() {
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
                 */}
-                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
                   <Link href="/my_page" className="flex items-center gap-1.5">
                     <UserCircle2 className="w-4 h-4" />
                     <span>{userName}</span>
@@ -145,7 +163,7 @@ export function Navbar() {
             )}
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className={pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"}>
+                <Button variant="ghost" size="icon" className={pathname === "/" ? "text-white" : "text-black"}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

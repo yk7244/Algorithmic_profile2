@@ -36,6 +36,7 @@ export interface DraggableImageProps {
     onImageDelete: (id: string) => void;
     isOwner?: boolean;
     ownerId?: string;
+    profile: any;
 }
 
 // 모양별 정보 배열
@@ -65,6 +66,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
     isOwner = true,
     ownerId,
     onImageDelete,
+    profile,
 }) => {
     const { attributes, listeners, setNodeRef, style } = useDraggableImage(
         image.id,
@@ -362,6 +364,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 isOwner={isOwner}
                 onImageSelect={onImageSelect}
                 ownerId={ownerId} 
+                profile={profile}
             />
         )}
     </> 

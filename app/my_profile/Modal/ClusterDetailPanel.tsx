@@ -15,6 +15,7 @@ import { useAddAsInterest } from "@/app/others_profile/hooks/useAddAsInterest";
 import { saveWatchedVideoToLocalStorage } from './Hooks/saveExploreWatchHistory';
 import { useRecommend } from './Hooks/useRecommend';
 import VideoList from './Hooks/VideoList'; 
+import { ProfileData } from '@/app/types/profile';
 
 interface ClusterDetailPanelProps {
     image: any;
@@ -24,6 +25,7 @@ interface ClusterDetailPanelProps {
     onImageSelect?: (img: any) => void;
     isOwner?: boolean;
     ownerId?: string;
+    profile: ProfileData;
 }
 
 const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
@@ -34,6 +36,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
         onImageSelect,
         isOwner = true,
         ownerId,
+        profile,
     }) => {
         if (!showDetails) return null;
 
@@ -50,6 +53,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
             if (showDetails && image.main_keyword && (isOwner || image.desired_self)) {
                 fetchAndSetVideos();
             }
+            console.log('im열림age', image);
         }, [showDetails, fetchAndSetVideos, isOwner, image.main_keyword, image.desired_self]);
 
         // 모달이 열릴 때마다 첫 번째 페이지로 초기화
@@ -139,7 +143,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             {/* 설명 */}
                             <div className="text-left mb-8 max-w-2xl mx-auto">
                                 <p className="text-[15px] leading-relaxed text-white/90 mb-2">
-                                    {image.description}
+                                    {image.description.replace(/당신/g, `${profile?.nickname}님`)}
+
                                     <br />
                                     <br />
                                     <span className="text-white/90 font-bold"> #{image.main_keyword} </span>
@@ -226,7 +231,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                     <p className="text-[12px] leading-relaxed text-white/40 mb-2">
                                         {descriptionOpen ?   (
                                             <>
-                                            {image.description}
+                                            {image.description.replace(/당신/g, `${profile?.nickname}님`)}
 
                                             <br />
                                             <br />
@@ -241,7 +246,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             </>
                                         ):(
                                             <>
-                                            {image.description.slice(0, 100)}...                                        
+                                            {image.description.replace(/당신/g, `${profile?.nickname}님`).slice(0, 100)}...
                                             <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>더보기</button>
                                             </>
                                         )}
@@ -387,13 +392,23 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                         /* 다른 사람의 프로필일 때 */
                                         <>
                                             {!isOwner && (
-                                                <div className="fixed bottom-6 left-6 right-6 z-50">
+                                                <div className="fixed bottom-6 left-6 right-6 z-50 group">
                                                     <Button
                                                         className="w-full bg-black hover:bg-gray-800 text-white px-6 py-6 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                                                         onClick={() => handleAddAsInterest(image, ownerId)}
                                                     >
-                                                        새로운 관심사로 추가하기
+                                                        <img src="/images/cokieIcon_white.svg" alt="click" className="w-4 h-4 mr-4" />
+                                                        이 키워드 나의 알고리즘 자화상에 추가하기
                                                     </Button>
+                                                    {/* 호버 툴팁 */}
+                                                    <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap z-50"
+                                                        style={{ pointerEvents: 'none' }}
+                                                    >
+                                                        관심이 생기셨나요? 나의 알고리즘 자화상에 추가해보세요!
+                                                        {/* 꼬리 */}
+                                                        <div className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-white"></div>
+                                                    </div>
+
                                                 </div>
                                             )}
                                             
