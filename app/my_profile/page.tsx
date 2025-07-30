@@ -351,6 +351,7 @@ useEffect(() => {
                           isSelected={selectedImages.some(img => img.id === image.id)}
                           isSearchMode={isSearchMode}
                           onImageDelete={handleImageDelete}
+                          profile={profile}
                         />
                       </div>
                     ))}

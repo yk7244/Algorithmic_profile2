@@ -541,10 +541,10 @@ useEffect(() => {
                         if (isReflection2) {  // 리플렉션 2 여부 확인
                           setPendingUploadAction(() => () => fileInputRef.current?.click());
                           pendingUploadAction?.();
-                          //setShowOverlayQuestion(false);
+                          setShowOverlayQuestion(false);
 
                         } else {
-                          //setShowOverlayQuestion(true);
+                          setShowOverlayQuestion(true);
                         }
                       }}
                       className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${

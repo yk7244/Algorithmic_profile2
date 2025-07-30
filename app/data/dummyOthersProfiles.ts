@@ -15,7 +15,7 @@ export type ImageData = {
   sub_keyword: string;
   mood_keyword: string;
   description: string;
-  category: Category;
+  category: string;
   width: number;
   height: number;
   rotate: number;
@@ -28,6 +28,8 @@ export type ImageData = {
   desired_self: boolean;
   metadata: any;
   desired_self_profile: string | null;
+  similarity?: number;
+  user_id?: string;
 };
 
 export type ProfileData = {

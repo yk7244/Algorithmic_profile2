@@ -19,9 +19,9 @@ const DragNotice = ({ isEditing, showDragNotice, isSearchMode }: DragNoticeProps
 
     return (
         <>
-        {showDragNotice && (
+        {showDragNotice && !isSearchMode && (
         <div
-        className={`z-1 mt-[100px] bg-white/80 backdrop-blur-lg text-black px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-fadeIn z-50`}
+        className={`z-1 mt-[100px] ${isSearchMode ? ' ':'bg-white/40'} backdrop-blur-lg text-black px-6 py-3 rounded-full shadow-lg flex items-center gap-2 animate-fadeIn z-50`}
         role="alert"
         aria-live="polite"
         >
@@ -42,21 +42,6 @@ const DragNotice = ({ isEditing, showDragNotice, isSearchMode }: DragNoticeProps
                         ×
                 </button>
             </>
-            ):isSearchMode ? (
-                <>
-                <div className="flex flex-row items-center gap-2">
-                    <MousePointerClickIcon className="w-6 h-6 text-black animate-pulse " />
-                    <span className="text-base">키워드는 한개만 선택할 수 있어요</span>
-                </div> 
-                <button
-                    className="ml-2 text-black font-bold text-lg hover:text-blue-200 transition"
-                    onClick={() => setShow(false)}
-                    aria-label="드래그 안내 닫기"
-                    type="button"
-                    >
-                        ×
-                </button>
-                </>
             ):(
                 
                 <>

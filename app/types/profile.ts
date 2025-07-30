@@ -78,6 +78,7 @@ export interface ImageData { //ProfileImages(저장명) - ClusterImages(변수�
   };
   frameStyle: string; //update되는 값
   created_at: string;
+  similarity?: number;
 } 
 
 // [4] ProfileData 타입 정의 -> Nickname/useProfileStorage.ts 에서 저장함

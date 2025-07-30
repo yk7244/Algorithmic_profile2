@@ -20,9 +20,9 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
 
     return (
         <div className="
-        relative flex flex-col group pl-8 space-y-6 pt-[40px] mb-20 shadow-2xl 
+            tive flex flex-col group pl-8 space-y-6 pt-[40px] mb-20 shadow-2xl 
                 px-10 py-12 z-10 justify-center h-full
-                bg-black/40 backdrop-blur-sm">
+                bg-black/40 backdrop-blur-sm ">
             <Button
                 variant="ghost"
                 size="icon"
@@ -36,7 +36,7 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
             </Button>
             {/* 닉네임 */}
 
-            <div className="flex flex-row items-center">
+            <div className="flex flex-row items-center ">
                 
                 <div className="text-white text-sm font-bold bg-blue-600 w-fit px-4 py-1 rounded-full backdrop-blur-sm">
                 탐색모드로 전환되었어요...
@@ -46,14 +46,14 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
             <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold tracking-tight text-white
             transform transition-transform duration-1000 ease-in-out">
-            당신의 관심사로 <br/>
-            다른 알고리즘 자화상을 <br/>
+            당신과 비슷한 다른 사람들의  <br/>
+            알고리즘 정체성 키워드를  <br/>
             탐색해보세요.
             </h1>
             </div>
             {/* 닉네임 설명 */}
             <div className="text-white text-sm leading-relaxed mt-2
-            transform transition-transform duration-1000 ease-in-out
+            transform transition-transform duration-1000 ease-in-out pb-14
             ">
             궁금한 키워드를 선택하면 당신과 유사한 알고리즘 자화상을 확인할 수 있어요.
             </div>

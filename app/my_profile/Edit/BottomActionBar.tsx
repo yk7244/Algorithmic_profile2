@@ -82,7 +82,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                         <Pen className="w-5 h-5 text-black group-hover:text-white transition-colors" />
                     </button>
                     <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
-                        무드보드 이미지나 위치가 이상한가요? 직접 조정해보세요
+                        이미지의 위치가 이상한가요? 직접 조정해보세요
                     </div>
                 </div>
                 {/* 2번 버튼 : 리플렉션1번 첫인상 */}
