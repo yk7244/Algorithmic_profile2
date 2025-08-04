@@ -111,21 +111,25 @@ export default function SearchPage() {
           ) : searchResults.length > 0 ? (
             <>
             <h2 className="text-lg text-black/80  font-bold mb-1 flex flex-row items-center gap-2 ">
+            
+            
+            다른 사람들의 자화상에서 
             {keywords.map((keyword, index) => (
               <div 
                 key={index}
                 className="bg-black/80 backdrop-blur-md px-4 py-1 rounded-full text-xs"
               >
+                
                 <span className="text-sm font-bold text-white">
                   #{keyword}
                 </span>
               </div>
             ))}
-            
-            과 비슷한 취향을 가진 사람들이 즐겨 보는 키워드들이에요. <br/>
+            과 유사한 면모들을 찾았어요. <br/>
+
             </h2>
             <h2 className="text-lg text-black/80 font-bold mb-4 flex flex-row items-center gap-1 ">
-              비슷한 취향의 사람들이 빠져 있는 키워드들을 살펴보며, 나와 닮은 점이나 새로운 관점을 발견해보세요.
+            비슷한 취향을 가진 사람들의 페이지에 방문하여, 나와 닮은 점이나 새로운 관점을 발견해보세요.
             </h2>
             
             <CardStack3D 

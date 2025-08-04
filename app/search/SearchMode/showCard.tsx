@@ -24,7 +24,8 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
     // 유사도 계산을 위한 사용자 ID 목록
     const userIds = cards.map(card => card.user_id).filter((id): id is string => Boolean(id));
     const similarities = [
-        0.7,
+        0.3,
+        0.2,
     ]
 
 
@@ -109,15 +110,20 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                         <div className="w-72 object-cover flex flex-col group">
                             {/* main_keyword는 카드 상단 */}
                             <span className="mb-2 ml-2 font-semibold text-gray-800 text-lg z-10">
+                                <span className="text-sm">{profile?.nickname || '이름 없음'}님의</span> <br/>
                                 #{card.main_keyword}
                             </span>
                             <div className="w-72 h-72 object-cover flex flex-col items-start relative overflow-hidden">
                                 {/* 이미지 */}
                                 <img src={cardSrc} alt="" className="w-72 h-full object-cover shadow-lg z-0" />
                                 {/* 이미지 내 좌측 상단 70% + 비슷한 키워드예요 */}
-                                <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
-                                    <span className="bg-white/20 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">{(card as any).similarity * 100}%</span>
-                                    <span className="text-white/80 text-xs drop-shadow ">비슷한 키워드예요</span>
+                                <div className="absolute top-4 left-4 flex flex-col items-end gap-2 z-20">
+                                    <div className="bg-blue-700 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
+                                        키워드 유사도 {(card as any).similarity * 100}%
+                                    </div>
+                                    <div className="bg-white/20 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
+                                        프로필 유사도 {similarities[1]*100}%
+                                    </div>
                                 </div>
                                 {/* 중앙 하단 그라데이션 오버레이 */}
                                 <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black/90 to-transparent z-10" />
@@ -127,14 +133,15 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                 {/* 중앙 하단 정보 */}
                                 {isCenter && (
                                 <div className="absolute bottom-0 left-0 w-full flex flex-col items-center z-20 group font-semibold">
+                                    {/* 프로필 유사도 
                                     <div className="flex items-center transition-all duration-300 text-xs text-white/70 opacity-80">
                                         <span className="text-blue-200 font-bold drop-shadow">{profile?.nickname || '이름 없음'}님</span> 은 당신과 전체적으로
                                     </div>
                                     <div className="flex items-center mb-2 transition-all duration-300 text-xs text-white/70 opacity-80">
-                                        <span className="text-blue-200 font-bold px-2 py-0.5 rounded-full  ">{similarities[0]*100}%</span>  
+                                        <span className="text-blue-200 font-bold px-2 py-0.5 rounded-full  ">프로필 유도 {similarities[0]*100}%</span>  
                                         <span className="text-white">  유사해요</span>
                                     </div>
-                                    
+                                    */}
                                     <button
                                         className="z-20 bg-white/30 backdrop-blur-sm text-white font-bold px-3 py-2 rounded-full shadow-lg mt-2 text-xs -mb-8 group-hover:mb-3 
                                         transform translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300
