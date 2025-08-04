@@ -32,9 +32,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     }, [showTaskGuide]);
     //console.log('🔥 fallbackProfile:', displayProfile);
     //const displayProfile = profile || fallbackProfile;
-    useEffect(() => {
-        console.log('컴포넌트 profile:', profile);
-    }, [profile]);
+    
 
     return (
         <div className="flex flex-row justify-between h-full">

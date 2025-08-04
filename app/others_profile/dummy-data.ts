@@ -130,7 +130,87 @@ export const images: ImageData[] = [
         similarity: 0.7,
     },
     {
-        id: 'dummy1-2',
+        id: "2",
+        user_id: "user1",
+        main_keyword: "K팝 열광자",
+        keywords: [
+            "팬덤 (3회)",   
+            "K-팝 (1회)",
+            "인기 아이돌 (1회)",
+            "블랙핑크 (1회)",
+            "세븐틴 (1회)",
+            "프로미스나인 (1회)",
+            "이달의 소녀 (1회)",
+            "젊은층 (2회)",
+            "2030세대",
+        ],
+        mood_keyword: "열정, 소속감, 트렌드, 젊음",
+        description: "당신은 K팝과 인기 아이돌에 대한 열정이 넘치는 ‘아이돌 열광자’로 보이네요. 특히 젊은 층의 트렌드에 민감하게 반응하며, 아이돌의 매력에 빠져드는 성향을 가지고 있는 것 같아요. 시청하신 영상들을 통해 당신의 팬심과 열정이 느껴졌습니다.",
+        category: "팬덤 콘텐츠",
+        sizeWeight: 0.02833333333333333,
+        src: "https://img.youtube.com/vi/U-8lGGFa6mQ/maxresdefault.jpg",
+        relatedVideos: [
+            {
+                "title": "Music & memes – the perfect combo! 🎶 🤣#funnysituations #skill #agent007",
+                "embedId": "OG-BS05HWZw"
+              },
+              {
+                "title": "😂🤣🤣🤣#shorts #ytshorts #trending #fypシ゚viral #popular #kdrama #funny #edit #foryou",
+                "embedId": "TcW5qHGsxCU"
+              },
+              {
+                "title": "Funny #Tatcha#funny#viralvideo#froyou",
+                "embedId": "h9Agww4eA6Y"
+              },
+              {
+                "title": "\"Gisele Bündchen Turns Jimmy Fallon Into a Supermodel 😂💪\"",
+                "embedId": "SKMxLj0UxaU"
+              },
+              {
+                "title": "올데프 우찬 바지 주머니로 들어간 투어스 도훈 명찰",
+                "embedId": "iM2QflQBnLA"
+              },
+              {
+                "title": "유머 밈 모음집 16탄 #유머 #웃긴짤 #개그",
+                "embedId": "C5bdbPuUlLU"
+              },
+              {
+                "title": "Music & memes – the perfect combo! 🎶🤣#cutie #relations #love",
+                "embedId": "cHPAVkuOLUc"
+              },
+              {
+                "title": "Ranking The Worst Gender Reveal Fails😂❤️ #ranking #tiktok #funnymoments #moments #genderreveal",
+                "embedId": "IgKbCBuCAKA"
+              },
+              {
+                "title": "He was shocked after doing that😂 #seventeen #carat #the8 #dino #seungkwan #kpop #scoups #wonwoo",
+                "embedId": "0xX0ADGY4JA"
+              },
+              {
+                "title": "Try Not To Laugh Challenge Part 4😹🤣😂#ifyoulaughyoulose #dontlaughchallenge#ifyoulaughyourgoingtohell",
+                "embedId": "s22PQHOklTA"
+              },
+              {
+                "title": "뭘 해도 안되는 날",
+                "embedId": "tNwzYW4lWD4"
+              }
+      
+        ],
+        desired_self: false,
+        desired_self_profile: null,
+        metadata: {},
+        rotate: 0,
+        width: 800,
+        height: 800,
+        left: "612.9529594099004px",
+        top: "100px",
+        position: { x: 612.9529594099004, y: 107.97193774932981 },
+        frameStyle: "normal",
+        created_at: "2025-07-30T15:18:39.119Z",
+        similarity: 0.7,
+    },
+    {
+        id: 'dummy2-2',
         user_id: 'user1',
         main_keyword: '호수',
         keywords: ['호수', '데크', '새벽', '안개'],

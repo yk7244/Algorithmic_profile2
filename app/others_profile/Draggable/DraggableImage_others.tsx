@@ -171,7 +171,12 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 <div className={`absolute inset-0  ${!isEditing ? 'transition-all duration-300 hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                 >
                     {mainKeyword == image.main_keyword && (
-                        <div className="text-blue-600/40 font-bold text-[12px] mr-1 -mt-2 mb-2"> 이전 페이지에서 발견한 알고리즘 정체성 키워드</div>
+                        <div className="text-black/80 font-bold text-[12px] mr-1 -mt-2 mb-2"> 
+                        <span className="bg-black/80 text-white backdrop-blur-lg px-2 py-1 rounded-full text-[10px] mr-1 -mt-2 mb-2"> 
+                            #{searchKeyword} 
+                        </span>
+                        와 가장 유사한 키워드
+                        </div>
                     )} 
                     {/* 메인키워드 */}
                     <div 
@@ -224,9 +229,11 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 onError={() => setImageLoadError(true)}
                             />
                             <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
-                                <TooltipWithPortal tooltip=" 키워드와 비슷한 정도예요" searchKeyword={searchKeyword || ''}>
-                                    {(image as any).similarity * 100}%
-                                </TooltipWithPortal>
+                                {mainKeyword == image.main_keyword && (
+                                    <TooltipWithPortal tooltip=" 키워드와 비슷한 정도예요" searchKeyword={searchKeyword || ''}>
+                                        {(image as any).similarity * 100}%
+                                    </TooltipWithPortal>
+                                )}
                             </div>
                             
                         </div>

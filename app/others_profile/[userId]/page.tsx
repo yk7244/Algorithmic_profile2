@@ -114,13 +114,13 @@ return (
                         <span className="text-base text-black">
                             발견하신 키워드
                             <span className="text-blue-600 font-bold "> #{mainKeyword} </span>
-                            외에도 아래의 알고리즘 정체성 키워드들이 있어요!
+                            외에도 자유롭게 탐색하며 나와 닮은 점이나 새로운 관점을 발견해보세요. 
                         </span>
                     </div> 
                     <div className="flex flex-row items-center gap-2">
                         <MousePointerClickIcon className="w-6 h-6 text-black animate-pulse " />
                         <div className="text-base text-black">
-                            끌리는 알고리즘 정체성 키워드는 이미지를 클릭해 내 자화상에 담아보세요
+                        내 자화상에 담고 싶은 키워드는 이미지를 클릭해 추가해보세요 
                         </div>
                     </div>
                 </div>

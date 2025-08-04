@@ -41,6 +41,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 ${isSearchMode ? 'bg-blue-600/80' : 'bg-white/70'} backdrop-blur-lg`} style={{height: '100vh', width: '70vw' }}>
                 {/* 호버 툴팁 */}
                 
+                
                 {/* 닉네임 */}
                 <div className="group text-white text-sm font-bold bg-black/60 w-fit px-4 py-1 rounded-full backdrop-blur-sm relative">
                     알고리즘이 본 당신은...
