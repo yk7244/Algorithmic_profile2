@@ -305,7 +305,7 @@ export async function getSimilarImages(category: string, excludeUserId?: string,
       .eq('users.open_to_connect', true)
       .eq('category', category)
       .limit(limit)
-      .order('similarity', { ascending: false, nullsLast: true })
+      .order('similarity', { ascending: false, nullsFirst: false })
 
     if (excludeUserId) {
       query = query.neq('user_id', excludeUserId)

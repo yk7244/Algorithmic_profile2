@@ -51,7 +51,7 @@ const CardGrid: React.FC<CardGridProps> = ({ cards, searchKeyword }) => {
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none" />
                             {/* 호버 시 중앙에 버튼 텍스트 */}
                             <span className="flex flex-col items-center justify-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 rounded-full shadow-lg font-bold text-sm text-white opacity-0 group-hover:opacity-100 transition-all pointer-events-none text-center whitespace-nowrap">
-                                {profile?.nickname || '이름 없음'}님 <br/>알고리즘 자화상 보러가기
+                                이름 없음님 <br/>알고리즘 자화상 보러가기
                             </span>
                         </div>
                     </button>

@@ -42,6 +42,7 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
     setShowThumbnailModal,
 }) => {
     const [tempImage, setTempImage] = useState<{src: string, keyword: string} | null>(null);
+    const [thumbnails, setThumbnails] = useState<string[]>([]);
     
     // 모달이 열릴 때마다 임시 이미지를 초기화
     useEffect(() => {
@@ -49,6 +50,24 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
             setTempImage(null);
         }
     }, [open]);
+
+    // 썸네일 데이터를 비동기로 로드
+    useEffect(() => {
+        const loadThumbnails = async () => {
+            try {
+                const thumbnailObj = await getThumbnailData(image.main_keyword);
+                const thumbnailArray = Array.isArray(thumbnailObj?.src) ? thumbnailObj.src : [];
+                setThumbnails(thumbnailArray);
+            } catch (error) {
+                console.error('썸네일 로드 중 오류:', error);
+                setThumbnails([]);
+            }
+        };
+
+        if (image?.main_keyword) {
+            loadThumbnails();
+        }
+    }, [image?.main_keyword]);
     
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
@@ -59,9 +78,9 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
         }
     };
 
-    const handleTempImageSelect = (selectedImage: any, source: 'thumbnail' | 'search') => {
+    const handleTempImageSelect = async (selectedImage: any, source: 'thumbnail' | 'search') => {
         if (source === 'thumbnail') {
-            const thumbnailData = getThumbnailData(selectedImage.embedId);
+            const thumbnailData = await getThumbnailData(selectedImage.embedId);
             setTempImage({ src: thumbnailData?.src[0] || '', keyword: image.main_keyword });
         } else {
             setTempImage({ 
@@ -78,9 +97,7 @@ const ImageResearchModal: React.FC<ImageResearchModalProps> = ({
         }
     };
 
-    // 썸네일 배열 생성
-    const thumbnailObj = getThumbnailData(image.main_keyword);
-    const thumbnails: string[] = Array.isArray(thumbnailObj?.src) ? thumbnailObj.src : [];
+    // 썸네일 배열은 useEffect에서 비동기로 로드됨
 
     // 관련 영상 썸네일 동적 생성
     const relatedThumbnails: { url: string; embedId: string; title: string }[] = (image.relatedVideos || []).map((video: any) => ({

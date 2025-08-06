@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getUserBackgroundColor, getUserData } from '@/app/utils/get/getUserData';
 import { saveUserBackgroundColor } from '@/app/utils/save/saveUserData';
+import { UserData } from '@/app/types/profile';
 
 // 오른쪽 색상에 대응하는 왼쪽 색상 매핑
 const getLeftColorFromRight = (rightColor: string): string => {
@@ -32,30 +33,87 @@ export function useBgColor(defaultRightColor: string = 'bg-[#F2F2F2]') {
   const [bgColor, setBgColor] = useState(defaultRightColor);
 
   useEffect(() => {
-    // userId는 실제 환경에 맞게 전달 필요
-    const user = getUserData();
-    const savedRightBgColor = getUserBackgroundColor(user);
-    if (savedRightBgColor) {
-      setBgColor(savedRightBgColor);
-    }
+    const loadUserBgColor = async () => {
+      try {
+        // userId는 실제 환경에 맞게 전달 필요
+        const user = await getUserData();
+        if (user && user.nickname) {
+          // UserData 형식으로 변환 (타입 안전성)
+          const userData: UserData = {
+            id: user.id,
+            nickname: user.nickname, // null 체크 완료
+            email: user.email || '',
+            background_color: user.background_color,
+            open_to_connect: user.open_to_connect,
+            last_analysis_time: undefined,
+            created_at: user.created_at
+          };
+          
+          const savedRightBgColor = getUserBackgroundColor(userData);
+          if (savedRightBgColor) {
+            setBgColor(savedRightBgColor);
+          }
+        }
+      } catch (error) {
+        console.error('❌ 사용자 배경색 로드 중 오류:', error);
+      }
+    };
+    
+    loadUserBgColor();
   }, []);
 
-  const handleColorChange = (colorClass: string) => {
+  const handleColorChange = async (colorClass: string) => {
     const bgColor = getLeftColorFromRight(colorClass);
     
     setBgColor(bgColor);
-    // userId는 실제 환경에 맞게 전달 필요
-    const user = getUserData();
-    saveUserBackgroundColor(user, bgColor);
+    
+    try {
+      // userId는 실제 환경에 맞게 전달 필요
+      const user = await getUserData();
+      if (user && user.nickname) {
+        // UserData 형식으로 변환 (타입 안전성)
+        const userData: UserData = {
+          id: user.id,
+          nickname: user.nickname, // null 체크 완료
+          email: user.email || '',
+          background_color: user.background_color,
+          open_to_connect: user.open_to_connect,
+          last_analysis_time: undefined,
+          created_at: user.created_at
+        };
+        
+        await saveUserBackgroundColor(userData.id, bgColor);
+      }
+    } catch (error) {
+      console.error('❌ 배경색 저장 중 오류:', error);
+    }
   };
 
-  const handleBgColorChange = (colorClass: string) => {
-    const user = getUserData();
-    const bgColor = getUserBackgroundColor(user);
-    
-    setBgColor(bgColor || 'bg-[#F2F2F2]');
-    // userId는 실제 환경에 맞게 전달 필요
-    saveUserBackgroundColor(user, bgColor || 'bg-[#F2F2F2]');
+  const handleBgColorChange = async (colorClass: string) => {
+    try {
+      const user = await getUserData();
+      if (user && user.nickname) {
+        // UserData 형식으로 변환 (타입 안전성)
+        const userData: UserData = {
+          id: user.id,
+          nickname: user.nickname, // null 체크 완료
+          email: user.email || '',
+          background_color: user.background_color,
+          open_to_connect: user.open_to_connect,
+          last_analysis_time: undefined,
+          created_at: user.created_at
+        };
+        
+        const bgColor = getUserBackgroundColor(userData);
+        
+        setBgColor(bgColor || 'bg-[#F2F2F2]');
+        // userId는 실제 환경에 맞게 전달 필요
+        await saveUserBackgroundColor(userData.id, bgColor || 'bg-[#F2F2F2]');
+      }
+    } catch (error) {
+      console.error('❌ 배경색 변경 중 오류:', error);
+      setBgColor('bg-[#F2F2F2]'); // 기본값으로 설정
+    }
   };
 
   return { 

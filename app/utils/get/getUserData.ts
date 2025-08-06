@@ -1,5 +1,5 @@
 import { UserData, ProfileData, ImageData } from '@/app/types/profile';
-import { getUser, getPublicUserProfile } from '@/lib/database-clean';
+import { getUser, getPublicUserProfile, convertDBImagesToLocalStorage } from '@/lib/database-clean';
 import { supabase } from '@/lib/supabase-clean';
 
 // user profile의 background_color를 불러오는 함수 (localStorage 사용)
@@ -23,8 +23,8 @@ export async function getUserFullProfileById(userId: string): Promise<{
       console.log('🔍 조회된 프로필 데이터:', publicProfile);
       
       // ✅ Supabase 조인된 데이터 구조 처리 (user 또는 users 필드 안전하게 접근)
-      const userData = publicProfile.user || 
-                      (Array.isArray(publicProfile.users) ? publicProfile.users[0] : publicProfile.users);
+      const userData = (publicProfile as any).user || 
+                      (Array.isArray((publicProfile as any).users) ? (publicProfile as any).users[0] : (publicProfile as any).users);
       
       if (!userData) {
         console.error('❌ 사용자 데이터가 없습니다:', publicProfile);
@@ -38,7 +38,7 @@ export async function getUserFullProfileById(userId: string): Promise<{
         email: userData.email || '', // 기본값 설정
         background_color: userData.background_color || '#000000', // 기본값 설정
         open_to_connect: userData.open_to_connect,
-        last_analysis_time: null, // 현재 DB에서 지원하지 않는 필드
+        last_analysis_time: undefined, // 현재 DB에서 지원하지 않는 필드
         created_at: userData.created_at
       };
 
@@ -46,7 +46,7 @@ export async function getUserFullProfileById(userId: string): Promise<{
         id: publicProfile.id || '',
         user_id: publicProfile.user_id || userId,
         nickname: publicProfile.nickname || userData.nickname,
-        description: publicProfile.description || '',
+        description: (publicProfile as any).main_description || '',
         backgroundColor: userData.background_color,
         created_at: publicProfile.created_at || userData.created_at
       };
@@ -60,32 +60,8 @@ export async function getUserFullProfileById(userId: string): Promise<{
         
 
         
-        images = userImages.map(dbImage => ({
-          id: dbImage.id,
-          src: dbImage.image_url || dbImage.src || '',
-          main_keyword: dbImage.main_keyword || '',
-          keywords: dbImage.keywords || [],
-          mood_keyword: dbImage.mood_keyword || '',
-          description: dbImage.description || '',
-          category: dbImage.category || '',
-          user_id: dbImage.user_id,
-          sizeWeight: Number(dbImage.size_weight) || 1,
-          frameStyle: dbImage.frame_style || 'normal',
-          left: dbImage.css_left || '0px',
-          top: dbImage.css_top || '0px',
-          position: {
-            x: Number(dbImage.position_x) || 0,
-            y: Number(dbImage.position_y) || 0
-          },
-          relatedVideos: dbImage.related_videos || [],
-          desired_self: Boolean(dbImage.desired_self),
-          desired_self_profile: dbImage.desired_self_profile || null,
-          metadata: dbImage.metadata || {},
-          rotate: Number(dbImage.rotate) || 0,
-          width: Number(dbImage.width) || 200,
-          height: Number(dbImage.height) || 200,
-          created_at: dbImage.created_at
-        }));
+        // DB 형식을 ImageData 형식으로 변환 (표준 변환 함수 사용)
+        images = convertDBImagesToLocalStorage(userImages);
         
 
       } catch (error) {

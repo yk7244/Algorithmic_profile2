@@ -41,6 +41,7 @@ export function saveTopThumbnails(cluster: any) {
     // ThumbnailData 객체 생성
     const thumbnailData: ThumbnailData = {
         main_keyword: cluster.main_keyword,
+        keyword: cluster.main_keyword, // keyword와 main_keyword를 동일하게 설정
         src: srcArray,
     };
 

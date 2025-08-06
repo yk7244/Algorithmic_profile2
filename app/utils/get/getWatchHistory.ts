@@ -24,15 +24,17 @@ export async function getWatchHistory(): Promise<WatchHistory[]> {
                     const migratedHistory = await getWatchHistoryDB(user.id);
                     return migratedHistory.map(item => ({
                         id: item.id,
+                        user_id: item.user_id,
                         title: item.title,
-                        description: item.description,
+                        description: item.description || '',
                         tags: item.tags || [],
                         keywords: item.keywords || [],
                         keyword: item.keywords || [], // 기존 코드 호환성
                         video_id: item.video_id,
-                        videoId: item.video_id, // 기존 코드 호환성
+                        videoId: item.video_id || '', // WatchHistory 타입에 맞게 string으로 설정
                         date: item.watch_date,
                         analysis_date: item.analysis_date,
+                        timestamp: item.created_at, // timestamp 필드 추가
                         created_at: item.created_at
                     }));
                 }
@@ -43,15 +45,17 @@ export async function getWatchHistory(): Promise<WatchHistory[]> {
         // DB 형식을 기존 WatchHistory 형식으로 변환
         return dbHistory.map(item => ({
             id: item.id,
+            user_id: item.user_id,
             title: item.title,
-            description: item.description,
+            description: item.description || '',
             tags: item.tags || [],
             keywords: item.keywords || [],
             keyword: item.keywords || [], // 기존 코드 호환성
             video_id: item.video_id,
-            videoId: item.video_id, // 기존 코드 호환성
+            videoId: item.video_id || '', // WatchHistory 타입에 맞게 string으로 설정
             date: item.watch_date,
             analysis_date: item.analysis_date,
+            timestamp: item.created_at, // timestamp 필드 추가
             created_at: item.created_at
         }));
     } catch (error) {

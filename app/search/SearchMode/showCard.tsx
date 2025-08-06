@@ -41,6 +41,16 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
 
     // 중복 사용자 ID 제거
     const uniqueUserIds = [...new Set(safeCards.map(card => card.user_id).filter((id): id is string => Boolean(id)))];
+    
+    // ✅ 디버깅: 카드의 user_id 확인
+    console.log('🔍 카드별 user_id 확인:', safeCards.map((card, idx) => ({
+        index: idx,
+        id: card.id,
+        user_id: card.user_id,
+        main_keyword: card.main_keyword,
+        hasUserId: !!card.user_id
+    })));
+    console.log('🔍 추출된 고유 사용자 ID들:', uniqueUserIds);
 
     // 카드들의 프로필 정보 로드 (최적화 - 중복 제거 + dependency 개선)
     useEffect(() => {
@@ -97,11 +107,18 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                 console.log(`🎯 유사도 계산 시작: ${profiles.length}개 사용자 (캐시 활용)`);
                 
                 // 현재 사용자의 프로필 정보 가져오기 (한 번만)
-                const currentUserProfile = await getUserFullProfileById(user.id);
-                if (!currentUserProfile.user || !currentUserProfile.profile) {
+                const currentUserProfileRaw = await getUserFullProfileById(user.id);
+                if (!currentUserProfileRaw.user || !currentUserProfileRaw.profile) {
                     console.log('⚠️ 현재 사용자 프로필을 가져올 수 없음');
                     return;
                 }
+
+                // 타입 안전성을 위한 타입 단언
+                const currentUserProfile = {
+                    user: currentUserProfileRaw.user,
+                    profile: currentUserProfileRaw.profile,
+                    images: currentUserProfileRaw.images
+                };
 
                 const similarities: {[userId: string]: number} = {};
 
@@ -110,8 +127,15 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                 
                 const similarityPromises = validProfiles.map(async (profile) => {
                     try {
-                        const otherUserProfile = await getUserFullProfileById(profile.user_id);
-                        if (otherUserProfile.user && otherUserProfile.profile) {
+                        const otherUserProfileRaw = await getUserFullProfileById(profile.user_id);
+                        if (otherUserProfileRaw.user && otherUserProfileRaw.profile) {
+                            // 타입 안전성을 위한 타입 단언
+                            const otherUserProfile = {
+                                user: otherUserProfileRaw.user,
+                                profile: otherUserProfileRaw.profile,
+                                images: otherUserProfileRaw.images
+                            };
+                            
                             const similarity = await calculateUserSimilarity(
                                 currentUserProfile,
                                 otherUserProfile
@@ -237,7 +261,7 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                         클러스터 유사도 {Math.round((card.similarity || 0) * 100)}%
                                     </div>
                                     <div className="bg-white/20 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
-                                        사용자 유사도 {Math.round((userSimilarities[userId] || 0) * 100)}%
+                                        사용자 유사도 {Math.round((userId && userSimilarities[userId] ? userSimilarities[userId] : 0) * 100)}%
                                     </div>
                                 </div>
                                 {/* 중앙 하단 그라데이션 오버레이 */}

@@ -22,8 +22,21 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     searchKeyword,
     similarities,
     }) => {
-    const displayProfile = useMemo(() => getLatestProfileData(), []);
+    const [displayProfile, setDisplayProfile] = useState<any>(null);
     const [showTaskGuide, setShowTaskGuide] = useState(false);
+
+    // 프로필 데이터를 비동기로 로드
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const profileData = await getLatestProfileData();
+                setDisplayProfile(profileData);
+            } catch (error) {
+                console.error('프로필 로드 중 오류:', error);
+            }
+        };
+        loadProfile();
+    }, []);
     useEffect(() => {
         if (showTaskGuide) {
             const timer = setTimeout(() => setShowTaskGuide(false), 3000);

@@ -26,7 +26,7 @@ export async function getWatchHistory_array(): Promise<WatchHistory_array[]> {
             id: item.id,
             watchHistory: item.watch_history_data,
             timestamp: item.timestamp?.slice(0, 10) || new Date().toISOString().slice(0, 10),
-            clusterHistory_id: item.cluster_history_id,
+            clusterHistory_id: item.cluster_history_id || '',
             created_at: item.timestamp
         }));
     } catch (error) {

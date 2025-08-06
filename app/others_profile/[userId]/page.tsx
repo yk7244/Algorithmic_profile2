@@ -12,7 +12,7 @@ UserData
 import { getPublicUserProfile } from '@/lib/database-clean';
 import { getUserFullProfileById } from '@/app/utils/get/getUserData';
 import { DndContext } from '@dnd-kit/core';
-import { restrictToContainer } from '@dnd-kit/modifiers';
+import { restrictToContainer } from '@/app/my_profile/Draggable/Hooks/Drag/useDragConstraints';
 import { useRouter } from 'next/navigation';
 import { MousePointerClickIcon, Lock } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -125,10 +125,28 @@ useEffect(() => {
             if (!currentUser) return;
 
             // 현재 사용자의 프로필 가져오기
-            const currentUserProfile = await getUserFullProfileById(currentUser.id);
-            if (!currentUserProfile.user || !currentUserProfile.profile) return;
+            const currentUserProfileRaw = await getUserFullProfileById(currentUser.id);
+            if (!currentUserProfileRaw.user || !currentUserProfileRaw.profile) {
+                console.warn('⚠️ 현재 사용자 프로필이 불완전합니다');
+                setUserSimilarity(0);
+                return;
+            }
+
+            // 타입 안전성을 위한 타입 단언
+            const currentUserProfile = {
+                user: currentUserProfileRaw.user,
+                profile: currentUserProfileRaw.profile,
+                images: currentUserProfileRaw.images
+            };
 
             // 타겟 사용자의 프로필 (이미 로드됨)
+            // user와 profile이 모두 존재하는지 확인
+            if (!user || !profile) {
+                console.warn('⚠️ 타겟 사용자 데이터가 불완전하여 유사도 계산을 건너뜁니다');
+                setUserSimilarity(0);
+                return;
+            }
+
             const targetUserProfile = {
                 user,
                 profile,
@@ -142,6 +160,7 @@ useEffect(() => {
             console.log(`✅ 사용자간 유사도: ${(similarity * 100).toFixed(1)}%`);
         } catch (error) {
             console.error('❌ 사용자간 유사도 계산 실패:', error);
+            setUserSimilarity(0); // 에러 시 기본값 설정
         }
     };
 

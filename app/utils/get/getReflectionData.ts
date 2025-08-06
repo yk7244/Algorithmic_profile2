@@ -31,10 +31,22 @@ export async function getReflectionData(): Promise<ReflectionData | null> {
             }
             // 기본값 반환: 모든 reflection이 완료되지 않은 상태
             return {
+                id: '0',
+                user_id: '0',
+                timestamp: new Date().toISOString(),
                 reflection1: false,
                 reflection2: false,
                 searched: false,
-                tutorial: false
+                tutorial: false,
+                reflection1_answer: {
+                    answer1: '',
+                    answer2: '',
+                    answer3: ''
+                },
+                reflection2_answer: {
+                    answer1: '',
+                    answer2: ''
+                }
             };
         }
 
@@ -51,10 +63,22 @@ export async function getReflectionData(): Promise<ReflectionData | null> {
         
         // 기본값 반환: 모든 reflection이 완료되지 않은 상태
         return {
+            id: '0',
+            user_id: '0',
+            timestamp: new Date().toISOString(),
             reflection1: false,
             reflection2: false,
             searched: false,
-            tutorial: false
+            tutorial: false,
+            reflection1_answer: {
+                answer1: '',
+                answer2: '',
+                answer3: ''
+            },
+            reflection2_answer: {
+                answer1: '',
+                answer2: ''
+            }
         };
     }
 }

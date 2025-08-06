@@ -9,7 +9,7 @@ import { ArrowLeft, Search } from "lucide-react";
 import { ImageData } from '@/app/types/profile';
 import CardStack3D from './SearchMode/showCard';      
 import { useAuth } from '@/context/AuthContext';
-import { getAllPublicImages, searchImagesByKeyword, getActiveUserImages } from '@/lib/database-clean';
+import { getAllPublicImages, searchImagesByKeyword, getActiveUserImages, convertDBImagesToLocalStorage } from '@/lib/database-clean';
 import { addSimilarityScores } from '@/lib/similarity';
 
 export default function SearchPage() {
@@ -69,20 +69,24 @@ export default function SearchPage() {
         // 키워드별로 검색 (현재 사용자 제외)
         for (const keyword of searchKeywords) {
           console.log(`🔍 키워드 "${keyword}" 검색 중...`);
-          const keywordImages = await searchImagesByKeyword(keyword.trim(), 20, currentUserId);
-          console.log(`🔍 키워드 "${keyword}" 검색 결과:`, keywordImages.length, '개');
+          const keywordImagesRaw = await searchImagesByKeyword(keyword.trim(), 20, currentUserId);
+          console.log(`🔍 키워드 "${keyword}" 검색 결과:`, keywordImagesRaw.length, '개');
+          // ImageRow[]를 ImageData[]로 변환
+          const keywordImages = convertDBImagesToLocalStorage(keywordImagesRaw);
           allPublicImages = [...allPublicImages, ...keywordImages];
         }
         
         // ✅ 키워드 검색 결과가 없으면 전체 공개 이미지 가져오기 (fallback)
         if (allPublicImages.length === 0) {
           console.log('⚠️ 키워드 검색 결과가 없어 전체 공개 이미지를 가져옵니다.');
-          allPublicImages = await getAllPublicImages(50, currentUserId);
+          const fallbackImagesRaw = await getAllPublicImages(50, currentUserId);
+          allPublicImages = convertDBImagesToLocalStorage(fallbackImagesRaw);
           console.log(`🔍 Fallback: 전체 공개 이미지 ${allPublicImages.length}개 조회됨`);
         }
       } else {
         // 키워드가 없으면 모든 공개 이미지 가져오기 (현재 사용자 제외)
-        allPublicImages = await getAllPublicImages(50, currentUserId); // 최대 50개
+        const allImagesRaw = await getAllPublicImages(50, currentUserId); // 최대 50개
+        allPublicImages = convertDBImagesToLocalStorage(allImagesRaw);
       }
 
       console.log('🔍 중복 제거 전 총 이미지 수:', allPublicImages.length);
@@ -133,7 +137,7 @@ export default function SearchPage() {
             // DB 형식을 ImageData 형식으로 변환
             const selectedClusterData: ImageData = {
               id: selectedCluster.id,
-              src: selectedCluster.image_url || selectedCluster.src || '',
+              src: selectedCluster.image_url || '',
               main_keyword: selectedCluster.main_keyword || '',
               keywords: selectedCluster.keywords || [],
               mood_keyword: selectedCluster.mood_keyword || '',
@@ -144,7 +148,10 @@ export default function SearchPage() {
               frameStyle: selectedCluster.frame_style || 'normal',
               left: selectedCluster.css_left || '0px',
               top: selectedCluster.css_top || '0px',
-              position: selectedCluster.position || { x: 0, y: 0 },
+              position: { 
+                x: selectedCluster.position_x || 0, 
+                y: selectedCluster.position_y || 0 
+              },
               relatedVideos: selectedCluster.related_videos || [],
               desired_self: selectedCluster.desired_self || false,
               desired_self_profile: selectedCluster.desired_self_profile || null,
@@ -155,30 +162,8 @@ export default function SearchPage() {
               created_at: selectedCluster.created_at
             };
 
-            // DB 형식을 ImageData 형식으로 먼저 변환
-            const convertedResults = filteredUniqueImages.map(dbImage => ({
-              id: dbImage.id,
-              src: dbImage.src || dbImage.image_url || '', 
-              main_keyword: dbImage.main_keyword || 'Unknown',
-              keywords: dbImage.keywords || [], 
-              mood_keyword: dbImage.mood_keyword || '', 
-              description: dbImage.description || '', 
-              category: dbImage.category || 'general', 
-              user_id: dbImage.user_id,
-              sizeWeight: dbImage.size_weight || dbImage.sizeWeight || 1,
-              frameStyle: dbImage.frame_style || dbImage.frameStyle || 'normal',
-              left: dbImage.css_left || dbImage.left || '0px',
-              top: dbImage.css_top || dbImage.top || '0px',
-              position: dbImage.position || { x: 0, y: 0 },
-              relatedVideos: dbImage.related_videos || dbImage.relatedVideos || [],
-              desired_self: dbImage.desired_self || false, 
-              desired_self_profile: dbImage.desired_self_profile || null, 
-              metadata: dbImage.metadata || {}, 
-              rotate: dbImage.rotate || 0, 
-              width: dbImage.width || 200, 
-              height: dbImage.height || 200, 
-              created_at: dbImage.created_at
-            }));
+                        // filteredUniqueImages는 이미 ImageData[] 형식으로 변환됨
+            const convertedResults = filteredUniqueImages;
 
             // 유사도 계산 및 정렬
             console.log('🔍 유사도 계산 시작...');
@@ -191,83 +176,17 @@ export default function SearchPage() {
             );
           } else {
             console.log('⚠️ 선택된 클러스터를 찾을 수 없어 유사도 없이 결과 반환');
-            // DB 형식을 ImageData 형식으로 변환
-            searchResultsWithSimilarity = filteredUniqueImages.map(dbImage => ({
-              id: dbImage.id,
-              src: dbImage.src || dbImage.image_url || '', 
-              main_keyword: dbImage.main_keyword || 'Unknown',
-              keywords: dbImage.keywords || [], 
-              mood_keyword: dbImage.mood_keyword || '', 
-              description: dbImage.description || '', 
-              category: dbImage.category || 'general', 
-              user_id: dbImage.user_id,
-              sizeWeight: dbImage.size_weight || dbImage.sizeWeight || 1,
-              frameStyle: dbImage.frame_style || dbImage.frameStyle || 'normal',
-              left: dbImage.css_left || dbImage.left || '0px',
-              top: dbImage.css_top || dbImage.top || '0px',
-              position: dbImage.position || { x: 0, y: 0 },
-              relatedVideos: dbImage.related_videos || dbImage.relatedVideos || [],
-              desired_self: dbImage.desired_self || false, 
-              desired_self_profile: dbImage.desired_self_profile || null, 
-              metadata: dbImage.metadata || {}, 
-              rotate: dbImage.rotate || 0, 
-              width: dbImage.width || 200, 
-              height: dbImage.height || 200, 
-              created_at: dbImage.created_at
-            }));
+            // filteredUniqueImages는 이미 ImageData[] 형식으로 변환됨
+            searchResultsWithSimilarity = filteredUniqueImages;
           }
         } catch (error) {
           console.error('❌ 유사도 계산 중 오류:', error);
-          // DB 형식을 ImageData 형식으로 변환
-          searchResultsWithSimilarity = filteredUniqueImages.map(dbImage => ({
-            id: dbImage.id,
-            src: dbImage.src || dbImage.image_url || '', 
-            main_keyword: dbImage.main_keyword || 'Unknown',
-            keywords: dbImage.keywords || [], 
-            mood_keyword: dbImage.mood_keyword || '', 
-            description: dbImage.description || '', 
-            category: dbImage.category || 'general', 
-            user_id: dbImage.user_id,
-            sizeWeight: dbImage.size_weight || dbImage.sizeWeight || 1,
-            frameStyle: dbImage.frame_style || dbImage.frameStyle || 'normal',
-            left: dbImage.css_left || dbImage.left || '0px',
-            top: dbImage.css_top || dbImage.top || '0px',
-            position: dbImage.position || { x: 0, y: 0 },
-            relatedVideos: dbImage.related_videos || dbImage.relatedVideos || [],
-            desired_self: dbImage.desired_self || false, 
-            desired_self_profile: dbImage.desired_self_profile || null, 
-            metadata: dbImage.metadata || {}, 
-            rotate: dbImage.rotate || 0, 
-            width: dbImage.width || 200, 
-            height: dbImage.height || 200, 
-            created_at: dbImage.created_at
-          }));
+          // filteredUniqueImages는 이미 ImageData[] 형식으로 변환됨
+          searchResultsWithSimilarity = filteredUniqueImages;
         }
       } else {
-        // DB 형식을 ImageData 형식으로 변환
-        searchResultsWithSimilarity = uniqueImages.map(dbImage => ({
-          id: dbImage.id,
-          src: dbImage.src || dbImage.image_url || '', 
-          main_keyword: dbImage.main_keyword || 'Unknown',
-          keywords: dbImage.keywords || [], 
-          mood_keyword: dbImage.mood_keyword || '', 
-          description: dbImage.description || '', 
-          category: dbImage.category || 'general', 
-          user_id: dbImage.user_id,
-          sizeWeight: dbImage.size_weight || dbImage.sizeWeight || 1,
-          frameStyle: dbImage.frame_style || dbImage.frameStyle || 'normal',
-          left: dbImage.css_left || dbImage.left || '0px',
-          top: dbImage.css_top || dbImage.top || '0px',
-          position: dbImage.position || { x: 0, y: 0 },
-          relatedVideos: dbImage.related_videos || dbImage.relatedVideos || [],
-          desired_self: dbImage.desired_self || false, 
-          desired_self_profile: dbImage.desired_self_profile || null, 
-          metadata: dbImage.metadata || {}, 
-          rotate: dbImage.rotate || 0, 
-          width: dbImage.width || 200, 
-          height: dbImage.height || 200, 
-          created_at: dbImage.created_at
-        }));
+        // uniqueImages는 이미 ImageData[] 형식으로 변환됨
+        searchResultsWithSimilarity = uniqueImages;
       }
 
       console.log('✅ DB에서 검색 결과 조회 완료:', searchResultsWithSimilarity.length, '개');

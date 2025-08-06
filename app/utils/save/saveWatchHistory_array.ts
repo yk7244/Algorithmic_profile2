@@ -62,7 +62,7 @@ export async function saveWatchHistory_array(): Promise<{ success: boolean, resu
         const dbResult = await saveWatchHistoryArray(
             user.id,
             watchHistory,
-            latestClusterId
+            latestClusterId || undefined
         );
 
         if (dbResult) {

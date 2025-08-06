@@ -232,7 +232,7 @@ export async function saveActiveUserImages(userId: string, images: any[]): Promi
     if (images.length > 0) {
       console.log('📝 새 이미지 데이터 변환 중...');
       const imageInserts: ImageInsert[] = images
-        .map((img, index) => {
+        .map((img, index): ImageInsert | null => {
           // 필수 필드 유효성 검사
           const mainKeyword = img.main_keyword || 'unknown';
           const keywords = Array.isArray(img.keywords) ? img.keywords : [];
@@ -502,7 +502,7 @@ export async function getPublicUserImages(userId: string): Promise<ImageRow[]> {
           id: img.id,
           main_keyword: img.main_keyword,
           cluster_id: img.cluster_id,
-          hasSrc: !!img.src
+          hasSrc: !!img.image_url
         }))
       });
     }
@@ -697,6 +697,7 @@ export function convertLocalStorageImagesToDB(localImages: any[]): ImageInsert[]
 export function convertDBImagesToLocalStorage(dbImages: ImageRow[]): any[] {
   return dbImages.map(img => ({
     id: img.id,
+    user_id: img.user_id, // ✅ 누락된 user_id 필드 추가
     main_keyword: img.main_keyword,
     keywords: img.keywords,
     mood_keyword: img.mood_keyword,
