@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { getClusterHistory } from "@/app/utils/get/getClusterHistory";
 import { getWatchHistory } from "@/app/utils/get/getWatchHistory";
 import { AnalysisModal } from "@/app/my_page/Analysis/AnalysisModal";
-import { setReflectionData } from "@/app/utils/save/saveReflection";
+import { setReflectionData as initializeReflectionData } from "@/app/utils/save/saveReflection";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { ReflectionData } from "@/app/types/profile";
 import { useRouter } from "next/navigation";
@@ -93,8 +93,8 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
                     <button className="bg-black text-white rounded-full px-6 py-3 text-md font-bold shadow transition hover:bg-gray-900"
                     onClick={async () => {
                         setOpen(true);
-                        // setReflectionData는 동기 함수이므로 그대로 호출
-                        setReflectionData();
+                        // initializeReflectionData는 비동기 함수이므로 await 사용
+                        await initializeReflectionData();
                     }}
                     >
                         알고리즘 자화상 분석 과정 살펴보기
