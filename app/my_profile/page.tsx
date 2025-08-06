@@ -1,6 +1,6 @@
 "use client";
 import OpenAI from "openai";
-import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, Dispatch, SetStateAction, useMemo, useCallback, Suspense } from 'react';
 import {DndContext} from '@dnd-kit/core';
 import { restrictToContainer } from './Draggable/Hooks/Drag/useDragConstraints';
 import { useSearchParams } from 'next/navigation';
@@ -46,7 +46,7 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
-export default function MyProfilePage() {
+function MyProfilePageContent() {
   const searchParams = useSearchParams();
   const [exploreAnimation, setExploreAnimation] = useState(false);
   // --- 상태 선언 ---
@@ -639,5 +639,13 @@ useEffect(() => {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MyProfilePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">로딩 중...</div>}>
+      <MyProfilePageContent />
+    </Suspense>
   );
 } 

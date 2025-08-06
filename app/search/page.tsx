@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Search } from "lucide-react";
@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import { getAllPublicImages, searchImagesByKeyword, getActiveUserImages, convertDBImagesToLocalStorage } from '@/lib/database-clean';
 import { addSimilarityScores } from '@/lib/similarity';
 
-export default function SearchPage() {
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isLoggedIn, isLoading: authLoading, user } = useAuth();
@@ -371,5 +371,13 @@ export default function SearchPage() {
         
       </div>
     </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">로딩 중...</div>}>
+      <SearchPageContent />
+    </Suspense>
   );
 }
