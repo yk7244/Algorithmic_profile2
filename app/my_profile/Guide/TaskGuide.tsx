@@ -14,13 +14,39 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
   const [num, setNum] = useState(1);
   const [taskContentOpen, setTaskContentOpen] = useState(false);
 
-  // 주차 업데이트 날짜 계산
-  const upload_check = useMemo(() => isOneWeekPassed(), []);
-  // 알고리즘 자화상 첫인상 남기기 여부 확인
-  const reflectionData = getReflectionData();
-  console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
-  const isReflection1 = reflectionData?.reflection1 !== false;
-  const isSearched = reflectionData?.searched !== false;
+  // 주차 업데이트 날짜 계산 및 리플렉션 데이터 로드
+  const [upload_check, setUploadCheck] = useState<number>(-3); // 기본값: 로딩 중
+  const [reflectionData, setReflectionData] = useState<any>(null);
+  const [isReflection1, setIsReflection1] = useState(false);
+  const [isSearched, setIsSearched] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // 업로드 체크 로드
+        const checkResult = await isOneWeekPassed();
+        setUploadCheck(checkResult);
+        console.log('🔍 TaskGuide Upload Check 결과:', checkResult);
+
+        // 리플렉션 데이터 로드
+        const reflectionResult = await getReflectionData();
+        setReflectionData(reflectionResult);
+        console.log('✅ TaskGuide 리플렉션 데이터 로드 완료');
+        
+        // ✅ 수정: 올바른 로직으로 변경 
+        setIsReflection1(reflectionResult?.reflection1 === true);
+        setIsSearched(reflectionResult?.searched === true);
+      } catch (error) {
+        console.error('❌ TaskGuide 데이터 로드 오류:', error);
+        setUploadCheck(-1); // 오류 시 초기 유저로 처리
+        setReflectionData(null);
+        setIsReflection1(false);
+        setIsSearched(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   useEffect(() => {
     const nextNum = isReflection1 ? (isSearched ? 3 : 2) : 1;

@@ -144,8 +144,8 @@ useEffect(() => {
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
-            const parseHistory = getParseHistory() || [];
-            console.log('parseHistory 불러오기:', parseHistory);
+            const parseHistory = await getParseHistory() || [];
+            console.log('✅ parseHistory 불러오기 완료:', parseHistory.length, '개');
             console.log('fetchVideoInfo:', fetchVideoInfo);
 
             
@@ -215,8 +215,8 @@ useEffect(() => {
         }, 1000);
         return () => clearTimeout(timer);
     } else if (showCompletePage && countdown === 0) {
-        // 카운트다운 끝나면 my_profile로 이동
-        router.push('/my_profile');
+        // 카운트다운 끝나면 my_profile로 이동 (업로드 완료 파라미터 추가)
+        router.push('/my_profile?upload_completed=true');
         //별명
     }
 }, [showCompletePage, countdown, router]);

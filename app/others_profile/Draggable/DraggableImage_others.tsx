@@ -110,6 +110,19 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
 
     // desired_self 여부에 따라 실제 크기 조절에 사용될 가중치 계산
     const effectiveSizeWeight = image.desired_self ? image.sizeWeight : (image.sizeWeight || 0.1) * 10;
+    
+    useEffect(() => {
+        // src가 없거나 logo.png를 포함하는 경우, 유효하지 않은 것으로 간주합니다.
+        const isInvalid = !image.src || image.src.includes('/images/logo.png');
+        if (isInvalid) {
+            const target = document.getElementById(image.id) as HTMLImageElement;
+            if (target) {
+                target.src = '/images/default_image.png';
+            }
+            setImageLoadError(true); // 이미지 로드 에러 상태 설정
+        }
+        // 이 효과는 이미지 소스가 바뀔 때마다 실행됩니다.
+    }, [image.src, image.id]);
 
     // effectiveSizeWeight를 기반으로 폰트 크기 계산
     const minFontSize = 10;
@@ -149,8 +162,10 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
         getFrameStyle,
     } = useImageFrame(frameStyle, image, () => {});
 
-    return (
+                return (
     <>
+
+        
         {/* 이미지 띄우기 */}
         <Sheet>
             <div
@@ -188,7 +203,6 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         
                         <div className="group relative -top-2">
                             {mainKeyword == image.main_keyword ? (
-                                
                                 <span className={`font-semibold text-blue-600`}>
                                     #{image.main_keyword}
                                 </span>
@@ -231,7 +245,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
                                 {mainKeyword == image.main_keyword && (
                                     <TooltipWithPortal tooltip=" 키워드와 비슷한 정도예요" searchKeyword={searchKeyword || ''}>
-                                        {(image as any).similarity * 100}%
+                                        {Math.round(((image as any).similarity || 0.85) * 100)}%
                                     </TooltipWithPortal>
                                 )}
                             </div>

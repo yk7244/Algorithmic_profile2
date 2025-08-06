@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageData } from '@/app/types/profile';
 import { getUserFullProfileById } from "@/app/utils/get/getUserData";
+import { calculateUserSimilarity } from "@/lib/similarity";
+import { useAuth } from '@/context/AuthContext';
 
 // 3D 카드 스택 컴포넌트
 interface CardStack3DProps {
@@ -15,40 +17,133 @@ interface CardStack3DProps {
 const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
     const [centerIdx, setCenterIdx] = useState(0);
     const [profiles, setProfiles] = useState<any[]>([]);
+    const [userSimilarities, setUserSimilarities] = useState<{[userId: string]: number}>({});
+    const { user } = useAuth();
 
-    const total = cards.length;
+    // ✅ cards가 undefined이거나 빈 배열인 경우 처리
+    const safeCards = cards || [];
+    const total = safeCards.length;
     const cardWidth = 340; // w-72
     const gap = 1; // 카드 간격(px)
     const router = useRouter();
 
-    // 유사도 계산을 위한 사용자 ID 목록
-    const userIds = cards.map(card => card.user_id).filter((id): id is string => Boolean(id));
-    const similarities = [
-        0.3,
-        0.2,
-    ]
+    // ✅ 카드가 없는 경우 early return
+    if (safeCards.length === 0) {
+        return (
+            <div className="relative w-full h-[500px] flex items-center justify-center select-none bg-transparent mt-10">
+                <div className="text-white text-center">
+                    <div className="text-lg mb-2">검색 결과가 없습니다</div>
+                    <div className="text-sm text-gray-400">다른 키워드로 검색해보세요</div>
+                </div>
+            </div>
+        );
+    }
 
+    // 중복 사용자 ID 제거
+    const uniqueUserIds = [...new Set(safeCards.map(card => card.user_id).filter((id): id is string => Boolean(id)))];
 
-
-    // 카드들의 프로필 정보 로드
+    // 카드들의 프로필 정보 로드 (최적화 - 중복 제거 + dependency 개선)
     useEffect(() => {
         const loadProfiles = async () => {
-            const profilePromises = cards.map(async (card) => {
-                if (card.user_id) {
-                    const result = await getUserFullProfileById(card.user_id);
-                    return result.profile;
+            console.log(`🔍 프로필 로딩 시작: ${uniqueUserIds.length}개 고유 사용자`);
+            
+            const profilePromises = uniqueUserIds.map(async (userId) => {
+                try {
+                    const result = await getUserFullProfileById(userId);
+                    if (result.profile) {
+                        console.log(`✅ 프로필 로드 성공: ${result.profile.nickname} (${userId})`);
+                        return result.profile;
+                    } else {
+                        console.log(`⚠️ 프로필 없음, 기본 프로필 생성: ${userId}`);
+                        return {
+                            id: userId,
+                            user_id: userId,
+                            nickname: `사용자${userId.slice(-4)}`,
+                            description: '',
+                            backgroundColor: '#000000',
+                            created_at: new Date().toISOString()
+                        };
+                    }
+                } catch (error) {
+                    console.error(`❌ 프로필 로드 실패 (${userId}):`, error);
+                    return {
+                        id: userId,
+                        user_id: userId,
+                        nickname: `사용자${userId.slice(-4)}`,
+                        description: '',
+                        backgroundColor: '#000000',
+                        created_at: new Date().toISOString()
+                    };
                 }
-                return null;
             });
             
             const loadedProfiles = await Promise.all(profilePromises);
-            setProfiles(loadedProfiles);
+            const validProfiles = loadedProfiles.filter(profile => profile !== null && profile !== undefined);
+            console.log(`✅ 프로필 로딩 완료: ${validProfiles.length}개`);
+            setProfiles(validProfiles);
         };
 
-        if (cards.length > 0) {
+        if (uniqueUserIds.length > 0) {
             loadProfiles();
         }
-    }, [cards]);
+    }, [uniqueUserIds.length]); // 고유 사용자 수만 dependency로 설정
+
+    // 사용자간 유사도 계산 (최적화 - 한 번만 실행 + 캐시 활용)
+    useEffect(() => {
+        const calculateUserSimilarities = async () => {
+            if (!user?.id || profiles.length === 0) return;
+
+            try {
+                console.log(`🎯 유사도 계산 시작: ${profiles.length}개 사용자 (캐시 활용)`);
+                
+                // 현재 사용자의 프로필 정보 가져오기 (한 번만)
+                const currentUserProfile = await getUserFullProfileById(user.id);
+                if (!currentUserProfile.user || !currentUserProfile.profile) {
+                    console.log('⚠️ 현재 사용자 프로필을 가져올 수 없음');
+                    return;
+                }
+
+                const similarities: {[userId: string]: number} = {};
+
+                // 병렬 처리로 유사도 계산 (캐시 덕분에 중복 계산 방지)
+                const validProfiles = profiles.filter(profile => profile && profile.user_id && profile.user_id !== user.id);
+                
+                const similarityPromises = validProfiles.map(async (profile) => {
+                    try {
+                        const otherUserProfile = await getUserFullProfileById(profile.user_id);
+                        if (otherUserProfile.user && otherUserProfile.profile) {
+                            const similarity = await calculateUserSimilarity(
+                                currentUserProfile,
+                                otherUserProfile
+                            );
+                            return { userId: profile.user_id, similarity, nickname: profile.nickname };
+                        }
+                    } catch (error) {
+                        console.error(`❌ ${profile.user_id}와의 유사도 계산 실패:`, error);
+                    }
+                    return null;
+                });
+
+                const results = await Promise.all(similarityPromises);
+                
+                results.forEach(result => {
+                    if (result) {
+                        similarities[result.userId] = result.similarity;
+                        console.log(`✅ ${result.nickname}과의 유사도: ${(result.similarity * 100).toFixed(1)}%`);
+                    }
+                });
+
+                setUserSimilarities(similarities);
+                console.log('✅ 사용자간 유사도 계산 완료');
+            } catch (error) {
+                console.error('❌ 사용자간 유사도 계산 중 오류:', error);
+            }
+        };
+
+        // 약간의 딜레이를 주어 프로필 로딩이 완료된 후 실행
+        const timeoutId = setTimeout(calculateUserSimilarities, 300);
+        return () => clearTimeout(timeoutId);
+    }, [profiles.length, user?.id]); // profiles 전체가 아닌 length만 의존
 
     // 중앙 카드 이동 함수 (좌우 화살표 등에서 사용)
     const moveCenter = (dir: number) => {
@@ -62,9 +157,15 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
     const handleCardClick = (card: ImageData, idx: number, isCenter: boolean) => {
         if (!isCenter) {
             setCenterIdx(idx);
-
         } else if (card.user_id) {
-            router.push(`/others_profile/${card.user_id}?main_keyword=${encodeURIComponent(card.main_keyword || '')}&searchKeyword=${encodeURIComponent(searchKeyword)}&userIds=${encodeURIComponent(userIds.join(','))}`);
+            console.log(`🔗 다른 사용자 무드보드로 이동:`, {
+                userId: card.user_id,
+                mainKeyword: card.main_keyword,
+                similarity: card.similarity ? `${Math.round(card.similarity * 100)}%` : 'N/A'
+            });
+            router.push(`/others_profile/${card.user_id}?main_keyword=${encodeURIComponent(card.main_keyword || '')}&searchKeyword=${encodeURIComponent(searchKeyword)}&userIds=${encodeURIComponent(uniqueUserIds.join(','))}`);
+        } else {
+            console.warn('⚠️ 클릭한 카드에 user_id가 없습니다:', card);
         }
     };
     
@@ -83,13 +184,27 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
         </button>
 
         {/* 카드들 */}
-        {cards.map((card, idx) => {
+        {safeCards.map((card, idx) => {
             const offset = idx - centerIdx;
             const isCenter = offset === 0;
             const cardSrc = card.src || '/cards/default_card.png';
             const userId = card.user_id;
-            // 유상님✅ userId로 프로필 찾기
-            const profile = profiles.find(p => p.id === userId);
+            // ✅ userId로 프로필 찾기 (디버깅 로그 추가)
+            const profile = profiles.find(p => p && p.user_id === userId);
+            
+            // 디버깅: 프로필 매칭 상태 로그
+            if (!profile && idx === centerIdx) { // 중앙 카드일 때만 로그
+                console.log(`⚠️ 프로필 매칭 실패:`, {
+                    cardUserId: userId,
+                    availableProfiles: profiles.map(p => ({ user_id: p?.user_id, nickname: p?.nickname })),
+                    profilesLength: profiles.length
+                });
+            } else if (profile && idx === centerIdx) {
+                console.log(`✅ 프로필 매칭 성공:`, {
+                    userId: profile.user_id,
+                    nickname: profile.nickname
+                });
+            }
             return (
                 <div
                 key={card.id || idx}
@@ -119,10 +234,10 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                 {/* 이미지 내 좌측 상단 70% + 비슷한 키워드예요 */}
                                 <div className="absolute top-4 left-4 flex flex-col items-end gap-2 z-20">
                                     <div className="bg-blue-700 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
-                                        키워드 유사도 {(card as any).similarity * 100}%
+                                        클러스터 유사도 {Math.round((card.similarity || 0) * 100)}%
                                     </div>
                                     <div className="bg-white/20 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
-                                        프로필 유사도 {similarities[1]*100}%
+                                        사용자 유사도 {Math.round((userSimilarities[userId] || 0) * 100)}%
                                     </div>
                                 </div>
                                 {/* 중앙 하단 그라데이션 오버레이 */}
@@ -154,10 +269,10 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                             </div>
                             <div className="mt-2 text-[12px] z-10">
                                 <div className="text-white">
-                                    {card?.description.slice(0, 60)}...
+                                    {(card?.description || '').slice(0, 60)}{card?.description && card.description.length > 60 ? '...' : ''}
                                 </div>
                                 <div className=" mt-1 text-sm z-10">
-                                    {card?.keywords.slice(0, 4).map((keyword, index) => (
+                                    {(card?.keywords || []).slice(0, 4).map((keyword, index) => (
                                         <span key={index} className="text-blue-200 text-[12px] z-10">   
                                             #{keyword}
                                         </span>

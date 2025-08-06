@@ -36,23 +36,29 @@ export function useHistorySlider({
 
     // 히스토리 불러오기 (페이지 첫 로드 시)
     useEffect(() => {
-        
-        setCurrentHistoryIndex(-1); // 파란 점을 활성화
-
-        // 1. SliderHistory (검은 점들)를 불러옵니다.
-        const SliderHistory = getSliderHistory();
-        if (SliderHistory) {
+        const loadSliderHistory = async () => {
             try {
-                const migratedHistories = SliderHistory.map((history: any) => ({
-                    ...history,
-                    images: history.images || images // images는 props로 받은 초기 이미지
-                }));
-                setHistories(migratedHistories);
+                setCurrentHistoryIndex(-1); // 파란 점을 활성화
+
+                // 1. SliderHistory (검은 점들)를 불러옵니다.
+                const SliderHistory = await getSliderHistory();
+                if (SliderHistory && Array.isArray(SliderHistory)) {
+                    const migratedHistories = SliderHistory.map((history: any) => ({
+                        ...history,
+                        images: history.images || images // images는 props로 받은 초기 이미지
+                    }));
+                    setHistories(migratedHistories);
+                } else {
+                    console.log('SliderHistory가 배열이 아니거나 없습니다:', SliderHistory);
+                    setHistories([]);
+                }
             } catch (e) {
-                console.error("SliderHistory 파싱 에러:", e);
+                console.error("SliderHistory 로드 에러:", e);
                 setHistories([]);
             }
-        }
+        };
+
+        loadSliderHistory();
     }, []);
 
     

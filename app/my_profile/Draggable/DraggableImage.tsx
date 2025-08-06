@@ -83,7 +83,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
     const [showDeleteTooltip, setShowDeleteTooltip] = useState(false);
 
     // desired_self 여부에 따라 실제 크기 조절에 사용될 가중치 계산
-    const effectiveSizeWeight = image.desired_self ? image.sizeWeight : (image.sizeWeight || 0.1) * 10;
+    const safeSizeWeight = Number(image.sizeWeight) || 1;
+    const effectiveSizeWeight = image.desired_self ? safeSizeWeight : safeSizeWeight * 10;
 
     // effectiveSizeWeight를 기반으로 폰트 크기 계산
     const minFontSize = 10;
@@ -150,8 +151,8 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 style={{
                 ...style,
                 position: 'absolute',
-                width: image.width * (image.desired_self ? image.sizeWeight : image.sizeWeight * 10),
-                height: (image.height + 80) * (image.desired_self ? image.sizeWeight: image.sizeWeight * 10),
+                width: Math.max((Number(image.width) || 200) * (image.desired_self ? (Number(image.sizeWeight) || 1) : (Number(image.sizeWeight) || 1) * 10), 50),
+                height: Math.max(((Number(image.height) || 200) + 80) * (image.desired_self ? (Number(image.sizeWeight) || 1): (Number(image.sizeWeight) || 1) * 10), 50),
                 touchAction: 'none',
                 zIndex: isSelected ? 30 : 10,
                 transition: isEditing ? 'none' : 'transform 0.8s ease-in-out',

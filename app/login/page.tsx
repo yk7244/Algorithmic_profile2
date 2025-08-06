@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useLoginHandlers } from "./hooks/useLoginHandlers";
 
 export default function LoginPage() {
-  const { isLoading, handleGoogleLogin, handleAppleLogin, handleGithubLogin } = useLoginHandlers();
+  const { isLoading, error, handleGoogleLogin, handleAppleLogin, handleGithubLogin } = useLoginHandlers();
 
   
 
@@ -14,6 +14,14 @@ export default function LoginPage() {
       <div className="w-full max-w-sm flex flex-col items-center">
         <h1 className="text-3xl font-bold text-white mb-2">로그인 하기</h1>
         <p className="text-gray-400 mb-10 text-sm">소셜 계정으로 가볍게 연결하고 시작해보세요</p>
+        
+        {/* 에러 메시지 표시 */}
+        {error && (
+          <div className="w-full mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-red-400 text-sm text-center">{error}</p>
+          </div>
+        )}
+        
         <div className="flex flex-col gap-4 w-full">
           <button
             onClick={handleGoogleLogin}

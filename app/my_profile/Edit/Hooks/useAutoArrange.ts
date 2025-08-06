@@ -30,9 +30,27 @@ const useAutoArrange = ({ boardRef, images, setPositions, arrangeImagesInCenter 
     
     //console.log('컨테이너 크기:', { containerWidth, containerHeight, topMargin });
     
-    // 가운데보다 약간 오른쪽으로 이동시키기 위해 containerWidth를 조정
-    const rightShiftedWidth = containerWidth * 0.90; // 전체 너비의 75% 지점을 중심으로 설정
-    const leftOffset = containerWidth * 0.14; // 왼쪽에서 12.5% 지점부터 시작
+    // ✅ 해상도에 따른 반응형 배치 개선
+    const isWideScreen = containerWidth > 1400;
+    const isMediumScreen = containerWidth > 1000;
+    
+    let rightShiftedWidth, leftOffset;
+    
+    if (isWideScreen) {
+      // 와이드 스크린: 더 중앙에 가깝게
+      rightShiftedWidth = containerWidth * 0.85;
+      leftOffset = containerWidth * 0.10;
+    } else if (isMediumScreen) {
+      // 중간 스크린: 기존 설정 유지
+      rightShiftedWidth = containerWidth * 0.90;
+      leftOffset = containerWidth * 0.14;
+    } else {
+      // 작은 스크린: 거의 중앙 배치
+      rightShiftedWidth = containerWidth * 0.95;
+      leftOffset = containerWidth * 0.05;
+    }
+    
+    console.log(`📱 화면 크기: ${containerWidth}px, 배치 모드: ${isWideScreen ? 'Wide' : isMediumScreen ? 'Medium' : 'Small'}`);
     
     //console.log('계산된 값들:', { rightShiftedWidth, leftOffset });
     //console.log('images 배열:', images);

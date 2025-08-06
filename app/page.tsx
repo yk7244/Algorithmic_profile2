@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import OpenAI from 'openai';
 import { HelpCircle, Upload, Check } from "lucide-react";
 
-import { OpenAILogger } from './utils/init-logger';
+// import { OpenAILogger } from './utils/init-logger'; // 클라이언트에서 동적 로드
 import { parseJSONWatchHistory } from './upload/VideoParsing/jsonParser';
 import { parseWatchHistory } from './upload/VideoParsing/htmlParser';
 import { handleFileUpload, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } from './upload/Handlers/fileHandlers';
@@ -14,7 +14,7 @@ import { isOneWeekPassed } from './utils/uploadCheck';
 import { searchClusterImage } from './upload/ImageSearch/NaverImageSearch';
 import { fetchVideoInfo } from './upload/VideoAnalysis/videoKeyword';
 import { useClusterStorage } from './upload/hooks/useClusterStorage';
-import { my_account } from './data/dummyData';
+// import { my_account } from './data/dummyData'; // 더미 데이터 비활성화
 import { useRouter } from 'next/navigation';    
 import { useGenerateUserProfile } from './my_profile/Nickname/Hooks/useGenerateUserProfile';    
 import Image from 'next/image';
@@ -34,12 +34,6 @@ const openai = new OpenAI({
 apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 dangerouslyAllowBrowser: true
 });
-
-// 리플렉션 여부 확인
-const reflectionData = getReflectionData();
-const isReflection1 = reflectionData?.reflection1 !== false;
-const isReflection2 = reflectionData?.reflection2 !== false;
-
 
 //localstorage->watchHistory 에 배열로 들어감
 type WatchHistoryItem = {
@@ -85,6 +79,9 @@ const [clusters, setClusters] = useState<any[]>([]);
 // clusterImages state 타입 수정
 const [clusterImages, setClusterImages] = useState<Record<number, ClusterImage | null>>({});
 const [successCount, setSuccessCount] = useState(0);
+const [reflectionData, setReflectionData] = useState<any>(null);
+const [isReflection1, setIsReflection1] = useState(false);
+const [isReflection2, setIsReflection2] = useState(false);
 const [analysisHistory, setAnalysisHistory] = useState<{
     id: string;
     date: string;
@@ -96,8 +93,29 @@ const [countdown, setCountdown] = useState(200000000);
 
 //upload 가능여부 체크 및 기간 설정, 하루당 최대 영상 개수 설정
 const upload_check_test = 2;
-const upload_check = useMemo(() => isOneWeekPassed(), []);
+const [upload_check, setUploadCheck] = useState<number>(-1); // 기본값: 초기 유저
 const [maxVideosPerDay, setMaxVideosPerDay] = useState(20);
+
+// 비동기 upload_check 로드
+useEffect(() => {
+  const loadUploadCheck = async () => {
+    try {
+      const checkResult = await isOneWeekPassed();
+      setUploadCheck(checkResult);
+      console.log('🔍 Upload Check 결과:', checkResult);
+      console.log('📅 Upload Check 의미:', 
+        checkResult === -1 ? '초기 유저 (4주치)' :
+        checkResult === -2 ? '두번째+ 업데이트 (1주치)' :
+        `${checkResult}일 지남`
+      );
+    } catch (error) {
+      console.error('❌ Upload Check 오류:', error);
+      setUploadCheck(-1); // 오류 시 초기 유저로 처리
+    }
+  };
+
+  loadUploadCheck();
+}, []);
 const [showOverlayQuestion, setShowOverlayQuestion] = useState(false);
 
 const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
@@ -105,22 +123,76 @@ const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | 
   to: undefined,
 });
 
+// 리플렉션 데이터 로드
+useEffect(() => {
+  const loadReflectionData = async () => {
+    try {
+      const data = await getReflectionData();
+      setReflectionData(data);
+      
+      // ✅ 올바른 reflection 로직 (업로드 기록이 있을 때만)
+      // 처음 사용자(upload_check === -1)는 reflection 불필요
+      if (upload_check === -1) {
+        console.log('🔵 초기 사용자: reflection 불필요');
+        setIsReflection1(false);
+        setIsReflection2(false);
+      } else {
+        // 업로드 기록이 있는 사용자만 reflection 체크
+        // reflection1: 첫 업로드 완료 후 아직 reflection1을 하지 않았을 때만 true
+        setIsReflection1(data?.reflection1 !== true);
+        
+        // reflection2: reflection1은 완료했지만 reflection2는 아직 하지 않았을 때만 true  
+        setIsReflection2(data?.reflection1 === true && data?.reflection2 !== true);
+      }
+      
+      console.log('✅ Home 페이지: 리플렉션 데이터 로드 완료');
+      console.log('🔍 Reflection 데이터:', { 
+        upload_check,
+        reflection1: data?.reflection1, 
+        reflection2: data?.reflection2
+      });
+      
+      // 실제 상태값은 이후에 로그
+      setTimeout(() => {
+        console.log('🎯 실제 Reflection 상태:', { 
+          isReflection1, 
+          isReflection2,
+          upload_check
+        });
+      }, 100);
+    } catch (error) {
+      console.error('❌ Home 페이지: 리플렉션 데이터 로드 오류:', error);
+      setReflectionData(null);
+      setIsReflection1(false);
+      setIsReflection2(false);
+    }
+  };
+
+  loadReflectionData();
+}, [upload_check]); // upload_check가 로드된 후 실행
+
 useEffect(() => {
   const today = new Date();
   if (upload_check === -1) {
+    // 초기 사용자: 4주치 (28일) 데이터 범위
+    console.log('📅 초기 사용자: 4주치(28일) 날짜 범위 설정');
     setDateRange({
-      from: new Date(today.getTime() - 6 * 24 * 60 * 60 * 1000),
+      from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 28일 전
       to: today,
     });
   } else if (upload_check === -2) {
+    // 두번째+ 업데이트 사용자: 1주치 (7일) 데이터 범위
+    console.log('📅 두번째+ 업데이트 사용자: 1주치(7일) 날짜 범위 설정');
     setDateRange({
-      from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
+      from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 7일 전
       to: today,
     });
   } else {
+    // 일주일이 안 지난 사용자: 업데이트 불가, 기본 범위
+    console.log('📅 업데이트 대기 중인 사용자: 기본 범위 설정');
     setShowOverlayQuestion(false);
     setDateRange({
-      from: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000),
+      from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 7일 전
       to: today,
     });
   }
@@ -538,11 +610,18 @@ useEffect(() => {
                   {/* 1-1-2 로그인O, 업데이트 O, 파일 업로드 X => 파일 업로드 버튼 */}
                   <div
                       onClick={e => {
+                        // 초기 사용자는 reflection 불필요, 바로 업로드 진행
+                        if (upload_check === -1) {
+                          console.log('🔵 초기 사용자: 바로 업로드 진행');
+                          fileInputRef.current?.click();
+                          return;
+                        }
+                        
+                        // 기존 사용자만 reflection 체크
                         if (isReflection2) {  // 리플렉션 2 여부 확인
                           setPendingUploadAction(() => () => fileInputRef.current?.click());
                           pendingUploadAction?.();
                           setShowOverlayQuestion(false);
-
                         } else {
                           setShowOverlayQuestion(true);
                         }
@@ -566,10 +645,14 @@ useEffect(() => {
                           maxVideosPerDay,
                           fetchVideoInfo,
                           openai,
-                          OpenAILogger,
+                          undefined, // OpenAILogger 제거 (서버 사이드 에러 방지)
                           parseWatchHistory
                         }));
-                        setShowOverlayQuestion(true);
+                        
+                        // 초기 사용자는 reflection 불필요
+                        if (upload_check !== -1) {
+                          setShowOverlayQuestion(true);
+                        }
                       }}
                   >
                           
@@ -587,7 +670,7 @@ useEffect(() => {
                                   maxVideosPerDay, // 하루 당 분석될 영상 개수 고정값 20으로 설정
                           fetchVideoInfo,
                           openai,
-                          OpenAILogger,
+                          undefined, // OpenAILogger 제거 (서버 사이드 에러 방지)
                           parseJSONWatchHistory,
                           parseWatchHistory
                               });

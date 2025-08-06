@@ -1,6 +1,6 @@
 "use client";
 
-import { setReflection_answer, setReflectionData_reflection1 } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData_reflection1, setReflectionData_reflection1DB } from "@/app/utils/save/saveReflection";
 import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -49,19 +49,12 @@ export default function ReflectionQuestionsPage() {
                 alert("25자 이상 작성해주세요.");
                 return;
             }
-            updateReflectionAnswer({
-                reflectionKey: "reflection1_answer",
-                answerKey: `answer${currentIndex}` as "answer1" | "answer2" | "answer3",
-                value: answers[currentIndex - 1]
-            });
+            // localStorage 저장은 완료 시 한 번에 처리
+            console.log(`Q${currentIndex} 답변:`, answers[currentIndex - 1]);
         }
-        // Q2: 슬라이더 값도 string으로 저장
+        // Q2: 슬라이더 값 로그
         if (currentIndex === 2) {
-            updateReflectionAnswer({
-                reflectionKey: "reflection1_answer",
-                answerKey: "answer2",
-                value: String(sliderValue)
-            });
+            console.log('Q2 슬라이더 값:', sliderValue);
         }
         if (currentIndex < questions.length - 1) {
         setCurrentIndex(currentIndex + 1);
@@ -70,7 +63,7 @@ export default function ReflectionQuestionsPage() {
         // router.push("/thanks") 가능
         }
         if (currentIndex === questions.length - 2) {
-            setReflection_answer(); //계속 스택으로 쌓임
+            // setReflection_answer(); // TODO: DB 버전으로 대체 필요
         }
     };
 
@@ -178,9 +171,17 @@ export default function ReflectionQuestionsPage() {
                     <button
                         className="mt-10 text-gray-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
-                        onClick={() => {
+                        onClick={async () => {
+                            // DB에 reflection1 완료 상태와 답변 저장
+                            const reflection1Answers = {
+                                answer1: answers[0],
+                                answer2: String(sliderValue),
+                                answer3: answers[2]
+                            };
+                            console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
+                            const success = await setReflectionData_reflection1DB(reflection1Answers);
+                            console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
                             router.push("/my_profile"); 
-                            setReflectionData_reflection1();
                         }}
                         >
                         나의 알고리즘 자화상으로 돌아가기
@@ -189,9 +190,17 @@ export default function ReflectionQuestionsPage() {
                     <button
                         className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
-                        onClick={() => {
+                        onClick={async () => {
+                            // DB에 reflection1 완료 상태와 답변 저장
+                            const reflection1Answers = {
+                                answer1: answers[0],
+                                answer2: String(sliderValue),
+                                answer3: answers[2]
+                            };
+                            console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
+                            const success = await setReflectionData_reflection1DB(reflection1Answers);
+                            console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
                             router.push("/my_profile?explore=1"); 
-                            setReflectionData_reflection1();
                         }}
                         >
                         알고리즘 탐색하기

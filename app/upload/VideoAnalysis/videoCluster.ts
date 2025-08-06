@@ -9,6 +9,8 @@ import { createUserData } from '@/app/utils/save/saveUserData';
 import { setReflectionData } from '@/app/utils/save/saveReflection';  
 import { saveWatchHistory_array } from '@/app/utils/save/saveWatchHistory_array';
 import { updateReflectionAnswer } from '@/app/utils/save/saveReflection';
+import { saveClusterHistory as saveClusterHistoryDB } from '@/lib/database-clean';
+import { supabase } from '@/lib/supabase-clean';
 
 // 필요한 타입 정의 (간단화)
 export type WatchHistoryItem = {
@@ -364,22 +366,50 @@ const generateNickname = async (clusters: any[], openai: any) => {
         const nicknameMatch = response.match(/별명:\s*(.*?)(?=\n|$)/);
         const descriptionMatch = response.match(/설명:\s*([\s\S]*?)(?=\n\n|$)/);
 
+        // ✅ 실제 사용자 ID 가져오기
+        const { supabase } = await import('@/lib/supabase-clean');
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            console.error('❌ 사용자 인증 정보를 찾을 수 없습니다.');
+            throw new Error('사용자 인증 실패');
+        }
+
         const newProfile = {
             id: generateProfileId(),
+            user_id: user.id, // ✅ 실제 사용자 ID 사용
             nickname: nicknameMatch ? nicknameMatch[1].trim() : '알고리즘 탐험가',
             description: descriptionMatch ? descriptionMatch[1].trim() : '당신만의 독특한 콘텐츠 취향을 가지고 있습니다. 메인 페이지에서 더 많은 관심사를 추가해보세요!',
             created_at: new Date().toISOString()
         };
         console.log('새로운 프로필:', newProfile);
-        saveProfileData(newProfile);
+        
+        // ✅ 비동기로 프로필 저장
+        console.log('🔄 프로필 DB 저장 시작...');
+        const profileSaveSuccess = await saveProfileData(newProfile);
+        if (profileSaveSuccess) {
+            console.log('✅ 프로필 DB 저장 성공:', newProfile.nickname);
+        } else {
+            console.error('❌ 프로필 DB 저장 실패');
+        }
   return newProfile;
 };
 
 
+// ✅ 중복 실행 방지를 위한 플래그
+let isVideoClusterRunning = false;
+
 //클러스터 실행 (handleCluster 함수 내부에서 호출)
 export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any, OpenAILogger: any) => {
   try {
-    console.log('=== VideoCluster 시작 ===');
+    // ✅ 중복 실행 방지
+    if (isVideoClusterRunning) {
+      console.warn('⚠️ VideoCluster가 이미 실행 중입니다. 중복 실행을 방지합니다.');
+      return [];
+    }
+    
+    isVideoClusterRunning = true;
+    console.log('=== VideoCluster 시작 === (중복 실행 방지 플래그 설정)');
     
     // 데이터 전처리
     const chunkSize = 20;
@@ -449,8 +479,15 @@ export const VideoCluster = async (watchHistory: WatchHistoryItem[], openai: any
   } catch (error) {
     console.error('클러스터 분석 실패:', error);
     throw error;
+  } finally {
+    // ✅ 성공하든 실패하든 플래그 해제
+    isVideoClusterRunning = false;
+    console.log('=== VideoCluster 완료 === (중복 실행 방지 플래그 해제)');
   }
 };
+
+// ✅ handleCluster 중복 실행 방지를 위한 플래그
+let isHandleClusterRunning = false;
 
 //handleCluster => 실행, 저장
 export const handleCluster = async (
@@ -469,6 +506,15 @@ export const handleCluster = async (
   //generateUserProfile: (localStorageObj: Storage) => void,
 ) => {
   try {
+    // ✅ 중복 실행 방지
+    if (isHandleClusterRunning) {
+      console.warn('⚠️ handleCluster가 이미 실행 중입니다. 중복 실행을 방지합니다.');
+      return;
+    }
+    
+    isHandleClusterRunning = true;
+    console.log('🔄 handleCluster 시작 - 중복 실행 방지 플래그 설정');
+    
     setIsLoading(true);
     
     // localStorage 존재 확인
@@ -489,16 +535,11 @@ export const handleCluster = async (
     };
     //console.log('[handleCluster] 새 분석 결과:', newAnalysis);
 
-    // 기존 분석 기록 불러오기
-    const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
-    //console.log('[handleCluster] 기존 분석 기록(불러오기 전):', savedAnalyses);
-    const updatedAnalyses = [...savedAnalyses, newAnalysis];
-    //console.log('[handleCluster] 업데이트된 분석 기록:', updatedAnalyses);
-
-    // 저장
-    localStorage.setItem('analysisHistory', JSON.stringify(updatedAnalyses));
+    // ✅ 중복 저장 방지: clusterTransform.ts에서 저장하므로 여기서는 제거
+    // analysisHistory 상태만 업데이트
+    const updatedAnalyses = [...(JSON.parse(localStorage.getItem('analysisHistory') || '[]')), newAnalysis];
     setAnalysisHistory(updatedAnalyses);
-    //console.log('[handleCluster] setAnalysisHistory 호출');
+    console.log('✅ analysisHistory 상태 업데이트 완료 (DB 저장은 clusterTransform에서 처리)');
 
     // 클러스터 설정 (이미 VideoCluster에서 이미지 추가됨)
     setClusters(newClusters);
@@ -514,17 +555,37 @@ export const handleCluster = async (
 
     // 6단계: 유저 데이터 업데이트 -> updated_at 업데이트
     console.log('6단계: 유저 데이터 생성');
-    createUserData();
+    try {
+        console.log('🔄 유저 데이터 DB 저장 시작...');
+        const userDataSuccess = await createUserData();
+        if (userDataSuccess) {
+            console.log('✅ 유저 데이터 DB 저장 성공');
+        } else {
+            console.error('❌ 유저 데이터 DB 저장 실패');
+        }
+    } catch (userDataError) {
+        console.error('❌ 유저 데이터 생성 중 오류:', userDataError);
+    }
     console.log('6단계 결과: 유저 데이터 생성 완료'); 
 
     // 7단계: 리플랙션 데이터 생성
     console.log('7단계: 리플랙션 데이터 생성'); 
-    setReflectionData();
+    try {
+        console.log('🔄 리플랙션 데이터 DB 저장 시작...');
+        const reflectionSuccess = await setReflectionData();
+        if (reflectionSuccess) {
+            console.log('✅ 리플랙션 데이터 DB 저장 성공');
+        } else {
+            console.error('❌ 리플랙션 데이터 DB 저장 실패');
+        }
+    } catch (reflectionError) {
+        console.error('❌ 리플랙션 데이터 생성 중 오류:', reflectionError);
+    }
     console.log('7단계 결과: 리플랙션 데이터 생성 완료');
 
     
     //Transform 함수 호출
-    transformClustersToImageData(newClusters);
+    await transformClustersToImageData(newClusters);
     setShowAnalysis(true);
     //console.log('[handleCluster] setShowAnalysis(true) 호출');
 
@@ -536,6 +597,9 @@ export const handleCluster = async (
   } 
   finally {
     setIsLoading(false);
+    // ✅ 성공하든 실패하든 플래그 해제
+    isHandleClusterRunning = false;
+    console.log('🔄 handleCluster 완료 - 중복 실행 방지 플래그 해제');
   }
 }; 
 

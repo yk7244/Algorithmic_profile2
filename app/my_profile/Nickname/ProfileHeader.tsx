@@ -19,7 +19,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     profile,
     isSearchMode,
     }) => {
-    const displayProfile = useMemo(() => getLatestProfileData(), []);
+    // props로 받은 profile 사용 (이미 main_description -> description 매핑됨)
+    const displayProfile = profile;
     const [showTaskGuide, setShowTaskGuide] = useState(false);
     useEffect(() => {
         if (showTaskGuide) {

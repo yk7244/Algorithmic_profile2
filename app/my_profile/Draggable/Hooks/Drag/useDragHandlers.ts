@@ -3,6 +3,8 @@ import { DragEndEvent } from '@dnd-kit/core';
 import { ImageData } from '../../../../types/profile';
 import { Dispatch, SetStateAction } from 'react';
 import { saveProfileImages } from "@/app/utils/save/saveImageData";
+import { getActiveUserImages, saveActiveUserImages, updateImagePosition } from '@/lib/database-clean';
+import { supabase } from '@/lib/supabase-clean';
 
 export function useDragEnd(
   isEditing: boolean, 
@@ -49,53 +51,8 @@ export function useDragEnd(
             return updatedPositions;
           });
           
-          // profileImages localStorage 즉시 업데이트
-          const profileImagesData = localStorage.getItem('profileImages');
-          if (profileImagesData) {
-            try {
-              const profileImages = JSON.parse(profileImagesData);
-              console.log('🔄 드래그 시 profileImages 즉시 업데이트 시작');
-              
-              if (Array.isArray(profileImages)) {
-                // 배열인 경우
-                const updatedProfileImages = profileImages.map((img: any) => {
-                  if (img.id === imageId) {
-                    return {
-                      ...img,
-                      left: `${newPosition.x}px`,
-                      top: `${newPosition.y}px`,
-                      position: newPosition,
-                    };
-                  }
-                  return img;
-                });
-                saveProfileImages(updatedProfileImages);
-                console.log(`✅ 배열 형태 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
-              } else {
-                // 객체인 경우
-                if (profileImages[imageId]) {
-                  const updatedProfileImages = {
-                    ...profileImages,
-                    [imageId]: {
-                      ...profileImages[imageId],
-                      left: `${newPosition.x}px`,
-                      top: `${newPosition.y}px`,
-                      position: newPosition,
-                    }
-                  };
-                  
-                  saveProfileImages(updatedProfileImages);
-                  console.log(`✅ 객체 형태 profileImages 즉시 업데이트 완료 (${imageId}):`, newPosition);
-                  const check =  localStorage.getItem('profileImages');
-                  console.log('check', check);
-                } else {
-                  console.log(`❌ profileImages에서 ${imageId} 키를 찾을 수 없음`);
-                }
-              }
-            } catch (error) {
-              console.error('profileImages 업데이트 중 에러:', error);
-            }
-          }
+          // DB에 이미지 위치 즉시 업데이트 (localStorage 대체)
+          updateImagePositionInDB(imageId, newPosition).catch(console.error);
           
           return {
             ...image,
@@ -108,4 +65,26 @@ export function useDragEnd(
       });
     });
   }, [isEditing, images, setImages, setPositions]);
+}
+
+// DB에 이미지 위치 업데이트하는 헬퍼 함수 (단일 이미지만)
+async function updateImagePositionInDB(imageId: string, position: {x: number, y: number}) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    console.log(`🔄 DB에 이미지 위치 업데이트: ${imageId}`, position);
+    
+    // ✅ 단일 이미지 위치만 업데이트 (전체 재생성 없음)
+    const success = await updateImagePosition(imageId, position.x, position.y);
+    
+    if (success) {
+      console.log('✅ 이미지 위치 DB 업데이트 완료:', imageId);
+    } else {
+      console.warn('⚠️ 이미지 위치 DB 업데이트 실패');
+    }
+    
+  } catch (error) {
+    console.error('❌ 이미지 위치 DB 업데이트 중 오류:', error);
+  }
 } 

@@ -72,10 +72,16 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
             }
         };
 
-        // 영상 클릭 핸들러 (시청 기록 관리)
-        const handleVideoClick = (video: VideoData) => {
-            saveWatchedVideoToLocalStorage(video, ownerId || 'guest');
-            setWatchedVideos(prev => [...new Set([...prev, video.embedId])]);
+        // 영상 클릭 핸들러 (시청 기록 관리) - DB 저장
+        const handleVideoClick = async (video: VideoData) => {
+            try {
+                await saveWatchedVideoToLocalStorage(video, ownerId || 'guest');
+                setWatchedVideos(prev => [...new Set([...prev, video.embedId])]);
+            } catch (error) {
+                console.error('❌ 영상 클릭 처리 오류:', error);
+                // 오류가 있어도 UI 상태는 업데이트
+                setWatchedVideos(prev => [...new Set([...prev, video.embedId])]);
+            }
         };
 
         // 프로필 방문 핸들러

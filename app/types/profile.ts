@@ -9,12 +9,13 @@
 //[0] users 테이블 
 export interface UserData {
   id: string;
+  nickname: string;
   email: string;
   background_color: string;
+  open_to_connect: boolean;
+  last_analysis_time?: string;
   created_at: string;
-  updated_at: string;
-  open_to_connect?: boolean; //search_map에서 사용
-
+  updated_at?: string;
 }
 
 //[1] WatchHistory 테이블 -> upload/VideoAnalysis/videoKeyword.ts 에서 저장함
@@ -84,9 +85,14 @@ export interface ImageData { //ProfileImages(저장명) - ClusterImages(변수�
 // [4] ProfileData 타입 정의 -> Nickname/useProfileStorage.ts 에서 저장함
 export interface ProfileData {
   id: string;
+  user_id: string;
   nickname: string;
   description: string;
+  main_description?: string; // DB 호환성
+  backgroundColor?: string;
+  is_active?: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 // [5] SliderHistory 테이블 -> utils/saveSliderHistory.ts 에서 저장함
@@ -104,8 +110,14 @@ export interface SliderHistory{
 
 //[6] ThumbnailData 테이블 
 export interface ThumbnailData {
+  id?: string;
   main_keyword: string;
+  keyword: string;
   src: string;
+  imageUrl?: string; // 호환성
+  searchQuery?: string; // 호환성  
+  source?: string; // 호환성
+  created_at?: string;
 }
 
 //[7] ReflectionData 테이블 
@@ -155,6 +167,16 @@ export interface HistoryData {
   frameStyles: Record<string, string>;
   images: ImageData[];
   bgColor?: string; // 히스토리별 배경색 (선택적)
+}
+
+//[9] ExploreWatchHistory 테이블 (탐색 시청 기록)
+export interface ExploreWatchHistory {
+  id: string;
+  user_id: string;
+  videoId: string;
+  title: string;
+  description: string;
+  timestamp: string;
 }
 
 /* 

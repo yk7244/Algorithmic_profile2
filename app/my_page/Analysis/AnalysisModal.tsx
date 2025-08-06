@@ -50,39 +50,63 @@ const description= [
 
 export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, history }) => {
     const [watchHistory, setWatchHistory] = useState<WatchHistory[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [activeStep, setActiveStep] = useState(0);
     const [videoOpen, setVideoOpen] = useState(false);
     const [descriptionOpen, setDescriptionOpen] = useState(false);
     const [showDetail_num, setShowDetail_num] = useState(0);
     const [title, setTitle] = useState('');
     const [desc, setDesc] = useState('');
+
     useEffect(() => {
-        //setWatchHistory(getWatchHistory() as WatchHistory[]);
+        const loadWatchHistory = async () => {
+            try {
+                setIsLoading(true);
+                console.log('🔄 AnalysisModal: 시청 기록 로드 시작', history.id);
+                
+                // clusterHistory_id로부터 watchHistory 배열 가져오기 (비동기)
+                const getwatchHistory = await getWatchHistory_by_clusterHistory_id(history);
+                
+                console.log('✅ AnalysisModal: 시청 기록 로드 완료', getwatchHistory.length, '개');
+                setWatchHistory(getwatchHistory);
+            } catch (error) {
+                console.error('❌ AnalysisModal: 시청 기록 로드 오류', error);
+                setWatchHistory([]); // 오류 시 빈 배열로 설정
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-        //console.log('history.id', history.id);
-        
-        // clusterHistory_id 로 부터 watchHistory 배열 가져오기
-        const getwatchHistory = getWatchHistory_by_clusterHistory_id(history);
-
-        //console.log('가져왔나?getwatchHistory', getwatchHistory);
-        // watchHistory 배열 펼치기
-        setWatchHistory(getwatchHistory);     
-    }, []);
+        if (history?.id) {
+            loadWatchHistory();
+        }
+    }, [history]);
 
     const [showDetail, setShowDetail] = useState(false);
 
 
-    const date = watchHistory[0]?.timestamp?.slice(0, 10) || new Date().toISOString().slice(0, 10);
-    const totalVideos = watchHistory.length;
-    const allKeywords = watchHistory.flatMap((v) => v.keywords || []);
+    // 로딩 중이거나 데이터가 없을 때 안전한 처리
+    const date = (Array.isArray(watchHistory) && watchHistory[0]?.timestamp?.slice(0, 10)) || new Date().toISOString().slice(0, 10);
+    const totalVideos = Array.isArray(watchHistory) ? watchHistory.length : 0;
+    const allKeywords = Array.isArray(watchHistory) ? watchHistory.flatMap((v) => v.keywords || []) : [];
     const totalKeywords = allKeywords.length;
     
-
-
     //console.log('현재 history', history);
 
-
     if (!open) return null;
+
+    // 로딩 중일 때 로딩 화면 표시
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+                <div className="bg-white rounded-3xl shadow-xl p-8 flex flex-col items-center justify-center min-h-[300px]" onClick={e => e.stopPropagation()}>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                    <p className="text-lg font-medium text-gray-700">분석 데이터를 불러오는 중...</p>
+                    <p className="text-sm text-gray-500 mt-2">잠시만 기다려주세요</p>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
             <div className="absolute top-6 mt-[12px] left-[120px] bg-[#F5F5F5] text-black rounded-full px-4 py-2 text-sm font-bold">{date}</div>

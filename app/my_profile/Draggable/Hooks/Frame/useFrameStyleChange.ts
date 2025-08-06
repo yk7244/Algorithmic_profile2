@@ -1,9 +1,10 @@
 import { Dispatch, SetStateAction, useCallback } from "react";
 import { ImageData } from "../../../../types/profile";
 import { saveProfileImages } from "@/app/utils/save/saveImageData";
+import { updateImageFrameStyle } from '@/lib/database-clean';
 
 export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Record<string, string>>>) {
-  return useCallback((id: string, style: string) => {
+  return useCallback(async (id: string, style: string) => {
     setFrameStyles(prev => {
       console.log(`🎨 프레임 스타일 변경 (useFrameStyleChange) - 이미지 ID: ${id}, 새 스타일: ${style}`);
       const newFrameStyles = {
@@ -14,6 +15,21 @@ export function useFrameStyleChange(setFrameStyles: Dispatch<SetStateAction<Reco
       return newFrameStyles;
     });
 
+    // DB에서 이미지 프레임 스타일 업데이트 (localStorage 대체)
+    try {
+      const success = await updateImageFrameStyle(id, style);
+      if (success) {
+        console.log(`✅ DB에서 이미지 ${id}의 프레임 스타일 업데이트 완료: ${style}`);
+        return; // DB 업데이트 성공 시 localStorage 업데이트 생략
+      } else {
+        console.error(`❌ DB에서 이미지 ${id}의 프레임 스타일 업데이트 실패`);
+      }
+    } catch (error) {
+      console.error(`❌ DB 프레임 스타일 업데이트 오류:`, error);
+    }
+
+    // DB 업데이트 실패 시 localStorage 백업 업데이트
+    console.warn('DB 업데이트 실패로 localStorage 백업 업데이트 수행');
     const profileImagesData = localStorage.getItem('profileImages');
     if (profileImagesData) {
       try {

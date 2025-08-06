@@ -33,11 +33,13 @@ import { savePositions } from "./Edit/Hooks/savePosition";
 import { getLatestProfileData } from "../utils/get/getProfileData";
 import { Bell, ChevronDownIcon, ChevronUpIcon, EditIcon, Pen, SearchIcon, SparklesIcon } from "lucide-react";
 import { AutoAwesome } from "@mui/icons-material";
-import TaskGuide from "./Guide/TaskGuide";  
+import TaskGuide from "./Guide/TaskGuide";
 import Tutorial from "./Tutorial/Tutorial";
 import DragNotice from "./Guide/DragNotice";
 import { getReflectionData } from "../utils/get/getReflectionData";
 import { getUserData } from "../utils/get/getUserData";
+import { supabase } from '@/lib/supabase-clean';
+import { updateUserBackgroundColor } from '@/lib/database-clean';
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -59,52 +61,128 @@ export default function MyProfilePage() {
   const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
   const placeholderImage = "../../../public/images/default_image.png"
   const [showTutorial, setShowTutorial] = useState(false);
-  const reflectionData = getReflectionData();
+  const [reflectionData, setReflectionData] = useState<any>(null);
+  const [isLoadingImages, setIsLoadingImages] = useState(true);
+  
+  // 🎯 showTutorial 로직: 튜토리얼 완료 여부에 따라 결정
   useEffect(() => {
-    if(reflectionData?.tutorial){
-      setShowTutorial(false);
-    }else{
-      setShowTutorial(true);
-    }
-  }, [reflectionData]);
-  console.log('🔵showTutorial',showTutorial);
-
-  //  const [profile, setProfile] = useState({ nickname: "기본 닉네임", description: "기본 설명" });
-  const [profile, setProfile] = useState(() => {
-    const latestProfile = getLatestProfileData();
-    return {
-      nickname: latestProfile?.nickname || '',
-      description: latestProfile?.description || '',
+    const loadReflectionData = async () => {
+      try {
+        const data = await getReflectionData();
+        setReflectionData(data);
+        
+        // ✅ 튜토리얼 완료된 경우: 튜토리얼 숨김
+        // ❌ 튜토리얼 미완료 또는 null/undefined: 튜토리얼 표시
+        const isTutorialCompleted = data?.tutorial === true;
+        setShowTutorial(!isTutorialCompleted);
+        
+        console.log('🎯 튜토리얼 상태:', {
+          tutorial: data?.tutorial,
+          showTutorial: !isTutorialCompleted
+        });
+      } catch (error) {
+        console.error('❌ Reflection 데이터 로드 오류:', error);
+        // 에러 시 기본값: 튜토리얼 표시 (신규 사용자 가정)
+        setShowTutorial(true);
+      }
     };
+
+    loadReflectionData();
+  }, []);
+
+    // 프로필 상태 - DB에서 비동기로 로드
+  const [profile, setProfile] = useState({
+    nickname: '',
+    description: ''
   });
   // changeProfile 함수는 setProfile을 호출
   const changeProfile = (nickname: string, description: string) => {
     setProfile({ nickname, description });
     console.log('🔵profile',profile);
   };
+  // 프로필 및 사용자 데이터 로드
+  const [bgColor, setBgColor] = useState('#000000');
+  
+  // [새로고침시] refreshTrigger 설정
+  const refreshTrigger = searchParams?.get('refresh') || searchParams?.get('upload_completed');
+  
+  // 프로필 데이터 로딩 (refreshTrigger 반응 + 무한루프 방지)
+  useEffect(() => {
+    const loadProfileAndUserData = async () => {
+      try {
+        console.log('🎯 프로필 데이터 로드 트리거:', refreshTrigger ? `새로고침(${refreshTrigger})` : '초기 로드');
+        
+        // DB에서 프로필 데이터 로드
+        const latestProfile = await getLatestProfileData();
+        if (latestProfile) {
+          const profileData = {
+            nickname: latestProfile.nickname || '',
+            description: latestProfile.main_description || ''
+          };
+          setProfile(profileData);
+          console.log('✅ 프로필 데이터 로드 완료:', {
+            nickname: profileData.nickname,
+            description: profileData.description,
+            hasDescription: !!profileData.description
+          });
+        } else {
+          console.warn('⚠️ 프로필 데이터를 찾을 수 없음, 빈 상태로 설정');
+          setProfile({ nickname: '', description: '' });
+        }
+
+        // DB에서 사용자 데이터 로드 (배경색 포함)
+        const userData = await getUserData();
+        if (userData?.background_color) {
+          setBgColor(userData.background_color);
+          console.log('✅ 사용자 배경색 로드 완료:', userData.background_color);
+        } else {
+          console.warn('⚠️ 사용자 배경색을 찾을 수 없음, 기본값 유지');
+        }
+
+        // ✅ 데이터 로드 완료 후 refresh 파라미터 제거 (무한루프 방지)
+        if (refreshTrigger) {
+          console.log('🧹 refresh 파라미터 제거하여 무한루프 방지');
+          const url = new URL(window.location.href);
+          url.searchParams.delete('refresh');
+          url.searchParams.delete('upload_completed');
+          window.history.replaceState({}, '', url.toString());
+        }
+      } catch (error) {
+        console.error('❌ 프로필/사용자 데이터 로드 오류:', error);
+        // 에러 시 기본값 설정
+        setProfile({ nickname: '', description: '' });
+        setBgColor('#000000');
+      }
+    };
+
+    loadProfileAndUserData();
+  }, [refreshTrigger]); // refreshTrigger 의존성 추가
+
   useEffect(() => {
     console.log('🔥 최신 profile 상태:', profile);
   }, [profile]);
-  // 임시: 실제 환경에서는 로그인 유저 id를 동적으로 받아야 함
-  // const user = getUserData();
-  //const bgColor = getUserBackgroundColor(user || '#F2F2F2') || 'bg-[#F2F2F2]';
 
-  // 배경색 상태 및 변경 함수
-  //const { bgColor, setBgColor, handleBgColorChange } = useBgColor();
-  const [bgColor, setBgColor] = useState('#000000');
   useEffect(() => {
     console.log('🔥 bgColor', bgColor);
   }, [bgColor]);
-  useEffect(() => {
-    const user = getUserData();
-    setBgColor(user.background_color);
-  }, []);
 
-  const handleBgColorChange = (bgColor: string) => {
-    const user = getUserData();
-    user.background_color = bgColor;
-    localStorage.setItem('UserData', JSON.stringify(user));
-    setBgColor(bgColor);
+  // DB 연결된 배경색 변경 함수
+  const handleBgColorChange = async (newBgColor: string) => {
+    try {
+      // DB에서 배경색 업데이트
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const success = await updateUserBackgroundColor(user.id, newBgColor);
+        if (success) {
+          setBgColor(newBgColor);
+          console.log('✅ 배경색 DB 업데이트 완료:', newBgColor);
+        } else {
+          console.error('❌ 배경색 DB 업데이트 실패');
+        }
+      }
+    } catch (error) {
+      console.error('❌ 배경색 변경 오류:', error);
+    }
   };
 
   // 히스토리 클릭 시 배경색 변경 콜백
@@ -117,7 +195,125 @@ export default function MyProfilePage() {
     setFrameStyles,
     setPositions,
     placeholderImage,
+    refreshTrigger: refreshTrigger || undefined,
   });
+
+  // ✅ 업로드 완료 파라미터 감지해서 강제 새로고침
+  useEffect(() => {
+    const uploadCompleted = searchParams?.get('upload_completed');
+    if (uploadCompleted === 'true') {
+      console.log('🎯 업로드 완료 감지! 즉시 이미지 강제 새로고침 실행');
+      
+      // URL에서 파라미터 제거 (중복 실행 방지)
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+      
+      // 즉시 전체 데이터 강제 새로고침 (3초 간격으로 10번 시도)
+      let refreshCount = 0;
+      const forceRefresh = async () => {
+        refreshCount++;
+        console.log(`🔄 업로드 완료 후 전체 데이터 강제 새로고침 ${refreshCount}/10`);
+        
+        try {
+          // ✅ 1. 프로필 정보 새로고침
+          console.log('🔄 프로필 정보 새로고침 시도...');
+          const { getActiveProfile } = await import('@/lib/database-clean');
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (user) {
+            const freshProfile = await getActiveProfile(user.id);
+            if (freshProfile && freshProfile.nickname) {
+              console.log('✅ 프로필 정보 새로고침 성공:', freshProfile.nickname);
+              // ✅ main_description을 description으로 매핑
+              setProfile({
+                nickname: freshProfile.nickname,
+                description: freshProfile.main_description || ''
+              });
+            } else {
+              console.log('⚠️ 프로필 정보 아직 없음, 계속 시도...');
+            }
+          }
+          
+          // ✅ 2. 이미지 데이터 새로고침
+          console.log('🔄 이미지 데이터 새로고침 시도...');
+          const { getProfileImages } = await import('../utils/get/getImageData');
+          const profileImages = await getProfileImages();
+          
+          if (profileImages && profileImages.length > 0) {
+            console.log('✅ 업로드 완료 후 이미지 로드 성공!', profileImages.length, '개');
+            setImages(profileImages);
+            setIsLoadingImages(false);
+            
+            const visibleIds = new Set(profileImages.map(img => img.id).filter(Boolean));
+            setVisibleImageIds(visibleIds);
+            
+            const frameStylesObj: Record<string, string> = {};
+            profileImages.forEach(img => {
+              if (img.id && img.frame_style) {
+                frameStylesObj[img.id] = img.frame_style;
+              }
+            });
+            setFrameStyles(frameStylesObj);
+            
+            const positionsObj: Record<string, {x: number, y: number}> = {};
+            profileImages.forEach(img => {
+              if (img.id && img.position) {
+                positionsObj[img.id] = img.position;
+              }
+            });
+            setPositions(positionsObj);
+            
+            console.log('🎉 업로드 완료 후 전체 데이터 로드 성공! 새로고침 종료');
+            return; // 이미지 로드 성공하면 종료
+          } else {
+            console.log(`⚠️ 이미지 데이터 아직 없음 (${refreshCount}/10), 계속 시도...`);
+          }
+          
+          // ✅ 최대 재시도 횟수 체크
+          if (refreshCount < 10) {
+            console.log(`🔄 ${refreshCount}/10 시도 완료, 3초 후 재시도...`);
+            setTimeout(forceRefresh, 3000);
+          } else {
+            console.warn('⚠️ 업로드 완료 후 데이터 로드 최대 재시도 횟수 도달. 수동 새로고침이 필요할 수 있습니다.');
+          }
+        } catch (error) {
+          console.error(`❌ 업로드 완료 후 강제 새로고침 실패 (${refreshCount}/10):`, error);
+          if (refreshCount < 10) {
+            console.log(`🔄 에러 발생, 3초 후 재시도... (${refreshCount}/10)`);
+            setTimeout(forceRefresh, 3000);
+          }
+        }
+      };
+      
+      // 즉시 첫 번째 시도
+      forceRefresh();
+    }
+  }, [searchParams, setImages, setVisibleImageIds, setFrameStyles, setPositions]);
+
+  // 이미지 로딩 상태 관리
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (images.length > 0) {
+        setIsLoadingImages(false);
+      }
+    }, 1000); // 1초 후 체크
+
+    return () => clearTimeout(timer);
+  }, [images]);
+
+  // 이미지가 로드되면 로딩 상태 해제
+  useEffect(() => {
+    if (images.length > 0) {
+      setIsLoadingImages(false);
+    } else {
+      // 6초 후에도 이미지가 없으면 로딩 해제 (실제로 데이터가 없는 것으로 간주)
+      const timeout = setTimeout(() => {
+        setIsLoadingImages(false);
+      }, 6000);
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [images]);
 
   const historySlider = useHistorySlider({
     images: images as ImageData[],
@@ -297,7 +493,17 @@ useEffect(() => {
         {/* 오른쪽: 무드보드/이미지/카드 등 */}
         <div className={`relative flex flex-col h-full w-full } ${exploreAnimation ? 'animate-fadeIn' : ''}`} ref={boardRef}>
           {/* 튜토리얼 영역 */}
-          <Tutorial show={showTutorial} onClose={() => setShowTutorial(false)}/>  
+          <Tutorial 
+            show={showTutorial} 
+            onClose={async () => {
+              console.log('🎯 튜토리얼 완료 - 상태 업데이트 중...');
+              setShowTutorial(false);
+              // 튜토리얼 완료 후 reflectionData 새로고침
+              const updatedData = await getReflectionData();
+              setReflectionData(updatedData);
+              console.log('✅ 튜토리얼 완료 - 상태 업데이트 완료');
+            }}
+          />  
           {/* 나머지 메인 UI는 튜토리얼이 닫혔을 때만 렌더링 */}
 
             <>
@@ -327,11 +533,35 @@ useEffect(() => {
               {/* My_profile 페이지 이미지레이아웃 */}
               <div className="flex-1 flex flex-col items-center justify-start w-full">
                 <div className="fixed w-full h-full mx-auto mt-8">
-                  <DndContext
-                    onDragEnd={handleDragEnd}
-                    modifiers={[restrictToContainer]}
-                  >
-                    {images.map((image) => (
+                  {images.length === 0 ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center text-gray-400">
+                        {isLoadingImages ? (
+                          <>
+                            <div className="mb-4">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400 mx-auto"></div>
+                            </div>
+                            <p className="text-sm">프로필을 불러오는 중...</p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="mb-4">
+                              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto">
+                                <span className="text-2xl">🎨</span>
+                              </div>
+                            </div>
+                            <p className="text-lg font-medium mb-2 text-gray-600">아직 프로필이 생성되지 않았습니다</p>
+                            <p className="text-sm text-gray-500">업로드를 통해 나만의 알고리즘 자화상을 만들어보세요</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <DndContext
+                      onDragEnd={handleDragEnd}
+                      modifiers={[restrictToContainer]}
+                    >
+                      {images.map((image) => (
                       <div
                         key={image.id || Math.random().toString()}
                         className={`transition-all duration-500 ${
@@ -355,7 +585,8 @@ useEffect(() => {
                         />
                       </div>
                     ))}
-                  </DndContext>
+                    </DndContext>
+                  )}
                 </div>
                 {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
                 <AutoArrangeButton 

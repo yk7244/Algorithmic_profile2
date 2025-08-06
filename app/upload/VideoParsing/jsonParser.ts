@@ -1,6 +1,6 @@
 //import { fetchVideoInfo } from '../VideoAnalysis/fetchVideoInfo';
 import {fetchVideoInfo} from '../VideoAnalysis/videoKeyword';
-import { OpenAILogger } from '../../utils/init-logger';
+// import { OpenAILogger } from '../../utils/init-logger'; // 서버 사이드 에러 방지
 import { saveParseHistory } from '../../utils/save/saveParseHistory';
 
 // Define types for JSON watch history
@@ -110,7 +110,9 @@ export const parseJSONWatchHistory = async (
     const selectedItems = Object.values(groupedByDate).flat();
     console.log(`3)그룹화 및 제한 후 영상 수: ${selectedItems.length}개`);
     console.log('selectedItems:', selectedItems);
-    saveParseHistory(selectedItems);
+    
+    // 파싱 히스토리 저장 (DB 저장으로 마이그레이션됨)
+    await saveParseHistory(selectedItems); // DB에 저장 (localStorage 대신)
 
     return selectedItems;
     

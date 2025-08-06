@@ -1,6 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { getLatestProfileData } from "@/app/utils/get/getProfileData";
 
+// 안전한 날짜 포맷팅 함수
+const formatSafeDate = (dateValue: any): string => {
+    if (!dateValue) return '날짜를 불러오는 중...';
+    
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) {
+        console.warn('Invalid date value:', dateValue);
+        return '날짜 정보 없음';
+    }
+    
+    return date.toLocaleDateString('ko-KR', {
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
 interface HistorySliderProps {
     histories: any[];
     currentHistoryIndex: number;
@@ -43,12 +61,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
             {/* 3초간 보여주는 안내 메시지 */}
             {showToast && (
                 <div className="relative flex items-center justify-center mt-4 bg-black/80 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fadeIn text-base mb-5">
-                    {currentHistoryIndex === -1 ? '현재 자화상' : new Date(histories[currentHistoryIndex].created_at).toLocaleDateString('ko-KR', {
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })} 모습이예요.
+                    {currentHistoryIndex === -1 ? '현재 자화상' : formatSafeDate(histories[currentHistoryIndex]?.created_at || histories[currentHistoryIndex]?.timestamp)} 모습이예요.
                 </div>
             )}
         <div className="relative bg-white/50 backdrop-blur-lg w-full flex flex-col items-center">
@@ -88,9 +101,18 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                             ...histories.map((history, index) => {
                                 const hasDesiredSelf = history.images && history.images.some((img: any) => img.desired_self === true);
                                 const isSelected = currentHistoryIndex === index;
-                                // 점 위치: 선의 시작~끝(offset~100-offset%) 안에서 등간격
+                                
+                                // 🔍 디버깅: desired_self 감지 로그
+                                if (hasDesiredSelf) {
+                                    console.log(`⭐ 히스토리 ${index}: desired_self 감지됨 (별모양 표시)`, {
+                                        historyImages: history.images?.length || 0,
+                                        desiredSelfCount: history.images?.filter((img: any) => img.desired_self === true).length || 0
+                                    });
+                                }
+                                // 점 위치: 왼쪽이 과거(index 큰 값), 오른쪽이 현재(index 작은 값)
+                                const reversedIndex = histories.length - 1 - index; // 순서 반전
                                 const leftPercent = totalDots > 1
-                                    ? offset + (index / (totalDots - 1)) * span
+                                    ? offset + (reversedIndex / (totalDots - 1)) * span
                                     : 50;
                                 return (
                                     <div
@@ -100,15 +122,20 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                                     >
                                         <button
                                             className="w-4 h-4 rounded-full transition-all opacity-80 flex items-center justify-center"
-                                            onClick={() => {
+                                            onClick={async () => {
                                                 handleHistoryClick(index);
                                                 changeProfile(history.nickname, history.description);
                                                 setShowToast(true);
                                                 if (index === -1) {
-                                                    const tmp = getLatestProfileData();
-                                                    changeProfile(tmp.nickname, tmp.description);
+                                                    try {
+                                                        const tmp = await getLatestProfileData();
+                                                        if (tmp) {
+                                                            changeProfile(tmp.nickname, tmp.main_description);
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('❌ 최신 프로필 데이터 로드 오류:', error);
+                                                    }
                                                 }
-
                                             }}
                                         >
                                             {hasDesiredSelf ? (
@@ -120,12 +147,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                                             )}
                                         </button>
                                         <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap text-xs font-medium text-gray-500 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                                            {new Date(history.timestamp).toLocaleDateString('ko-KR', {
-                                                month: 'long',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
+                                            {formatSafeDate(history.timestamp || history.created_at)}
                                         </span>
                                     </div>
                                 );

@@ -43,24 +43,27 @@ export class OpenAILogger {
 
   static async log(entry: LogEntry) {
     try {
-      // Read existing logs from localStorage
-      let logs = '';
-      const storedLogs = localStorage.getItem(this.STORAGE_KEY);
-      if (storedLogs) {
-        logs = storedLogs;
-      }
-
-      // Add new log entry
-      const formattedEntry = this.formatLogEntry(entry);
-      logs += formattedEntry;
-
-      // Store updated logs
-      localStorage.setItem(this.STORAGE_KEY, logs);
-
       // Write to console for immediate feedback
       console.log(`\n=== OpenAI ${entry.type.toUpperCase()} ===`);
       console.log(JSON.stringify(entry, null, 2));
       console.log('=============================\n');
+
+      // Only use localStorage in browser environment
+      if (typeof window !== 'undefined') {
+        // Read existing logs from localStorage
+        let logs = '';
+        const storedLogs = localStorage.getItem(this.STORAGE_KEY);
+        if (storedLogs) {
+          logs = storedLogs;
+        }
+
+        // Add new log entry
+        const formattedEntry = this.formatLogEntry(entry);
+        logs += formattedEntry;
+
+        // Store updated logs
+        localStorage.setItem(this.STORAGE_KEY, logs);
+      }
     } catch (error) {
       console.error('Error writing to logs:', error);
     }
@@ -93,7 +96,10 @@ export class OpenAILogger {
 
   static getLogs(): string {
     try {
-      return localStorage.getItem(this.STORAGE_KEY) || '';
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem(this.STORAGE_KEY) || '';
+      }
+      return '';
     } catch (error) {
       console.error('Error reading logs:', error);
       return '';
@@ -102,7 +108,9 @@ export class OpenAILogger {
 
   static clearLogs() {
     try {
-      localStorage.removeItem(this.STORAGE_KEY);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(this.STORAGE_KEY);
+      }
     } catch (error) {
       console.error('Error clearing logs:', error);
     }

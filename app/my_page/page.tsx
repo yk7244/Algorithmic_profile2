@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { CheckCircle2, UserPlus, UserX } from 'lucide-react';
+import { CheckCircle2, UserPlus, UserX, Lock } from 'lucide-react';
 import { Reflection_answer, WatchHistory } from '../types/profile';   
 import { getClusterHistory } from '@/app/utils/get/getClusterHistory';
 import { ClusterHistory } from '@/app/types/profile';
@@ -13,12 +13,12 @@ import { UpdateCard } from './History/UpdateCard';
 import { handleToggleOpenToConnect } from "@/app/utils/save/saveUserData";
 import { UserData } from "@/app/types/profile";
 import { getUserData } from '@/app/utils/get/getUserData';
-  
-
+import { useRouter } from 'next/navigation';
 
 // 실제 페이지 이름으로 함수 이름을 변경하세요. (예: UpdatePage, SearchMapPage)
 export default function MyPage() {
-const { logout } = useAuth();
+const { logout, isLoggedIn, isLoading, user } = useAuth();
+const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profile' | 'open_setting'>('profile');
   const [userData, setUserData] = useState<UserData | null>(null);
   const [clusterHistory, setClusterHistory] = useState<ClusterHistory[]>([]);
@@ -29,29 +29,59 @@ const { logout } = useAuth();
   
 
   useEffect(() => {
-    setClusterHistory(getClusterHistory());
-    //console.log('clusterHistory 가져옴!!', clusterHistory);
-  }, []);
+    const loadData = async () => {
+      try {
+        // DB에서 클러스터 히스토리 조회
+        const history = await getClusterHistory();
+        setClusterHistory(history);
+        console.log('✅ 클러스터 히스토리 로드 완료:', history.length, '개');
+        
+        // DB에서 사용자 데이터 조회
+        const userData = await getUserData();
+        if (userData) {
+          // DB 타입을 프론트엔드 타입으로 변환
+          const convertedUserData: UserData = {
+            ...userData,
+            nickname: userData.nickname || '',
+            last_analysis_time: userData.last_analysis_at || undefined,
+            updated_at: userData.updated_at || undefined
+          };
+          setUserData(convertedUserData);
+        }
+        console.log('✅ 사용자 데이터 로드 완료:', userData?.nickname);
+      } catch (error) {
+        console.error('❌ 내 페이지 데이터 로드 오류:', error);
+      }
+    };
 
-  useEffect(() => {
-    // TODO: 실제 로그인 유저 id로 대체
-    const arr = getUserData();
-    setUserData(arr);
-    
-  }, []);
+    if (isLoggedIn) {
+      loadData();
+    }
+  }, [isLoggedIn]);
 
   // 최신 기록 날짜 구하기
   const latestEntry = clusterHistory[clusterHistory.length - 1];
   
 
-  // 공개 상태 토글 핸들러
-  const handleToggle = () => {
-    //console.log('userData', userData);
+  // 공개 상태 토글 핸들러 (DB 연결)
+  const handleToggle = async () => {
     if (!userData) return;
-    const updated = { ...userData, open_to_connect: !userData.open_to_connect };
-    handleToggleOpenToConnect(userData.id);
-    setUserData(updated);
-   
+    
+    try {
+      // DB에서 공개 상태 토글
+      const success = await handleToggleOpenToConnect(userData.id);
+      
+      if (success) {
+        // UI 업데이트
+        const updated = { ...userData, open_to_connect: !userData.open_to_connect };
+        setUserData(updated);
+        console.log('✅ 공개 상태 토글 완료:', updated.open_to_connect ? '공개' : '비공개');
+      } else {
+        console.error('❌ 공개 상태 토글 실패');
+      }
+    } catch (error) {
+      console.error('❌ 공개 상태 토글 오류:', error);
+    }
   };
 
   return (
@@ -74,7 +104,17 @@ const { logout } = useAuth();
         </nav>
         <div className="w-full px-8 pb-20 mb-10">
           <button
-            onClick={logout}
+            onClick={async () => {
+              try {
+                console.log('🔄 로그아웃 시도 중...');
+                await logout();
+                console.log('✅ 로그아웃 성공');
+                // 홈페이지로 리다이렉트
+                window.location.href = '/';
+              } catch (error) {
+                console.error('❌ 로그아웃 실패:', error);
+              }
+            }}
             className="w-full text-lg font-medium rounded-lg px-4 py-3 bg-gray-900 text-white hover:bg-gray-800 transition-colors rounded-[10px]"
           >
             로그아웃 하기

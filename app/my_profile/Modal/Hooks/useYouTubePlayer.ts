@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { VideoData } from "../../../types/profile"; 
+import type { VideoData } from "../../Draggable/DraggableImage"; 
 
 /**
  * useYouTubePlayer

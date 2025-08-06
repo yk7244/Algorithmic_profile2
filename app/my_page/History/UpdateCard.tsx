@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { ClusterHistory } from "@/app/types/profile";
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { isOneWeekPassed } from "@/app/utils/uploadCheck";
@@ -7,13 +8,63 @@ import { useRouter } from "next/navigation";
 // ClusterHistory 카드 컴포넌트
 export const UpdateCard: React.FC<{ history: ClusterHistory }> = ({ history }) => {
     const router = useRouter();
+    const [reflectionData, setReflectionData] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    
     //console.log('history', history);
     // 최신 기록 날짜 구하기
     const latestEntry = history;
     const latestEntryDate = latestEntry.created_at ? new Date(new Date(latestEntry.created_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10) : '';
 
-    const updateDate = isOneWeekPassed();
-    const reflectionData = getReflectionData();
+    const [updateDate, setUpdateDate] = useState<number>(-3); // 기본값: 로딩 중
+
+    // 업데이트 날짜 로드
+    useEffect(() => {
+        const loadUpdateDate = async () => {
+            try {
+                const result = await isOneWeekPassed();
+                setUpdateDate(result);
+                console.log('🔍 UpdateCard Upload Check 결과:', result);
+            } catch (error) {
+                console.error('❌ UpdateCard Upload Check 오류:', error);
+                setUpdateDate(-1); // 오류 시 초기 유저로 처리
+            }
+        };
+
+        loadUpdateDate();
+    }, []);
+
+    // 리플렉션 데이터 로드
+    useEffect(() => {
+        const loadReflectionData = async () => {
+            try {
+                setIsLoading(true);
+                const data = await getReflectionData();
+                setReflectionData(data);
+                console.log('✅ UpdateCard: 리플렉션 데이터 로드 완료');
+            } catch (error) {
+                console.error('❌ UpdateCard: 리플렉션 데이터 로드 오류:', error);
+                setReflectionData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadReflectionData();
+    }, []);
+
+    // 로딩 중일 때
+    if (isLoading) {
+        return (
+            <div className="bg-[#E1E8FC] rounded-2xl shadow p-6 w-full">
+                <div className="animate-pulse">
+                    <div className="h-4 bg-white rounded w-32 mb-4"></div>
+                    <div className="h-6 bg-white rounded w-48 mb-4"></div>
+                </div>
+            </div>
+        );
+    }
+
     //console.log('reflectionData', reflectionData);
     
     return (

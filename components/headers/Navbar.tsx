@@ -26,47 +26,80 @@ import { isOneWeekPassed } from '@/app/utils/uploadCheck';
 export function Navbar() {
   const pathname = usePathname();
   const isMainPage = pathname === '/';
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, user, userData } = useAuth();
   const [language, setLanguage] = useState("KO");
   const router = useRouter();
   const [showOverlayQuestion1, setShowOverlayQuestion1] = useState(false);
   const [showOverlayQuestion2, setShowOverlayQuestion2] = useState(false);
-  
-  const reflectionData = getReflectionData();
-  const isReflection1 = reflectionData?.reflection1 !== false;
-  const isReflection2 = reflectionData?.reflection2 !== false;
+  const [reflectionData, setReflectionData] = useState<any>(null);
+  const [isReflection1, setIsReflection1] = useState(false);
+  const [isReflection2, setIsReflection2] = useState(false);
   const handleLanguageToggle = () => {
     setLanguage(prevLang => prevLang === "KO" ? "EN" : "KO");
   };
   const [isLocked, setIsLocked] = useState(false);
   
+  // 기존 reflection 로드는 아래의 통합된 함수로 대체됨
+  
   useEffect(() => {
-    if(isOneWeekPassed()==-2){  //업데이트 날짜 지난 경우, 두번째 업데이트 유저
-      
-      console.log('두번째 업데이트 유저 메뉴바 락 되었습니다. 업데이트 후, 사용가능합니다.');
+    const loadUploadCheckAndSetLockAndReflection = async () => {
+      try {
+        const uploadCheck = await isOneWeekPassed();
+        console.log('🔍 Navbar Upload Check 결과:', uploadCheck);
 
-      if(isReflection2){
-        setShowOverlayQuestion2(false); //리플랙션2 했으면 안보여줌.
-      }else{ 
-        setShowOverlayQuestion2(true); //리플랙션1 안했으면 보여줌.
+        // 리플렉션 데이터도 함께 로드
+        const reflectionResult = await getReflectionData();
+        setReflectionData(reflectionResult);
+
+        // 초기 사용자는 reflection 불필요
+        if (uploadCheck === -1) {
+          console.log('🔵 초기 사용자: navbar reflection 불필요');
+          setIsReflection1(false);
+          setIsReflection2(false);
+          setIsLocked(false); // 락 해제
+        } else {
+          // 업로드 기록이 있는 사용자만 reflection 체크
+          // ✅ 수정: reflection1 완료 시 탐색 활성화
+          setIsReflection1(reflectionResult?.reflection1 === true);
+          setIsReflection2(reflectionResult?.reflection1 === true && reflectionResult?.reflection2 !== true);
+
+          if(uploadCheck === -2){  //업데이트 날짜 지난 경우, 두번째 업데이트 유저
+            console.log('두번째 업데이트 유저 메뉴바 락 되었습니다. 업데이트 후, 사용가능합니다.');
+
+            if(reflectionResult?.reflection1 === true && reflectionResult?.reflection2 !== true){
+              setShowOverlayQuestion2(true); //리플랙션2 안했으면 보여줌.
+            }else{ 
+              setShowOverlayQuestion2(false); //리플랙션2 했으면 안보여줌.
+            }
+
+            if(reflectionResult?.reflection1 !== true){
+              setIsLocked(true); // 락 걸림
+            }else{ 
+              setIsLocked(false); //업데이트 하면 리플랙션 테이블 초기화되니까 락 해제
+            }
+          }else{
+            console.log('📅', uploadCheck, '일 지남 - 업데이트 대기');
+            setIsLocked(false); 
+          }
+        }
+        
+        console.log('✅ Navbar: 업로드 체크 및 리플렉션 데이터 로드 완료');
+      } catch (error) {
+        console.error('❌ Navbar: 업로드 체크 및 리플렉션 데이터 로드 오류:', error);
+        setIsLocked(false); // 오류 시 락 해제
+        setIsReflection1(false);
+        setIsReflection2(false);
       }
+    };
 
-      if(isReflection1){
-        setIsLocked(false); //업데이트 하면 리플랙션 테이블 초기화되니까 락 해제
-      }else{ 
-        setIsLocked(true); // 락 걸림
-      }
-    }else if(isOneWeekPassed()==-1){  //업데이트 날짜 지난 경우, 첫번째 업데이트 유저
-      console.log('첫번째 업데이트 유저 메뉴바 락 해제되었습니다. 업데이트 후, 사용가능합니다.');
-      setIsLocked(false); // 락 걸림
-    }else{
-      setIsLocked(false); 
-    }
-  }, []);
+    loadUploadCheckAndSetLockAndReflection();
+  }, []); // 초기 로드 시에만 실행
 
-
-
-  const userName = "daisy";
+  // 사용자 이름 가져오기 (DB에서 가져온 실제 사용자 데이터 사용)
+  const userName = userData?.nickname || 
+                   user?.user_metadata?.full_name || 
+                   user?.email?.split('@')[0] || 
+                   "사용자";
 
   return (
     <>
@@ -103,10 +136,24 @@ export function Navbar() {
             {isLoggedIn && !isLocked ? (
               <>
                 
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white " : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`
-              
-              }>
-                  <Link href="/my_profile">나의 알고리즘 자화상 </Link>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className={`${pathname === "/" ? "text-white " : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                  onClick={() => {
+                    // 페이지 이동 시 강제로 새로고침 파라미터 추가 (중복 클릭 방지)
+                    if (window.location.pathname === '/my_profile') {
+                      // 이미 my_profile 페이지에 있으면 새로고침 파라미터만 추가
+                      const timestamp = Date.now();
+                      router.replace(`/my_profile?refresh=${timestamp}`);
+                    } else {
+                      // 다른 페이지에서 온 경우 정상적인 이동
+                      const timestamp = Date.now();
+                      router.push(`/my_profile?refresh=${timestamp}`);
+                    }
+                  }}
+                >
+                  나의 알고리즘 자화상
                 </Button>
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
                 onClick={() => {

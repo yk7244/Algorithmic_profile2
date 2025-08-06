@@ -385,7 +385,7 @@ export default function Home() {
               </>
 
               {/* 업데이트 했으면 분석할 시청기록 개수와 날짜  확인 */}
-              {watchHistory.length > 0 && (
+              {Array.isArray(watchHistory) && watchHistory.length > 0 && (
                 <div className="w-full max-w-[700px] mb-6">
                   <div className="bg-gradient-to-r from-black via-gray-900 to-gray-800 rounded-xl p-6 shadow flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex flex-col items-center sm:items-start">
@@ -448,7 +448,7 @@ export default function Home() {
               </div>
 
               {/* 분석된 시청 기록 목록 */}
-              {watchHistory.length > 0 && (
+              {Array.isArray(watchHistory) && watchHistory.length > 0 && (
                 <>
                 <div className="mt-8 w-full max-w-[897px] bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg">
                   {/* 시청 기록 목록 헤더 */}
@@ -493,16 +493,16 @@ export default function Home() {
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h3 className="text-lg font-medium mb-2">기본 정보</h3>
-                      <p>총 영상 수: {watchHistory.length}</p>
+                      <p>총 영상 수: {Array.isArray(watchHistory) ? watchHistory.length : 0}</p>
                       <p>총 키워드 수: {
-                        new Set(watchHistory.flatMap(item => item.keywords)).size
+                        Array.isArray(watchHistory) ? new Set(watchHistory.flatMap(item => item.keywords || [])).size : 0
                       }</p>
                     </div>
                     <div className="bg-gray-50 rounded-lg p-4">
                       <h3 className="text-lg font-medium mb-2">최다 출현 키워드</h3>
                       <div className="flex flex-wrap gap-2">
                         {Object.entries(
-                          watchHistory.flatMap(item => item.keywords)
+                          (Array.isArray(watchHistory) ? watchHistory.flatMap(item => item.keywords || []) : [])
                             .reduce((acc: {[key: string]: number}, keyword) => {
                               acc[keyword] = (acc[keyword] || 0) + 1;
                               return acc;

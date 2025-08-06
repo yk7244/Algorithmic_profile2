@@ -1,6 +1,6 @@
 import { ClusterHistory } from "@/app/types/profile";   
 import { Sparkles } from "lucide-react";
-import { isOneWeekPassed } from "@/app/utils/uploadCheck";
+// import { isOneWeekPassed } from "@/app/utils/uploadCheck"; // 사용하지 않음
 import React, { useState, useEffect } from "react";
 import { getClusterHistory } from "@/app/utils/get/getClusterHistory";
 import { getWatchHistory } from "@/app/utils/get/getWatchHistory";
@@ -17,16 +17,59 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
     const router = useRouter();
     if (!history) return null;
     const [open, setOpen] = useState(false);     
+    const [watchHistory, setWatchHistory] = useState<any[]>([]);
+    const [reflectionData, setReflectionData] = useState<ReflectionData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    
     //console.log('history!!!', history);
     //console.log('history.images!!!', history.images);
 
-    const watchHistory = getWatchHistory();
+    // 비동기 데이터 로드
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                setIsLoading(true);
+                
+                // DB에서 시청 기록 로드
+                const watchHistoryData = await getWatchHistory();
+                setWatchHistory(Array.isArray(watchHistoryData) ? watchHistoryData : []);
+                
+                // DB에서 리플렉션 데이터 로드  
+                const reflectionData = await getReflectionData();
+                setReflectionData(reflectionData);
+                
+                console.log('✅ ClusterHistoryCard 데이터 로드 완료');
+            } catch (error) {
+                console.error('❌ ClusterHistoryCard 데이터 로드 오류:', error);
+                setWatchHistory([]);
+                setReflectionData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadData();
+    }, []);
+
+    // 로딩 중일 때
+    if (isLoading) {
+        return (
+            <div className="bg-white rounded-2xl shadow p-6 mb-6">
+                <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                    <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+            </div>
+        );
+    }
+
     //날짜 찾기 
-    const totalVideos = watchHistory.length;
-    const allKeywords = watchHistory.flatMap((v) => v.keywords || []);
+    const totalVideos = Array.isArray(watchHistory) ? watchHistory.length : 0;
+    const allKeywords = Array.isArray(watchHistory) ? watchHistory.flatMap((v) => v.keywords || []) : [];
     const totalKeywords = allKeywords.length;
 
-    const reflectionData = getReflectionData();
     //console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
     const isDisabled = reflectionData?.reflection1 !== false;
 
@@ -48,8 +91,9 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
             <div className="flex flex-row justify-end gap-2 p-4 ">
                 <div className="relative group">
                     <button className="bg-black text-white rounded-full px-6 py-3 text-md font-bold shadow transition hover:bg-gray-900"
-                    onClick={() => {
+                    onClick={async () => {
                         setOpen(true);
+                        // setReflectionData는 동기 함수이므로 그대로 호출
                         setReflectionData();
                     }}
                     >

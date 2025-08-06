@@ -1,11 +1,11 @@
 "use client";
 
 import { ArrowUpRight, ArrowRight, Link } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getUserData } from "@/app/utils/get/getUserData";
 import { getLatestProfileData, getProfileData } from "@/app/utils/get/getProfileData";
 import { useRouter } from "next/navigation";
-import { setReflection_answer, setReflectionData, setReflectionData_reflection2, updateReflectionAnswer } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData, setReflectionData_reflection2, setReflectionData_reflection2DB, updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 
 const subQuestions = [
     "지난 한 주, 튜브렌즈에서의 경험은 어떠셨나요?",
@@ -29,7 +29,23 @@ const questions = [
 export default function ReflectionQuestionsPage2() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<string[]>(["", "", ""]);
+    const [userData, setUserData] = useState<any>(null);
     const router = useRouter();     
+
+    // DB에서 사용자 프로필 데이터 로드
+    useEffect(() => {
+        const loadUserData = async () => {
+            try {
+                const profileData = await getLatestProfileData();
+                setUserData(profileData);
+                console.log('✅ Reflection2: 사용자 프로필 로드 완료:', profileData?.nickname);
+            } catch (error) {
+                console.error('❌ Reflection2: 사용자 프로필 로드 오류:', error);
+            }
+        };
+
+        loadUserData();
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const updated = [...answers];
@@ -49,30 +65,22 @@ export default function ReflectionQuestionsPage2() {
                 alert("25자 이상 작성해주세요.");
                 return;
             }
-        updateReflectionAnswer({
-            reflectionKey: "reflection2_answer",
-                answerKey: "answer1",
-                value: answers[currentIndex - 1]
-            });
+            // localStorage 저장은 완료 시 한 번에 처리
+            console.log('Q1 답변:', answers[currentIndex - 1]);
         }
         if (currentIndex === 2) {
             if (answers[currentIndex - 1].length <= 25){
                 alert("25자 이상 작성해주세요.");
                 return;
             }
-            updateReflectionAnswer({
-                reflectionKey: "reflection2_answer",
-                answerKey: "answer2",
-                value: answers[currentIndex - 1]
-            });
+            // localStorage 저장은 완료 시 한 번에 처리
+            console.log('Q2 답변:', answers[currentIndex - 1]);
         }
 
         if (currentIndex === questions.length - 2) {
-            setReflection_answer(); //계속 스택으로 쌓임
+            // setReflection_answer(); // TODO: DB 버전으로 대체 필요
         }
     };
-    const userData = getLatestProfileData();
-    //console.log('userData', userData);
 
     return (
         <div className="relative min-h-screen bg-gray-300 text-white flex flex-col overflow-hidden">
@@ -127,10 +135,16 @@ export default function ReflectionQuestionsPage2() {
                     <button
                         className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
-                        onClick={() => {
+                        onClick={async () => {
+                            // DB에 reflection2 완료 상태와 답변 저장
+                            const reflection2Answers = {
+                                answer1: answers[0], // Q1 답변
+                                answer2: answers[1]  // Q2 답변
+                            };
+                            console.log('🔄 reflection2 답변 DB 저장 중:', reflection2Answers);
+                            const success = await setReflectionData_reflection2DB(reflection2Answers);
+                            console.log(success ? '✅ reflection2 답변 DB 저장 성공' : '❌ reflection2 답변 DB 저장 실패');
                             router.push("/"); 
-                            setReflectionData_reflection2();
-                            
                         }}
                         >
                         알고리즘 자화상 업데이트 하러 가기

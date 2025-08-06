@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { ImageData } from '@/app/types/profile';
-import { profiles } from '@/app/others_profile/dummy-data';
+import { useAuth } from '@/context/AuthContext';
 
 interface CardGridProps {
     cards: ImageData[];
@@ -9,6 +9,19 @@ interface CardGridProps {
 
 const CardGrid: React.FC<CardGridProps> = ({ cards, searchKeyword }) => {
     const router = useRouter();
+    const { isLoggedIn } = useAuth();
+
+    // 로그인하지 않은 사용자에게는 빈 그리드 표시
+    if (!isLoggedIn) {
+        return (
+            <div className="relative w-full">
+                <div className="grid grid-cols-4 gap-8 py-8 px-4 max-h-[700px]">
+                    {/* 빈 상태 */}
+                </div>
+            </div>
+        );
+    }
+
     return (
       <div className="relative w-full">
         {/* 카드 그리드 */}
@@ -16,7 +29,7 @@ const CardGrid: React.FC<CardGridProps> = ({ cards, searchKeyword }) => {
             {cards.map((image, idx) => {
                 const imageSrc = image.src || '/images/default_image.png';
                 const userId = image.user_id;
-                const profile = profiles.find(p => p.id === userId);
+                // 프로필 정보는 필요시 DB에서 별도로 조회
                 return (
                     <button
                         key={image.id || idx}

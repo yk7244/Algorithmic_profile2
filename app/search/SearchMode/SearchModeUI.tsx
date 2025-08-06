@@ -1,5 +1,5 @@
 
-import { setReflectionData_searched } from "@/app/utils/save/saveReflection";
+import { setReflectionData_searchedDB } from "@/app/utils/save/saveReflection";
 import { MousePointer2Icon, MousePointerClick, MousePointerClickIcon } from "lucide-react";
 import React, { useState } from "react";
 
@@ -71,10 +71,10 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
                     ):null}
                     
                     <button
-                        onClick={() =>{
+                        onClick={async () =>{
                             if(selectedImages.length >= 1){
                                 handleSearch();
-                                setReflectionData_searched();
+                                await setReflectionData_searchedDB();
                             }
                         }}
                         className={`z-30 text-black font-bold py-3 px-10 rounded-full 

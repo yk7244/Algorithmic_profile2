@@ -2,6 +2,8 @@ import { Dispatch, SetStateAction } from "react";
 import { generateProfileId } from "../Hooks/useProfileStorage";
 import { ProfileData } from '../../../types/profile';
 import { saveProfileData } from "../../../utils/save/saveProfileData";
+import { getActiveUserImages, convertDBImagesToLocalStorage, saveActiveUserImages } from '@/lib/database-clean';
+import { supabase } from '@/lib/supabase-clean';
 
 interface UseGenerateUserProfileParams {
     openai: any;
@@ -34,29 +36,60 @@ export function useGenerateUserProfile({
             await new Promise(resolve => setTimeout(resolve, 1500));
         }
             
-        // localStorage에서 profileImages 데이터 가져오기
-        const profileImagesData = localStorage.getItem('profileImages');
-        console.log('프로필 이미지 데이터:', profileImagesData);
+        // 현재 로그인한 사용자 ID 가져오기
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            console.error('사용자 인증 정보를 찾을 수 없습니다.');
+            return;
+        }
+
+        // DB에서 사용자의 활성 이미지 데이터 가져오기 (localStorage 대체)
+        let dbImages = await getActiveUserImages(user.id);
+        console.log('DB에서 가져온 이미지 데이터:', dbImages);
             
-        if (!profileImagesData) {
+        // DB에 데이터가 없으면 localStorage 확인 후 자동 마이그레이션
+        if (!dbImages || dbImages.length === 0) {
+            const profileImagesData = localStorage.getItem('profileImages');
+            if (profileImagesData) {
+                console.log('localStorage에서 기존 데이터 발견, 자동 마이그레이션 수행');
+                try {
+                    const localImages = JSON.parse(profileImagesData);
+                    if (Array.isArray(localImages) && localImages.length > 0) {
+                        const success = await saveActiveUserImages(user.id, localImages);
+                        if (success) {
+                            console.log('자동 마이그레이션 완료');
+                            dbImages = await getActiveUserImages(user.id); // 마이그레이션된 데이터 다시 가져오기
+                        }
+                    }
+                } catch (error) {
+                    console.error('자동 마이그레이션 중 오류:', error);
+                }
+            }
+        }
+            
+        // 여전히 데이터가 없으면 기본 프로필 생성
+        if (!dbImages || dbImages.length === 0) {
             const defaultProfile = {
             nickname: '알고리즘 탐험가',
-            description: '아직 프로필 이미지가 없습니다. 메인 페이지에서 "Tell me who I am"을 클릭하여 프로필을 생성해보세요!'
+            description: '프로필을 생성하려면 업로드를 진행해주세요.'
             };
             setProfile(defaultProfile);
                 
                 // 기본 프로필도 저장
+                const { data: { user: currentUser } } = await supabase.auth.getUser();
                 const profileData: ProfileData = {
                     id: generateProfileId(),
+                    user_id: currentUser?.id || 'unknown',
                     nickname: defaultProfile.nickname,
                     description: defaultProfile.description,
                     created_at: new Date().toISOString(),
                 };
-                saveProfileData(profileData);
+                await saveProfileData(profileData);
             return;
         }
 
-        const profileImages = JSON.parse(profileImagesData);
+        // DB 이미지를 localStorage 형식으로 변환하여 기존 로직과 호환
+        const profileImages = convertDBImagesToLocalStorage(dbImages);
         // 프롬프트 생성을 위한 데이터 가공
         const imageData = Object.values(profileImages).map((image: any) => ({
             main_keyword: image.main_keyword,
@@ -111,13 +144,15 @@ export function useGenerateUserProfile({
         setProfile(newProfile);
             
             // 새로운 프로필도 저장
+            const { data: { user: authUser } } = await supabase.auth.getUser();
             const profileData: ProfileData = {
                 id: generateProfileId(),
+                user_id: authUser?.id || 'unknown',
                 nickname: newProfile.nickname,
                 description: newProfile.description,
                 created_at: new Date().toISOString()
             };
-            saveProfileData(profileData); 
+            await saveProfileData(profileData); 
             
         } catch (error) {
         console.error('프로필 생성 오류:', error);

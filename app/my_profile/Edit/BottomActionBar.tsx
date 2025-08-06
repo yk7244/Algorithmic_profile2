@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Pen, Save, Sparkles } from "lucide-react";
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -7,6 +7,7 @@ import { saveProfileImages } from "@/app/utils/save/saveImageData";
 import { savePositions } from "./Hooks/savePosition";
 import { useRouter } from 'next/navigation';
 import { getReflectionData } from "@/app/utils/get/getReflectionData";
+import { isOneWeekPassed } from "@/app/utils/uploadCheck";
 import OverlayQuestion1 from "../../reflection/reflection1/overlay/OverlayQuestion1";
 import OverlayQuestion2 from "../../reflection/reflection2/overlay/OverlayQuestion2";
 
@@ -38,32 +39,94 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
     const router = useRouter();
     const [showOverlayQuestion1, setShowOverlayQuestion1] = useState(false);
     const [showOverlayQuestion2, setShowOverlayQuestion2] = useState(false);
+    const [reflectionData, setReflectionData] = useState<any>(null);
+    const [isReflection1, setIsReflection1] = useState(false);
+    const [isReflection2, setIsReflection2] = useState(false);
+    const [isSaving, setIsSaving] = useState(false); // ✅ 저장 중 상태 추가
+
+    // 업로드 체크 및 리플렉션 데이터 로드
+    useEffect(() => {
+        const loadUploadCheckAndReflection = async () => {
+            try {
+                // 업로드 체크
+                const uploadCheck = await isOneWeekPassed();
+                console.log('🔍 BottomActionBar Upload Check 결과:', uploadCheck);
+                
+                // 리플렉션 데이터 로드
+                const data = await getReflectionData();
+                setReflectionData(data);
+                
+                // 초기 사용자는 reflection 불필요
+                if (uploadCheck === -1) {
+                    console.log('🔵 BottomActionBar: 초기 사용자 reflection 불필요');
+                    setIsReflection1(false);
+                    setIsReflection2(false);
+                } else {
+                                    // 기존 사용자만 reflection 체크
+                // ✅ 수정: reflection1 완료 시 탐색 활성화
+                const reflection1Status = data?.reflection1 === true;
+                const reflection2Status = data?.reflection1 === true && data?.reflection2 !== true;
+                
+                console.log('🎯 BottomActionBar Reflection 상태 디버깅:', {
+                    'data?.reflection1': data?.reflection1,
+                    'data?.reflection2': data?.reflection2,
+                    'reflection1Status (탐색 활성화)': reflection1Status,
+                    'reflection2Status': reflection2Status
+                });
+                
+                setIsReflection1(reflection1Status);
+                setIsReflection2(reflection2Status);
+                }
+                
+                console.log('✅ BottomActionBar: 업로드 체크 및 리플렉션 데이터 로드 완료');
+            } catch (error) {
+                console.error('❌ BottomActionBar: 데이터 로드 오류:', error);
+                setReflectionData(null);
+                setIsReflection1(false);
+                setIsReflection2(false);
+            }
+        };
+
+        loadUploadCheckAndReflection();
+    }, []);
+
     if (sliderCurrentHistoryIndex !== -1) {
         return null;
     }
 
-    // 위치 병합 후 저장하는 함수
-    const savePositions = () => {
-        const updatedImages = images.map(img => {
-            const pos = positions[img.id];
-            if (pos) {
-                return {
-                    ...img,
-                    left: `${pos.x}px`,
-                    top: `${pos.y}px`,
-                    position: { x: pos.x, y: pos.y },
-                };
-            }
-            return img;
-        });
-        console.log('updatedImages', updatedImages);
-        saveProfileImages(updatedImages);
+    // 위치 병합 후 저장하는 함수 (중복 실행 방지)
+    const savePositions = async () => {
+        if (isSaving) {
+            console.log('⚠️ 이미 저장 중입니다. 중복 실행을 방지합니다.');
+            return;
+        }
+
+        setIsSaving(true);
+        console.log('🔄 위치 저장 시작...');
+        
+        try {
+            const updatedImages = images.map(img => {
+                const pos = positions[img.id];
+                if (pos) {
+                    return {
+                        ...img,
+                        left: `${pos.x}px`,
+                        top: `${pos.y}px`,
+                        position: { x: pos.x, y: pos.y },
+                    };
+                }
+                return img;
+            });
+            
+            console.log('updatedImages', updatedImages);
+            await saveProfileImages(updatedImages);
+            console.log('✅ 위치 저장 완료');
+        } catch (error) {
+            console.error('❌ 위치 저장 실패:', error);
+        } finally {
+            setIsSaving(false);
+        }
     };
-    
-    const reflectionData = getReflectionData();
-    //console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
-    const isReflection1 = reflectionData?.reflection1 !== false;
-    const isReflection2 = reflectionData?.reflection2 !== false;
 
     return (
         <>
@@ -163,14 +226,29 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 <div className="fixed bottom-20 right-20 flex flex-col gap-3 z-50 transition-all duration-300">
 
                     <button
-                    className={`h-12 px-8 border border-gray-200 flex items-center gap-2 rounded-full shadow-md bg-black text-white hover:text-gray-200 hover:bg-gray-600`}                    
-                    onClick={() => {
-                        savePositions();
+                    className={`h-12 px-8 border border-gray-200 flex items-center gap-2 rounded-full shadow-md ${
+                        isSaving 
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                            : 'bg-black text-white hover:text-gray-200 hover:bg-gray-600'
+                    }`}                    
+                    onClick={async () => {
+                        if (isSaving) return;
+                        await savePositions();
                         offEditClick();
                     }}
+                    disabled={isSaving}
                     >
-                    <Save className="w-5 h-5 text-white" />
-                    저장하기
+                    {isSaving ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-gray-300 border-t-white rounded-full animate-spin" />
+                            저장 중...
+                        </>
+                    ) : (
+                        <>
+                            <Save className="w-5 h-5 text-white" />
+                            저장하기
+                        </>
+                    )}
                     </button>
                     
 
