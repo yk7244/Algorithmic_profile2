@@ -7,7 +7,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    // 저장소 설정 강화
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'supabase.auth.token',
+    // 디버그 모드 (개발 환경에서만)
+    debug: process.env.NODE_ENV === 'development'
+  },
+  // 전역 옵션
+  global: {
+    headers: {
+      'x-my-custom-header': 'algorithmic-profile'
+    }
+  },
+  // DB 연결 설정
+  db: {
+    schema: 'public'
+  },
+  // 실시간 연결 설정 (지원되는 옵션만)
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 })
 

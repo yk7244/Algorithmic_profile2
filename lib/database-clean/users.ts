@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase-clean'
 import type { Database } from '@/lib/supabase-clean'
+import { withSupabaseRetry } from '@/lib/utils/retry'
 
 type UserRow = Database['public']['Tables']['users']['Row']
 type UserInsert = Database['public']['Tables']['users']['Insert']
@@ -9,7 +10,7 @@ type UserUpdate = Database['public']['Tables']['users']['Update']
  * 사용자 정보 조회
  */
 export async function getUser(userId: string): Promise<UserRow | null> {
-  try {
+  return withSupabaseRetry(async () => {
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -18,14 +19,15 @@ export async function getUser(userId: string): Promise<UserRow | null> {
 
     if (error) {
       console.error('Error fetching user:', error)
-      return null
+      throw new Error(`사용자 조회 실패: ${error.message}`)
     }
 
     return data
-  } catch (error) {
-    console.error('Error in getUser:', error)
+  }, `사용자 정보 조회 (${userId})`)
+  .catch(error => {
+    console.error('❌ getUser 최종 실패:', error)
     return null
-  }
+  })
 }
 
 /**

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase-clean'
 import type { Database } from '@/lib/supabase-clean'
+import { withUploadRetry } from '@/lib/utils/retry'
 
 type WatchHistoryRow = Database['public']['Tables']['watch_history']['Row']
 type WatchHistoryInsert = Database['public']['Tables']['watch_history']['Insert']
@@ -93,7 +94,7 @@ export async function createWatchHistories(watchData: WatchHistoryInsert[]): Pro
  * 시청 기록 저장 (localStorage 대체)
  */
 export async function saveWatchHistory(userId: string, watchHistoryArray: any[]): Promise<boolean> {
-  try {
+  return withUploadRetry(async () => {
     if (!watchHistoryArray || watchHistoryArray.length === 0) {
       return true
     }
@@ -241,10 +242,11 @@ export async function saveWatchHistory(userId: string, watchHistoryArray: any[])
     
     console.log(`✅ watch_history 저장 완료: ${result.length}개`);
     return result.length > 0;
-  } catch (error) {
-    console.error('❌ Error in saveWatchHistory:', error);
+  }, `시청 기록 저장 (${userId}, ${watchHistoryArray.length}개 항목)`)
+  .catch(error => {
+    console.error('❌ saveWatchHistory 최종 실패:', error);
     return false;
-  }
+  });
 }
 
 /**
