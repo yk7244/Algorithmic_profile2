@@ -93,13 +93,14 @@ const router = useRouter();
             className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'profile' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
             onClick={() => setActiveTab('profile')}
           >
-            내 알고리즘 자화상 히스토리
+            내 알고리즘 시각화 히스토리
           </button>
           <button
-            className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'open_setting' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}`}
+            className={`text-lg text-left w-full px-4 py-2 font-bold rounded-lg transition-colors ${activeTab === 'open_setting' ? 'text-gray-900 bg-gray-100' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'}
+            disabled  `}
             onClick={() => setActiveTab('open_setting')}
           >
-            내 알고리즘 자화상 공개 설정
+            내 알고리즘 시각화 공개 설정
           </button>
         </nav>
         <div className="w-full px-8 pb-20 mb-10">
@@ -144,6 +145,7 @@ const router = useRouter();
             </div>
           </>
         )}
+        {/* 공개 설정 
         {activeTab === 'open_setting' && (
           <div className="w-full mx-auto flex flex-col items-center justify-center py-2 pr-20">
           <div className={`w-full flex items-center gap-6 px-8 py-8 rounded-2xl shadow-lg border transition-all duration-300
@@ -158,11 +160,11 @@ const router = useRouter();
               </div>
               <div className="text-gray-500 text-sm">
                 {userData?.open_to_connect
-                  ? "다른 사용자가 내 알고리즘 자화상을 둘러볼 수 있도록 허용할게요."
-                  : "다른 사용자가 내 알고리즘 자화상을 볼 수 없도록 할게요."}
+                  ? "다른 사용자가 내 알고리즘 시각화를 둘러볼 수 있도록 허용할게요." 
+                  : "다른 사용자가 내 알고리즘 시각화를 볼 수 없도록 할게요."}
               </div>
             </div>
-            {/* 스위치 */}
+          
             <button
               onClick={handleToggle}
               className={`relative w-14 h-8 flex items-center rounded-full transition-colors duration-300
@@ -176,7 +178,9 @@ const router = useRouter();
             </button>
           </div>
         </div>
+        
         )}
+        */}
       </main>
     </div>
   );

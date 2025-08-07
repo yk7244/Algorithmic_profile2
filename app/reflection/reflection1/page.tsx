@@ -11,7 +11,7 @@ const subQuestions = [
     "질문은 총 3가지예요. 먼저 첫번째 질문을 드려볼게요.",
     "그렇게 느끼셨다니, 흥미로워요! ",
     "마지막으로, ",
-    "알고리즘 자화상 감상 기록이 끝났어요.",    
+    "알고리즘 시각화 감상 기록이 끝났어요.",    
     "이제, "
 ];
 
@@ -19,8 +19,8 @@ const questions = [
     "감상을 남겨주세요.",
     "Q1. 알고리즘이 바라본 ‘나는’ 어떤 사람이었나요?",
     "Q2. 알고리즘이 바라본 ‘나’는, 내가 생각하는 나와 얼마나 닮아 있었나요?",
-    "Q3. 알고리즘 자화상’을 보고 느낀 생각이나 감정은 무엇인가요",
-    "적어주신 감상은 알고리즘에 곧바로 반영되진 않아요. 스스로의 관심사와 그 방향을 더 또렷하게 마주하게 되었기를 바래요.",
+    "Q3. 알고리즘 자화상 분석 결과를 보고 어떤 느낌이나 생각이 들었는지 자유롭게 공유해주세요",
+    "스스로의 관심사를 더 또렷하게 마주하게 되었기를 바래요.",
     "새로운 알고리즘을 직접 탐색하는 시간을 가져볼까요? "
 ];
 
@@ -78,12 +78,20 @@ export default function ReflectionQuestionsPage() {
         
             <h1 className="text-black text-xl font-semibold mb-1">{subQuestions[currentIndex]}</h1> 
             <h1 className="text-black text-xl font-semibold mb-3">{questions[currentIndex]}</h1>
+            {currentIndex === 4 && (
+                <div className="text-gray-400 font-bold text-[14px] mb-4">적어주신 감상은 알고리즘에 반영되진 않습니다. </div>
+            )}
+            {currentIndex === 5 && (
+                <div className="text-gray-400 font-bold text-[14px] mb-4">
+                    적어주신 내용을 저장중이예요. 잠시만 기다려주세요.
+                </div>
+            )}
 
             {/* 입력 필드: Q1~Q3에만 보임 */}
             { currentIndex === 1 || currentIndex === 3 ? (
                 <>
                 <div className="text-gray-400 text-[12px] mb-10">
-                    25자에서 300자 내외로 작성해주세요.
+                    25자 이상 작성해주세요.
                 </div>
                 <div className="flex items-center bg-white rounded-full shadow-2xl px-6 py-4 w-full max-w-2xl">
                     <input
@@ -159,13 +167,15 @@ export default function ReflectionQuestionsPage() {
 
             {/* 하단 Next 버튼: 항상 있음 */}
             {currentIndex < questions.length - 1 ? (
+                <>  
                 <button
                 onClick={handleNext}
                 className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
                 >
-                다음
+                    {currentIndex === 3 ? "완료" : "다음"}
                 <ArrowRight className="ml-1 w-5 h-5" />
                 </button>
+                </>
             ):(
                 <div className="flex flex-row gap-4">  
                     <button
@@ -184,7 +194,7 @@ export default function ReflectionQuestionsPage() {
                             router.push("/my_profile"); 
                         }}
                         >
-                        나의 알고리즘 자화상으로 돌아가기
+                        돌아가기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                     <button
@@ -203,7 +213,7 @@ export default function ReflectionQuestionsPage() {
                             router.push("/my_profile?explore=1"); 
                         }}
                         >
-                        알고리즘 탐색하기
+                        다른 사람 알고리즘 탐색하기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                 </div>

@@ -51,18 +51,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold tracking-tight">
-                        {profile?.nickname ? profile.nickname : 'My 알고리즘 자화상'}
+                        {profile?.nickname ? profile.nickname : 'My 알고리즘 시각화'}
                         <div
                             className="justify-center absolute left-80 ml-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-r-white after:border-l-transparent after:mr-[-1px]"
                             style={{ zIndex: 9999 }}
                         >
-                            당신의 시청 성향을 종합적으로 분석해 <br/> 재밌는 동물로 표현해봤어요.
+                            당신의 시청 성향을 종합적으로 분석해 <br/> 재밌는 캐릭터로 표현해봤어요.
                         </div>
                     </h1>
                 </div>
                 {/* 닉네임 설명 */}
                 <div className="text-gray-700 text-sm leading-relaxed mt-2">
-                {displayProfile?.description || '나만의 알고리즘 자화상을 생성해보세요.'}
+                {displayProfile?.description || '나만의 알고리즘 시각화를 생성해보세요.'}
                 </div>
             </div>
             

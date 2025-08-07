@@ -58,10 +58,10 @@ export const arrangeImagesInCenter = (
   });
 
   // 2. 시뮬레이션 실행 (물리 기반)
-  const iterations = 120;
+  const iterations = 140;
   const repulsionForce = 0.8;
   const gravityForce = 0.015;
-  const spacing = 20; // 이미지 간 최소 간격
+  const spacing = 6; // 이미지 간 최소 간격
 
   for (let i = 0; i < iterations; i++) {
     // 중력 (중앙으로 끌어당기는 힘)

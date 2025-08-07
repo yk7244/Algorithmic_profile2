@@ -4,9 +4,11 @@ import {
   ImageData
 } from '../../../types/profile';
 import { getSliderHistory } from "@/app/utils/get/getSliderHistory";
+import { getLatestProfileData } from "@/app/utils/get/getProfileData";
+import { getUserData } from "@/app/utils/get/getUserData";
 
 export function useHistorySlider({
-    images,
+    originalImage: initialOriginalImage,
     positions,
     frameStyles,
     setPositions,
@@ -18,7 +20,7 @@ export function useHistorySlider({
     originalBgColor,
     changeProfile,
 }: {
-    images: ImageData[];   
+    originalImage: ImageData[];
     positions: Record<string, {x: number, y: number}>;
     frameStyles: Record<string, string>;
     setPositions: (positions: Record<string, {x: number, y: number}>) => void;
@@ -33,6 +35,7 @@ export function useHistorySlider({
     const [histories, setHistories] = useState<HistoryData[]>([]);
     const [currentHistoryIndex, setCurrentHistoryIndex] = useState<number>(-1);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [originalImage, setOriginalImage] = useState<ImageData[]>(initialOriginalImage);
 
     // 히스토리 불러오기 (페이지 첫 로드 시)
     useEffect(() => {
@@ -45,7 +48,7 @@ export function useHistorySlider({
                 if (SliderHistory && Array.isArray(SliderHistory)) {
                     const migratedHistories = SliderHistory.map((history: any) => ({
                         ...history,
-                        images: history.images || images // images는 props로 받은 초기 이미지
+                        images: history.images || originalImage // images는 props로 받은 초기 이미지
                     }));
                     setHistories(migratedHistories);
                 } else {
@@ -61,7 +64,10 @@ export function useHistorySlider({
         loadSliderHistory();
     }, []);
 
-    
+    useEffect(() => {
+        setImages(originalImage);
+        setOriginalImage(originalImage); // 최초 한 번만!
+    }, []);   
 
     // 히스토리 재생 효과
     useEffect(() => {
@@ -158,15 +164,56 @@ export function useHistorySlider({
     }, [isPlaying, histories, setPositions, setFrameStyles, setVisibleImageIds, setImages, placeholderImage]);
 
     // 히스토리 클릭 핸들러
-    const handleHistoryClick = (index: number) => {
+    const handleHistoryClick = (index: number, originalImage: any[]) => {
         console.log(`🕐 === 히스토리 ${index} 클릭 ===`);
         
         // -1은 원본 ProfileImages 상태를 의미
         if (index === -1) {
-            if (onHistoryBgColorChange) onHistoryBgColorChange(originalBgColor); // 원래 배경색으로 복원
+            // 1. 프로필/유저 데이터 최신화 (이미지 상태는 건드리지 않음!)
+            const loadProfileAndUserData = async () => {
+                try {
+                    // 프로필 데이터 로드
+                    const latestProfile = await getLatestProfileData();
+                    if (latestProfile) {
+                        const profileData = {
+                            nickname: latestProfile.nickname || '',
+                            description: latestProfile.main_description || ''
+                        };
+                        if (typeof changeProfile === 'function') changeProfile(profileData.nickname, profileData.description);
+                    } else {
+                        if (typeof changeProfile === 'function') changeProfile('', '');
+                    }
+
+                    // 유저 데이터(배경색 등) 로드
+                    const userData = await getUserData();
+                    if (userData?.background_color) {
+                        if (typeof onHistoryBgColorChange === 'function') onHistoryBgColorChange(userData.background_color);
+                    } else {
+                        if (typeof onHistoryBgColorChange === 'function') onHistoryBgColorChange('#000000');
+                    }
+                } catch (error) {
+                    if (typeof changeProfile === 'function') changeProfile('', '');
+                    if (typeof onHistoryBgColorChange === 'function') onHistoryBgColorChange('#000000');
+                }
+            };
+            loadProfileAndUserData();
+
+            // 2. 이미지/포지션 등 복원 (setImages만 사용, setOriginalImages는 절대 호출하지 않음!)
+            console.log('🔵originalImage', originalImage);
             setCurrentHistoryIndex(-1);
-            //강제 새로고침
-            window.location.reload();
+            const safeOriginalImage = (originalImage ?? []).map(img => ({ ...img }));
+            const selectedHistoryImageIds = new Set<string>(safeOriginalImage.map(pImg => pImg.id).filter(id => id));
+            setVisibleImageIds(selectedHistoryImageIds);
+
+            setImages(safeOriginalImage); // 원본 복원
+            const positionsFromImages: Record<string, {x: number, y: number}> = {};
+            safeOriginalImage.forEach((img: any) => {
+                if (img.id && img.position) {
+                    positionsFromImages[img.id] = img.position;
+                }
+            });
+            setPositions(positionsFromImages);
+            setFrameStyles(frameStyles);
             return;
         }
         // index가 -1이 아닐 때, 해당 히스토리의 배경색을 적용

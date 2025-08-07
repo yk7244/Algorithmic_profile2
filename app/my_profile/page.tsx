@@ -54,6 +54,7 @@ function MyProfilePageContent() {
   const [showGeneratingDialog, setShowGeneratingDialog] = useState(false);
   const [generatingStep, setGeneratingStep] = useState(0);
   const [images, setImages] = useState<ImageData[]>([]);
+  const [originalImages, setOriginalImages] = useState<ImageData[]>([]);
   const [positions, setPositions] = useState<Record<string, {x: number, y: number}>>({});
   const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState(false);
@@ -188,9 +189,14 @@ function MyProfilePageContent() {
   // 히스토리 클릭 시 배경색 변경 콜백
   const handleHistoryBgColorChange = (bgColor: string) => setBgColor(bgColor);
 
+  // images와 originalImages를 모두 세팅하는 핸들러 분리
+  const handleSetImages = (imgs: ImageData[]) => {
+    setImages(imgs);
+    setOriginalImages(imgs);
+  };
   // [새로고침시] ProfileImages 로드 훅 사용
   useProfileImagesLoad({
-    setImages: setImages as Dispatch<SetStateAction<ImageData[]>>,
+    setImages: handleSetImages,
     setVisibleImageIds,
     setFrameStyles,
     setPositions,
@@ -242,6 +248,7 @@ function MyProfilePageContent() {
           if (profileImages && profileImages.length > 0) {
             console.log('✅ 업로드 완료 후 이미지 로드 성공!', profileImages.length, '개');
             setImages(profileImages);
+            setOriginalImages(profileImages); // 원본 따로 저장!
             setIsLoadingImages(false);
             
             const visibleIds = new Set(profileImages.map(img => img.id).filter(Boolean));
@@ -316,7 +323,7 @@ function MyProfilePageContent() {
   }, [images]);
 
   const historySlider = useHistorySlider({
-    images: images as ImageData[],
+    originalImage: originalImages as any[],
     positions,
     frameStyles,
     setPositions,
@@ -551,7 +558,7 @@ useEffect(() => {
                               </div>
                             </div>
                             <p className="text-lg font-medium mb-2 text-gray-600">아직 프로필이 생성되지 않았습니다</p>
-                            <p className="text-sm text-gray-500">업로드를 통해 나만의 알고리즘 자화상을 만들어보세요</p>
+                            <p className="text-sm text-gray-500">업로드를 통해 나만의 알고리즘 시각화를 만들어보세요</p>
                           </>
                         )}
                       </div>
@@ -603,11 +610,14 @@ useEffect(() => {
               {!isEditing && !isSearchMode && (
                 <div className="w-full">
                   <HistorySlider
+                    originalImage={originalImages} // 항상 원본만 전달!
                     histories={sliderHistories}
                     currentHistoryIndex={sliderCurrentHistoryIndex}
                     isPlaying={sliderIsPlaying}
                     handlePlayHistory={handlePlayHistory}
-                    handleHistoryClick={handleHistoryClick}
+                    handleHistoryClick={
+                      (index) => handleHistoryClick(index, originalImages)
+                    }
                     changeProfile={changeProfile}
                   />
                 </div>
