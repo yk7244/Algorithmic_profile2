@@ -226,16 +226,18 @@ useEffect(() => {
 return (
     <main className={`flex min-h-screen items-center p-4 py-40 relative overflow-hidden scroll-none 
         ${
-        showCompletePage
-        ? " " // showCompletePage가 true면 이 색
-        : bgColorByStep[generatingStep] || "bg-[#777E90]" // 아니면 step에 따라
+            showCompletePage ? '' :
+            generatingStep === 1 ? 'bg-[#000000]' : 
+            generatingStep === 2 ? 'bg-gradient-to-r from-[#000000] to-[#FFFFFF]' :
+            'bg-gradient-to-r from-[#8F8F8F] to-[#FFFFFF]'
+        }
     }`}
     >  
     
     {/* 하단 퍼지는 블러 애니메이션 배경 */}
     {showCompletePage ? (
         <div
-            className={`scroll-none min-h-screen bg-[#777E90] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
+            className={`scroll-none min-h-screen {bg-[#777E90] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
             style={{
             backgroundImage: "url('/images/upload_bg.svg')",
             backgroundSize: 'contain',
@@ -248,14 +250,15 @@ return (
             animation: 'fadeIn 2s ease-in-out',            
             }}>
             <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
-            <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
+            <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[120px] animate-blob" style={{ animationDelay: '2s' }} />
             <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />      
         </div>
     ):(
     <div className="absolute inset-0 overflow-hidden z-2 pointer-events-none">
-        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[120px] animate-blob" style={{ animationDelay: '0s' }} />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
+        <div className="absolute -bottom-[30%] -left-[20%] w-[60%] h-[80%] rounded-full bg-[#82A5FF] blur-[120px] animate-blob" style={{ animationDelay: '0s' }} />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-[#82A5FF] blur-[120px] animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-[10%] left-[10%] w-[40%] h-[20%] rounded-full bg-white blur-[70px] animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] rotate-20 rounded-full bg-[#98B5FF]  blur-[70px] animate-blob" style={{ animationDelay: '4s' }} />
     </div>
     )}
 
@@ -270,8 +273,8 @@ return (
                     style={{
                         animation: 'fadeIn 2s ease-in-out',
                     }}>
-                        알고리즘이 본 당신의 알고리즘 자화상이 완성되었습니다. <br/>
-                        {countdown}초 뒤 나의 알고리즘 자화상으로 이동할게요. 
+                        알고리즘이 본 당신의 알고리즘 시각화가 완성되었습니다. <br/>
+                        {countdown}초 뒤 나의 알고리즘 시각화로 이동할게요. 
                     </h1>
                 </div>
             </div>

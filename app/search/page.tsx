@@ -303,7 +303,7 @@ function SearchPageContent() {
         <div className="fixed top-22 right-10 bg-white/90 backdrop-blur-lg text-black px-7 py-3 rounded-full shadow-xl flex items-center min-w-[420px] max-w-[600px] z-50 animate-fadeIn">
           <span className="text-base flex items-center p-2 pr-3 pl-3">
             <img src="/images/cokieIcon.svg" alt="click" className="w-4 h-4 mr-4" />
-            더 궁금하다면 이미지를 클릭해 자화상 전체를 구경할 수 있어요.
+            더 궁금하다면 이미지를 클릭해 시각화 전체를 구경할 수 있어요.
           </span>
           <button
             className="flex items-center justify-center top-2 right-3 text-black font-bold text-lg hover:text-blue-400 transition  
@@ -329,14 +329,14 @@ function SearchPageContent() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-black/20 border-t-black rounded-full animate-spin mb-4"></div>
-              <p className="text-black text-xl"> 당신과 비슷한 취향의 알고리즘 정체성 키워드를 찾고 있어요...</p>
+              <p className="text-black text-xl"> 당신과 비슷한 취향의 알고리즘 키워드를 찾고 있어요...</p>
             </div>
           ) : searchResults.length > 0 ? (
             <>
             <h2 className="text-lg text-black/80  font-bold mb-1 flex flex-row items-center gap-2 ">
             
             
-            다른 사람들의 자화상에서 
+            다른 사람들의 알고리즘에서 
             {keywords.map((keyword, index) => (
               <div 
                 key={index}
@@ -348,11 +348,11 @@ function SearchPageContent() {
                 </span>
               </div>
             ))}
-            과 유사한 면모들을 찾았어요. <br/>
+            과 유사한 키워드들을 찾았어요. <br/>
 
             </h2>
             <h2 className="text-lg text-black/80 font-bold mb-4 flex flex-row items-center gap-1 ">
-            비슷한 취향을 가진 사람들의 페이지에 방문하여, 나와 닮은 점이나 새로운 관점을 발견해보세요.
+            비슷한 취향을 가진 사람들의 알고리즘을 확인하고, 나와 닮은 점이나 새로운 컨텐츠들을 발견해보세요.
             </h2>
             
             <CardStack3D 

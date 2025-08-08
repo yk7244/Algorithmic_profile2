@@ -258,10 +258,10 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                 {/* 이미지 내 좌측 상단 70% + 비슷한 키워드예요 */}
                                 <div className="absolute top-4 left-4 flex flex-col items-end gap-2 z-20">
                                     <div className="bg-blue-700 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
-                                        클러스터 유사도 {Math.round((card.similarity || 0) * 100)}%
+                                        키워드 유사도 {Math.round((card.similarity || 0) * 100)}%
                                     </div>
                                     <div className="bg-white/20 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
-                                        사용자 유사도 {Math.round((userId && userSimilarities[userId] ? userSimilarities[userId] : 0) * 100)}%
+                                        이 사람과의 전체 유사도  {Math.round((userId && userSimilarities[userId] ? userSimilarities[userId] : 0) * 100)}%
                                     </div>
                                 </div>
                                 {/* 중앙 하단 그라데이션 오버레이 */}
@@ -286,7 +286,7 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                         transform translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300
                                         hover:bg-white/80 hover:shadow-lg hover:text-black "
                                     >
-                                        알고리즘 자화상 전체 보러가기
+                                        알고리즘 전체 보러가기
                                     </button>
                                 </div>
                                 )}

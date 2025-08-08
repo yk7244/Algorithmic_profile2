@@ -49,7 +49,7 @@ const SearchModeUI: React.FC<SearchModeUIProps> = ({
                         <div className="flex flex-col items-end text-right gap-2">
                         <span className="text-base text-white">
                             새롭게 탐색하고 싶은 <br/>
-                            알고리즘 정체성 키워드를 선택하고 <br/>
+                            알고리즘 키워드를 선택하고 <br/>
                             탐색하기를 눌러주세요!
                         </span>
                         </div>

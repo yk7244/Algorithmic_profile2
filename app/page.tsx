@@ -601,7 +601,7 @@ useEffect(() => {
                         opacity: showButton ? 1 : 0.4,  
                       }}
                     >
-                      나의 알고리즘 자화상 보기
+                      나의 알고리즘 시각화 보기
                     </button>
                   )
                 </>

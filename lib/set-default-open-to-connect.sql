@@ -1,4 +1,4 @@
--- 알고리즘 자화상 공개 설정 기본값을 true로 변경
+-- 알고리즘 시각화 공개 설정 기본값을 true로 변경
 -- Supabase Dashboard의 SQL Editor에서 실행하세요
 
 -- 1. 기존 사용자들의 open_to_connect를 true로 변경 (선택사항)
@@ -20,4 +20,4 @@ FROM public.users
 WHERE id = auth.uid();
 
 -- 성공 메시지
-SELECT '알고리즘 자화상 공개 설정이 기본값 true로 변경되었습니다!' as status;
+SELECT '알고리즘 시각화 공개 설정이 기본값 true로 변경되었습니다!' as status;

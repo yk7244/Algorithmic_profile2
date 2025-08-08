@@ -4,7 +4,7 @@ import { getActiveUserImages, convertDBImagesToLocalStorage, saveActiveUserImage
 import { supabase } from '@/lib/supabase-clean';
 
 interface UseProfileImagesLoadProps {
-setImages: React.Dispatch<React.SetStateAction<ImageData[]>>;
+setImages: (imgs: ImageData[]) => void;
 setVisibleImageIds: React.Dispatch<React.SetStateAction<Set<string>>>;
 setFrameStyles: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 setPositions: React.Dispatch<React.SetStateAction<Record<string, {x: number, y: number}>>>;
@@ -57,7 +57,7 @@ export function getProfileImagesSync() {
 }
 
 interface UseProfileImagesLoadProps {
-    setImages: React.Dispatch<React.SetStateAction<ImageData[]>>;
+    setImages: (imgs: ImageData[]) => void;
     setVisibleImageIds: React.Dispatch<React.SetStateAction<Set<string>>>;
     setFrameStyles: React.Dispatch<React.SetStateAction<Record<string, string>>>;
     setPositions: React.Dispatch<React.SetStateAction<Record<string, {x: number, y: number}>>>;

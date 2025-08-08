@@ -286,7 +286,7 @@ return (
                     <div className="flex flex-row items-center gap-2">
                         <MousePointerClickIcon className="w-6 h-6 text-black animate-pulse " />
                         <div className="text-base text-black">
-                        내 자화상에 담고 싶은 키워드는 이미지를 클릭해 추가해보세요 
+                        내 시각화에 담고 싶은 키워드는 이미지를 클릭해 추가해보세요 
                         </div>
                     </div>
                 </div>

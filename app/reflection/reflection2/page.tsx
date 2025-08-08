@@ -147,7 +147,7 @@ export default function ReflectionQuestionsPage2() {
                             router.push("/"); 
                         }}
                         >
-                        알고리즘 자화상 업데이트 하러 가기
+                        알고리즘 시각화 업데이트 하러 가기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                 </div>

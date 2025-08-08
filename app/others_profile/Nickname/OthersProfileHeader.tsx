@@ -61,27 +61,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </div>
                     <span className="text-sm font-bold"> 과 비슷한 키워드를 가진 </span>                
                 </div>
-                <div className="text-sm font-bold flex flex-row items-center">다른 사람의 알고리즘 자화상은..</div>
+                <div className="text-sm font-bold flex flex-row items-center">다른 사람의 알고리즘 시각화는..</div>
 
                 <div className="flex items-center justify-between mt-12">
                     <h1 className="text-2xl font-bold tracking-tight">
-                        {profile?.nickname ? profile.nickname : 'My 알고리즘 자화상'}
+                        {profile?.nickname ? profile.nickname : 'My 알고리즘 시각화'}
                         <div
                             className="justify-center absolute left-80 ml-4 top-1/2 -translate-y-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-r-white after:border-l-transparent after:mr-[-1px]"
                             style={{ zIndex: 9999 }}
                         >
-                            {profile?.nickname ? profile.nickname : 'My 알고리즘 자화상'}님의 시청 성향을 종합적으로 분석해 <br/> 재밌는 동물로 표현해봤어요.
+                            {profile?.nickname ? profile.nickname : 'My 알고리즘 시각화'}님의 시청 성향을 종합적으로 분석해 <br/> 재밌는 동물로 표현해봤어요.
                         </div>
                     </h1>
                 </div>
                 {/* 닉네임 설명 */}
                 <div className="text-gray-700 text-sm leading-relaxed mt-2">
-                {displayProfile?.description || '나만의 알고리즘 자화상을 생성해보세요.'}
+                {displayProfile?.description || '나만의 알고리즘 시각화를 생성해보세요.'}
                 </div>
 
                 {/* 유사도 */}
                 <div className="flex items-center mt-6 text-sm text-black/40">  
-                    <span className="text-sm ">{profile?.nickname ? profile.nickname : 'My 알고리즘 자화상'}님은 당신과 전체적으로 </span>
+                    <span className="text-sm ">{profile?.nickname ? profile.nickname : 'My 알고리즘 시각화'}님은 당신과 전체적으로 </span>
                     <span className="text-sm ml-1 mr-1 text-blue-600"> {Math.round(similarities[0]*100)}%</span> 유사해요.
                 </div>
             </div>

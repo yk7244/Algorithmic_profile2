@@ -116,10 +116,11 @@ export function Navbar() {
               <div className="h-5 w-5 flex items-center justify-center">
                 <Image src="/images/logo.png" alt="TubeLens Logo" width={18} height={18} />
               </div>
-              <span className={`${pathname === "/" ? "text-white" : pathname === "/upload" ? "text-black" : "text-black"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
+              <span className={`${pathname === "/" ? "text-white bg-shadow-lg shadow-white  " : pathname === "/upload" ? "text-black" : "text-black"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
                 TubeLens
               </span>
             </Link>
+            {/*
             <HoverCard openDelay={100} closeDelay={200}>
               <HoverCardTrigger asChild>
                 <Link href="/introduction" className={`hidden md:flex items-center gap-1 transition-colors ml-3 
@@ -128,8 +129,9 @@ export function Navbar() {
                   <HelpCircle className="w-4 h-4" />
                 </Link>
               </HoverCardTrigger>
-              
+                          
             </HoverCard>
+            */}
           </div>
 
           <nav className="hidden md:flex items-center gap-x-4 md:pr-0">
@@ -139,7 +141,7 @@ export function Navbar() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={`${pathname === "/" ? "text-white " : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                  className={`${pathname === "/" ? "text-white " : pathname === "/my_profile" ? "bg-black text-white" : "text-black"} text-sm font-medium px-6 rounded-[20px]`}
                   onClick={() => {
                     // 페이지 이동 시 강제로 새로고침 파라미터 추가 (중복 클릭 방지)
                     if (window.location.pathname === '/my_profile') {
@@ -153,18 +155,18 @@ export function Navbar() {
                     }
                   }}
                 >
-                  나의 알고리즘 자화상
+                  나의 알고리즘
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                  <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : pathname === "/search" ? "bg-black text-white" : "text-black"} text-sm font-medium rounded-[20px]`}
                 onClick={() => {
-                  if (isReflection1) {
+                  if (reflectionData?.reflection1 === true) {
                     router.replace('/my_profile?explore=1');
                   } else {
                     setShowOverlayQuestion1(true);
                   }
                 }}
                 >
-                  <span>다른 사람의 알고리즘 자화상 탐색</span>
+                  <span>다른 사람의 알고리즘 탐색</span>
                 </Button>
                 
                 {/* 언어 선택 버튼 
@@ -172,7 +174,7 @@ export function Navbar() {
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
                 */}
-                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/" ? "text-white" : pathname === "/my_page" ? "bg-black text-white" : "text-black"} text-sm font-medium px-6 py-1.5 rounded-full`}>
                   <Link href="/my_page" className="flex items-center gap-1.5">
                     <UserCircle2 className="w-4 h-4" />
                     <span>{userName}</span>
@@ -230,11 +232,15 @@ export function Navbar() {
                         </Link>
                       </Button>
 
-                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile">나의 알고리즘 자화상</Link>    
+                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
+                        <Link href="/my_profile">나의 알고리즘</Link>    
                       </Button>
-                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile?explore=1">다른 사람의 알고리즘 자화상 탐색</Link>
+                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
+                        {reflectionData?.reflection1 === true ? (
+                          <Link href="/my_profile?explore=1">다른 사람의 알고리즘 탐색</Link>
+                        ) : (
+                          <div onClick={() => setShowOverlayQuestion1(true)}>다른 사람의 알고리즘 탐색</div>
+                        )}
                       </Button>
                       
                       
@@ -244,13 +250,14 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      
+                      {/*
                       {isMainPage && (
                         <div className="px-4 pt-5 flex items-center gap-1.5 text-gray-400 border-t border-gray-700 mt-1.5 rounded-[20px]">
                           <HelpCircle className="w-5 h-5" />
                           <span className="text-base">TubeLens가 궁금하신가요?</span>
                         </div>
                       )}
+                      */}
                     </>
                   )}
                 </nav>
