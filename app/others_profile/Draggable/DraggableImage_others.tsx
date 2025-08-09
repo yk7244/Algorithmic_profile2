@@ -253,6 +253,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onImageSelect(image);
+                                    setShowDetails(true);
                                 }}
                                 onError={() => setImageLoadError(true)}
                             />
