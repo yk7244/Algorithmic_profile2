@@ -177,7 +177,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                         disabled={!isReflection1}
                         onClick={() => {
                             if (isReflection1) {
-                                router.replace('/my_profile?explore=1');
+                                router.replace('/search');
                             } else {
                                 setShowOverlayQuestion1(true);
                             }

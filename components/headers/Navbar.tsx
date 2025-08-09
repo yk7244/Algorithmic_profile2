@@ -165,7 +165,7 @@ export function Navbar() {
                   <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : pathname === "/search" ? "bg-black text-white" : "text-black"} text-sm font-medium rounded-[20px]`}
                 onClick={() => {
                   if (reflectionData?.reflection1 === true) {
-                    router.replace('/my_profile?explore=1');
+                    router.replace('/search');
                   } else {
                     setShowOverlayQuestion1(true);
                   }
@@ -242,7 +242,7 @@ export function Navbar() {
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
                         {reflectionData?.reflection1 === true ? (
-                          <Link href="/my_profile?explore=1">다른 사람의 알고리즘 탐색</Link>
+                          <Link href="/search">다른 사람의 알고리즘 탐색</Link>
                         ) : (
                           <div onClick={() => setShowOverlayQuestion1(true)}>다른 사람의 알고리즘 탐색</div>
                         )}

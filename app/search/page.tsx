@@ -18,27 +18,243 @@ function SearchPageContent() {
   const { isLoggedIn, isLoading: authLoading, user } = useAuth();
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [keywordsBySize, setKeywordsBySize] = useState<{ big: string[], mid: string[], small: string[] }>({ big: [], mid: [], small: [] });
   // 유상님✅ 더미 데이터로 가져온 이미지들 그냥 검색 결과에 다 ImageData[] 형태로 저장
   const [searchResults, setSearchResults] = useState<ImageData[]>([]);
   const [isSearchMode, setIsSearchMode] = useState(true);
   const [show, setShow] = useState(true); // 안내 문구 표시 여부
     
   useEffect(() => {
-    // URL에서 키워드 파라미터 가져오기
-    const keywordParam = searchParams.get('keywords');
-    if (keywordParam) {
-      const keywordArray = keywordParam.split(',');
-      setKeywords(keywordArray);
-      
-      // 여기서 검색 로직 구현
-      performSearch(keywordArray);
+    (async () => {
+      if (!isLoggedIn || !user?.id) {
+        setIsLoading(false);
+        return;
+      }
+      // 1. 내 이미지 + 선택 클러스터 (keywords[0] 기준)
+      const { userImages, selectedCluster } = await getUserImageData(
+        user.id,
+        keywords[0] || ''    // 없으면 '' 전달됨
+      );
+  
+      // 2 영향도별 키워드 묶기
+      const kbs = getKeywordsBySize(userImages);
+      setKeywordsBySize(kbs);
+
+      //3. 전체 이미지 데이터 받아오기
+      const filteredUniqueImages = await getAllImages();
+  
+      // 4. 키워드가 있으면 검색
+      if (keywords.length > 0) {
+        await KeywordSearch(selectedCluster, filteredUniqueImages ); // 기존 함수 그대로 호출
+      } else {
+        setIsLoading(false);
+      }
+    })();
+    // keywords가 바뀔 때 재실행 (※ 필요에 따라 디바운스/최신요청 가드 추가 가능)
+  }, [isLoggedIn, user?.id, keywords.join(',')]);
+  
+  // 1. 현재 사용자 이미지 + 선택 클러스터 추출
+  const getUserImageData = async (
+
+    currentUserId: string,
+    selectedKeyword: string
+  ): Promise<{ userImages: ImageData[]; selectedCluster: ImageData | null }> => {
+    // ❗ try 바깥에서 먼저 선언/초기화
+    let userImages: ImageData[] = [];
+    let selectedCluster: ImageData | null = null;
+
+    if (!currentUserId) {
+      return { userImages, selectedCluster };
+    }
+
+    try {
+      const activeRows = await getActiveUserImages(currentUserId); // DB rows
+
+      // rows → ImageData 매핑
+      userImages = activeRows.map((r) => ({
+        id: r.id,
+        src: r.image_url || '',
+        main_keyword: r.main_keyword || '',
+        keywords: r.keywords || [],
+        mood_keyword: r.mood_keyword || '',
+        description: r.description || '',
+        category: r.category || '',
+        user_id: r.user_id,
+        sizeWeight: r.size_weight || 1,
+        frameStyle: r.frame_style || 'normal',
+        left: r.css_left || '0px',
+        top: r.css_top || '0px',
+        position: { x: r.position_x || 0, y: r.position_y || 0 },
+        relatedVideos: r.related_videos || [],
+        desired_self: r.desired_self || false,
+        desired_self_profile: r.desired_self_profile || null,
+        metadata: r.metadata || {},
+        rotate: r.rotate || 0,
+        width: r.width || 200,
+        height: r.height || 200,
+        created_at: r.created_at,
+      }));
+
+      console.log('🔍 현재 사용자 이미지 데이터:', userImages);
+
+      // 키워드 매칭 (빈 키워드 방지 + 해시 제거)
+      const key = (selectedKeyword || '').replace(/^#/, '').trim().toLowerCase();
+      if (key.length > 0) {
+        const matched = userImages.find(
+          (img) =>
+            (img.main_keyword || '').toLowerCase().includes(key) ||
+            (img.keywords || []).some((k) => (k || '').toLowerCase().includes(key))
+        );
+        selectedCluster = matched ?? null;
+      } else {
+        selectedCluster = null;
+      }
+
+      console.log('🔍 선택된 클러스터:', selectedCluster);
+    } catch (e) {
+      console.error('getUserImageData error:', e);
+      // activeImgs는 [] 유지, selectedCluster는 null 유지
+    }
+
+    return { userImages, selectedCluster };
+  };
+  // 2 sizeWeight별 키워드 분류
+  const getKeywordsBySize = (userImageData: ImageData[]) => {
+    const big: string[] = [];
+    const mid: string[] = [];
+    const small: string[] = [];
+
+    if(userImageData.length > 0) {
+      userImageData.forEach(img => {
+        if (img.sizeWeight > 0.027) {
+          big.push(img.main_keyword);
+        } else if (img.sizeWeight > 0.02) {
+          mid.push(img.main_keyword);
+        } else {
+          small.push(img.main_keyword);
+        }
+      });
+    }
+
+    return {
+      big,   // 큰 영향 키워드 배열
+      mid,   // 중간 영향 키워드 배열
+      small  // 작은 영향 키워드 배열
+    };
+  };
+  // 3. 전체 이미지 데이터 받아오기 (DB → ImageData[])
+  const getAllImages = async (): Promise<ImageData[]> => {
+    const currentUserId = user?.id; // ✅ 현재 사용자 ID
+
+    // 여기에 최종적으로 반환할 이미지 배열 선언
+    let allPublicImages: ImageData[] = [];
+
+    // 🔍 전체 공개 이미지 (필터 없이)
+    const baseImagesRaw = await getAllPublicImages(100); 
+    console.log('🔍 전체 공개 이미지 수 (필터 없음):', baseImagesRaw.length);
+
+    if (keywords.length > 0) {
+      // 키워드별로 검색 (현재 사용자 제외)
+      for (const keyword of keywords) {
+        console.log(`🔍 키워드 "${keyword}" 검색 중...`);
+        const keywordImagesRaw = await searchImagesByKeyword(keyword.trim(), 20, currentUserId);
+        console.log(`🔍 키워드 "${keyword}" 검색 결과:`, keywordImagesRaw.length, '개');
+        
+        const keywordImages = convertDBImagesToLocalStorage(keywordImagesRaw);
+        allPublicImages = [...allPublicImages, ...keywordImages];
+      }
+
+      // ✅ 키워드 검색 결과가 없으면 전체 공개 이미지 가져오기 (fallback)
+      if (allPublicImages.length === 0) {
+        console.log('⚠️ 키워드 검색 결과가 없어 전체 공개 이미지를 가져옵니다.');
+        const fallbackImagesRaw = await getAllPublicImages(50, currentUserId);
+        allPublicImages = convertDBImagesToLocalStorage(fallbackImagesRaw);
+        console.log(`🔍 Fallback: 전체 공개 이미지 ${allPublicImages.length}개 조회됨`);
+      }
     } else {
+      // 키워드가 없으면 모든 공개 이미지 가져오기 (현재 사용자 제외)
+      const allImagesRaw = await getAllPublicImages(50, currentUserId);
+      allPublicImages = convertDBImagesToLocalStorage(allImagesRaw);
+    }
+
+    console.log('🔍 중복 제거 전 총 이미지 수:', allPublicImages.length);
+
+    // 3. 중복 이미지 제거
+    const uniqueImages = allPublicImages.filter(
+      (image, index, self) => index === self.findIndex(i => i.id === image.id)
+    );
+    console.log('🔍 중복 제거 후 총 이미지 수:', uniqueImages.length);
+
+    // 4. ✅ 현재 사용자 클러스터 제거
+    const filteredUniqueImages = uniqueImages.filter(img => {
+      const isOwnCluster = img.user_id === currentUserId;
+      if (isOwnCluster) {
+        console.log(`⚠️ 현재 사용자의 클러스터 제거: ${img.main_keyword} (${img.user_id})`);
+      }
+      return !isOwnCluster;
+    });
+    console.log(`🔍 현재 사용자 제외 후: ${uniqueImages.length}개 → ${filteredUniqueImages.length}개`);
+
+    return filteredUniqueImages;
+  };
+  // 4. 검색 로직 구현
+  const KeywordSearch = async (seletedCluster: ImageData | null, filteredUniqueImages: ImageData[]) => {
+    try {
+      let searchResultsWithSimilarity: ImageData[] = [];
+      if (seletedCluster && filteredUniqueImages.length > 0) {
+        try {
+            // 다른 사람들 꺼
+            const convertedResults = filteredUniqueImages;
+            // 5-4. 유사도 계산 및 정렬
+            console.log('🔍 유사도 계산 시작...');
+            setIsLoading(true);
+            searchResultsWithSimilarity = await addSimilarityScores(seletedCluster, convertedResults);
+
+            console.log('✅ 유사도 계산 완료. 상위 결과들:', 
+              searchResultsWithSimilarity.slice(0, 3).map(r => ({
+                keyword: r.main_keyword,
+                similarity: (r.similarity || 0).toFixed(3)
+              }))
+            );
+        } catch (error) {
+          console.error('❌ 유사도 계산 중 오류:', error);
+          // filteredUniqueImages는 이미 ImageData[] 형식으로 변환됨
+          searchResultsWithSimilarity = filteredUniqueImages;
+        }
+      } else {
+        searchResultsWithSimilarity = filteredUniqueImages;
+      }
+
+      console.log('✅ DB에서 검색 결과 조회 완료:', searchResultsWithSimilarity.length, '개');
+      
+      // ✅ 클러스터 유사도 30% 이상만 필터링
+      const filteredResults = searchResultsWithSimilarity.filter(result => {
+        const similarity = result.similarity || 0;
+        return similarity >= 0.3; // 30% 이상
+      });
+      console.log(`🔍 유사도 30% 이상 필터링: ${searchResultsWithSimilarity.length}개 → ${filteredResults.length}개`);
+      
+      // ✅ 30% 이상 결과가 없으면 상위 결과들을 표시 (최소 3개)
+      let finalResults = filteredResults;
+      if (filteredResults.length === 0 && searchResultsWithSimilarity.length > 0) {
+        console.log('⚠️ 30% 이상 유사도 결과가 없습니다. 상위 3개 결과를 표시합니다.');
+        finalResults = searchResultsWithSimilarity.slice(0, 3);
+      } else if (filteredResults.length === 0) {
+        console.log('⚠️ 검색 결과가 전혀 없습니다.');
+      }
+      
+      setSearchResults(finalResults);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('❌ DB 검색 오류:', error);
+      
+      // 오류 시 빈 결과 표시
+      setSearchResults([]);
       setIsLoading(false);
     }
-  }, [searchParams]);
+  }
 
-  // DB에서 공개 사용자 프로필 검색 - 인증된 사용자만 검색 결과 표시
+  // (원래 함수)DB에서 공개 사용자 프로필 검색 - 인증된 사용자만 검색 결과 표시
   const performSearch = async (searchKeywords: string[]) => {
     setIsLoading(true);
     try {
@@ -57,14 +273,13 @@ function SearchPageContent() {
         isLoggedIn
       });
 
-      // DB에서 공개된 사용자 이미지들 검색 (현재 사용자 제외)
+      // 1. DB에서 공개된 사용자 이미지들 검색 (현재 사용자 제외)
       let allPublicImages: ImageData[] = [];
       const currentUserId = user?.id; // ✅ 현재 사용자 ID
-
-      // 🔍 디버깅: 전체 공개 이미지 수 먼저 확인
       const allImagesWithoutFilter = await getAllPublicImages(100); // 필터 없이
       console.log('🔍 전체 공개 이미지 수 (필터 없음):', allImagesWithoutFilter.length);
       
+      //2. 키워드별로 검색
       if (searchKeywords.length > 0) {
         // 키워드별로 검색 (현재 사용자 제외)
         for (const keyword of searchKeywords) {
@@ -88,22 +303,19 @@ function SearchPageContent() {
         const allImagesRaw = await getAllPublicImages(50, currentUserId); // 최대 50개
         allPublicImages = convertDBImagesToLocalStorage(allImagesRaw);
       }
-
       console.log('🔍 중복 제거 전 총 이미지 수:', allPublicImages.length);
 
-      // 중복 제거 (같은 이미지 ID로)
+      // 3. 중복 이미지 제거
       const uniqueImages = allPublicImages.filter((image, index, self) => 
         index === self.findIndex(i => i.id === image.id)
       );
-
       console.log('🔍 중복 제거 후 총 이미지 수:', uniqueImages.length);
       console.log('🔍 검색 결과 사용자 ID들:', uniqueImages.map(img => ({
         id: img.id,
         user_id: img.user_id,
         main_keyword: img.main_keyword
       })));
-
-      // ✅ 추가 안전장치: 현재 사용자의 클러스터 강제 제거
+     // 4. ✅ 추가 안전장치: 현재 사용자의 클러스터 강제 제거
       const filteredUniqueImages = uniqueImages.filter(img => {
         const isOwnCluster = img.user_id === currentUserId;
         if (isOwnCluster) {
@@ -111,20 +323,19 @@ function SearchPageContent() {
         }
         return !isOwnCluster;
       });
-
       console.log(`🔍 현재 사용자 제외 후: ${uniqueImages.length}개 → ${filteredUniqueImages.length}개`);
 
-      // ✅ 유사도 계산: 사용자가 선택한 클러스터 찾기
+      // 5. ✅ 유사도 계산: 사용자가 선택한 클러스터 찾기
       let searchResultsWithSimilarity: ImageData[] = [];
       
       if (searchKeywords.length > 0 && filteredUniqueImages.length > 0) {
         try {
-          // 사용자의 현재 활성 이미지들에서 선택한 클러스터 찾기
+          // 5-1.사용자의 현재 활성 이미지들에서 선택한 클러스터 찾기
           console.log('🔍 사용자의 클러스터 찾는 중...');
           const userImages = await getActiveUserImages(currentUserId || '');
           console.log('🔍 사용자의 활성 이미지 수:', userImages.length);
           
-          // 검색 키워드와 일치하는 사용자의 클러스터 찾기
+          // 5-2. 검색 키워드와 일치하는 사용자의 클러스터 찾기
           const selectedKeyword = searchKeywords[0]; // 첫 번째 키워드 사용
           const selectedCluster = userImages.find(img => 
             img.main_keyword?.toLowerCase().includes(selectedKeyword.toLowerCase()) ||
@@ -134,7 +345,7 @@ function SearchPageContent() {
           if (selectedCluster) {
             console.log('✅ 선택된 클러스터 찾음:', selectedCluster.main_keyword);
             
-            // DB 형식을 ImageData 형식으로 변환
+            // 5-3. DB 형식을 ImageData 형식으로 변환
             const selectedClusterData: ImageData = {
               id: selectedCluster.id,
               src: selectedCluster.image_url || '',
@@ -162,10 +373,11 @@ function SearchPageContent() {
               created_at: selectedCluster.created_at
             };
 
-                        // filteredUniqueImages는 이미 ImageData[] 형식으로 변환됨
+            // filteredUniqueImages는 이미 ImageData[] 형식으로 변환됨
+            // 다른 사람들 꺼
             const convertedResults = filteredUniqueImages;
 
-            // 유사도 계산 및 정렬
+            // 5-4. 유사도 계산 및 정렬
             console.log('🔍 유사도 계산 시작...');
             searchResultsWithSimilarity = await addSimilarityScores(selectedClusterData, convertedResults);
             console.log('✅ 유사도 계산 완료. 상위 결과들:', 
@@ -299,6 +511,115 @@ function SearchPageContent() {
             </Button>
           <h1 className="text-2xl font-bold text-black"> 탐색 결과: {searchResults.length}개</h1>
         </div>
+        {/* 키워드 선택 패널 */}
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/60 via-slate-800/40 to-slate-900/40 shadow-xl backdrop-blur-xl p-5 mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2 mb-2">
+            내 키워드 선택
+          </h2>
+          <p className="text-md text-slate-300 mb-6">
+          💡 키워드를 선택하면, 나와 유사한 익명의 알고리즘을 확인할 수 있어요.
+          </p>
+
+          <div className="flex flex-row items-left gap-4">
+            {/* 큰 영향 */}
+            <div className="mb-4">
+              {/* 큰 영향 키워드 설명 */}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <p className="text-sm text-slate-200">
+                  <span className="font-semibold mr-1">큰 영향</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="ml-2 text-slate-300">누적 시청 비중 높음</span>
+                </p>
+              </div>
+              {/* 큰 영향 키워드 목록 */}
+              <div className="flex flex-wrap gap-2.5">
+                {keywordsBySize.big.map((kw, idx) => {
+                  const isSelected = keywords.includes(kw);
+                  return (
+                    <div
+                      key={kw + idx}
+                      className={
+                        "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                        (isSelected
+                          ? "bg-black text-white"
+                          : "bg-white/90 text-slate-900")
+                      }
+                      onClick={() => setKeywords([kw])}
+                    >
+                      {kw}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 중간 영향 */}
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                <p className="text-sm text-slate-200">
+                  <span className="font-semibold mr-1">중간 영향</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="ml-2 text-slate-300">누적 시청 비중 보통</span>
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {keywordsBySize.mid.map((kw, idx) => {
+                  const isSelected = keywords.includes(kw);
+                  return (
+                    <div
+                      key={kw + idx}
+                      className={
+                        "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                        (isSelected
+                          ? "bg-black text-white"
+                          : "bg-white/90 text-slate-900")
+                      }
+                      onClick={() => setKeywords([kw])}
+                    >
+                      {kw}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 작은 영향 */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                <p className="text-sm text-slate-200">
+                  <span className="font-semibold mr-1">작은 영향</span>
+                  <span className="text-slate-400">·</span>
+                  <span className="ml-2 text-slate-300">누적 시청 비중 적음</span>
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {keywordsBySize.small.map((kw, idx) => {
+                  const isSelected = keywords.includes(kw);
+                  return (
+                    <div
+                      key={kw + idx}
+                      className={
+                        "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                        (isSelected
+                          ? "bg-black text-white"
+                          : "bg-white/90 text-slate-900")
+                      }
+                      onClick={() => setKeywords([kw])}
+                    >
+                      {kw}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        {/* 안내 문구 */}
         {show && (
         <div className="fixed top-22 right-10 bg-white/90 backdrop-blur-lg text-black px-7 py-3 rounded-full shadow-xl flex items-center min-w-[420px] max-w-[600px] z-50 animate-fadeIn">
           <span className="text-base flex items-center p-2 pr-3 pl-3">
