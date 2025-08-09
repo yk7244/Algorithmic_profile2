@@ -438,6 +438,8 @@ const watchHistory_temp =[];
         console.error(`❌ 배치 처리 실패:`, result.reason);
       }
       
+      processedCount++;
+      batchCount++;
     }
     
     // ✅ 진행률 업데이트 및 중간 통계
