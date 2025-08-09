@@ -233,19 +233,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             */}
                         </div>
                         
-                        {/* 키워드를 이미지 하단에 배치 
-                        <div className="absolute bottom-0.5 left-0 right-0 flex flex-wrap gap-1 justify-center items-center p-1">
-                            {image.keywords.map((keyword: string, idx: number) => (
-                            <span
-                                key={idx}
-                                className="inline-block px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm rounded-full shadow-sm transition-colors"
-                            >
-                                #{keyword}
-                            </span>
-                            ))}
-                        </div>
                         
-                        */}
                         
                         </div>
                     </SheetTrigger>
