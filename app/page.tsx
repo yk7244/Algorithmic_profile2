@@ -577,7 +577,7 @@ useEffect(() => {
                       </div>
                       {/* 아래 요약 문장 */}
                       <div className="mt-2 text-sm text-gray-700 text-center">
-                        <span className="font-semibold text-gray-800">최근 일주일</span> 동안, <span className="font-semibold text-gray-800">하루당 30개씩</span> <br />
+                        <span className="font-semibold text-gray-800">최근 일주일</span> 동안, <span className="font-semibold text-gray-800">하루당 20개씩</span> <br />
                         영상을 <span className="font-semibold">무작위</span>로 골라 분석합니다.
                       </div>
                       </div>
@@ -747,86 +747,135 @@ useEffect(() => {
                       </button>
                       </DialogTrigger>
 
-                      <DialogContent className="w-[80vw] justify-center max-w-4xl p-6 rounded-xl shadow-lg" >
-                      <div className="space-y-4">
-                      <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
-                          Google Takeout에서 Youtube 시청기록 내보내기
-                      </h3>
-                      <div className="grid grid-cols-2 gap-6">
-                          <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
-                              <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
-                              <a 
-                                  href="https://takeout.google.com/" 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="text-sm text-blue-500 hover:underline"
-                              >
-                                  takeout.google.com
-                              </a>
-                              <p className="text-sm text-gray-500">'모두 선택해제' 버튼 클릭</p>
-                              <Dialog>
-                                  <DialogTrigger asChild>
-                                      <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                          <Image src="/images/takeout1.png" alt="Takeout Step 1" layout="fill" objectFit="contain" />
-                                      </div>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
-                                      <DialogClose asChild>
-                                          <Image src="/images/takeout1.png" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
-                                      </DialogClose>
-                                  </DialogContent>
-                              </Dialog>
-                          </div>
-                          <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
-                              <div className="font-medium text-gray-700 mb-2">2.'포함할 데이터 선택'에서
-                              YouTube 선택</div>
-                              <p className="text-sm text-gray-500">제일 하단에 위치한 YouTube 및 YouTube Music 선택</p>
-                              <Dialog>
-                                  <DialogTrigger asChild>
-                                      <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                          <Image src="/images/takeout2.png" alt="Takeout Step 2" layout="fill" objectFit="contain" />
-                                      </div>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
-                                  <DialogClose asChild>
-                                          <Image src="/images/takeout2.png" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
-                                      </DialogClose>
-                                  </DialogContent>
-                              </Dialog>
-                          </div>
-                          <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
-                              <div className="font-medium text-gray-700 mb-2">3. 버튼 '모든 Youtube 데이터 포함됨'에서 시청기록 선택</div>
-                              <p className="text-sm text-gray-500">모든 선택해제 후, 시청기록만 선택</p>
-                              <Dialog>
-                                  <DialogTrigger asChild>
-                                      <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                          <Image src="/images/takeout3.png" alt="Takeout Step 3" layout="fill" objectFit="contain" />
-                                      </div>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
-                                      <DialogClose asChild>
-                                          <Image src="/images/takeout3.png" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
-                                      </DialogClose>
-                                  </DialogContent>
-                              </Dialog>
-                          </div>
-                          <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
-                              <div className="font-medium text-gray-700 mb-2">4. 버튼 '여러형식'에서 하단 '기록'에 JSON 형식 선택</div>
-                              <p className="text-sm text-gray-500">JSON 형식 선택 후 내보내기</p>
-                              <Dialog>
-                                  <DialogTrigger asChild>
-                                      <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                          <Image src="/images/takeout4.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
-                                      </div>
-                                  </DialogTrigger>
-                                  <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
-                                      <DialogClose asChild>
-                                          <Image src="/images/takeout4.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
-                                      </DialogClose>
-                                  </DialogContent>
-                              </Dialog>
-                          </div>
-                      </div>
+                      <DialogContent className="w-[80vw] justify-center max-w-4xl p-6 rounded-xl shadow-lg " >
+                      <div className="space-y-4 overflow-y-auto max-h-[80vh]">
+                        <h3 className="text-lg font-semibold flex items-center gap-2 text-gray-800 pb-2 border-b">
+                            Google Takeout에서 Youtube 시청기록 내보내기
+                        </h3>
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">1. Google Takeout 접속</div>
+                                <a 
+                                    href="https://takeout.google.com/" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="text-sm text-blue-500 hover:underline"
+                                >
+                                    takeout.google.com
+                                </a>
+                                <p className="text-sm text-gray-500">'모두 선택해제' 버튼 클릭</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/1.png" alt="Takeout Step 1" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                        <DialogClose asChild>
+                                            <Image src="/images/1.png" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">2.'포함할 데이터 선택'에서
+                                'YouTube' 선택</div>
+                                <p className="text-sm text-gray-500">제일 하단에 위치한 'YouTube 및 YouTube Music' 선택</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/2.png" alt="Takeout Step 2" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                    <DialogClose asChild>
+                                            <Image src="/images/2.png" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">3. 버튼 '모든 Youtube 데이터 포함됨'에서 '시청기록'만 선택</div>
+                                <p className="text-sm text-gray-500">모든 선택해제 후, '시청기록'만 선택</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/3.png" alt="Takeout Step 3" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                        <DialogClose asChild>
+                                            <Image src="/images/3.png" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">4. 버튼 '여러형식'에서 하단 '기록'에서 'HTML 형식' 대신 'JSON 형식' 선택</div>
+                                <p className="text-sm text-gray-500">JSON 형식 선택 후 내보내기</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/4.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                        <DialogClose asChild>
+                                            <Image src="/images/4.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">5.  ‘내보내기 생성' 클릭 시, 이메일로 다운 링크 전송</div>
+                                <p className="text-sm text-gray-500">추출된 파일은 이메일에서 압축파일(.zip)형태로 제공</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/5.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                        <DialogClose asChild>
+                                            <Image src="/images/5.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">Step.6 이메일 알림받은 후 새로고침하고, ‘다운로드'버튼 선택</div>
+                                <p className="text-sm text-gray-500">이메일로 알림을 받으면 ‘다운로드'버튼 활성화</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/6.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                        <DialogClose asChild>
+                                            <Image src="/images/6.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                            <div className="p-5 rounded-xl bg-gray-50 border border-gray-100 flex flex-col">
+                                <div className="font-medium text-gray-700 mb-2">Step.7 다운파일 압축 푼 뒤 ‘시청기록.json' 파일 카톡으로 보내기</div>
+                                <p className="text-sm text-gray-500">*파일 경로 : YouTube and YouTube Music&gt;history&gt;watch-history.json 파일</p>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <Image src="/images/7.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                        </div>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
+                                        <DialogClose asChild>
+                                            <Image src="/images/7.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                        </DialogClose>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+
+                        </div>
                       </div>
                       </DialogContent>
                       </Dialog>

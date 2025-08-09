@@ -59,9 +59,9 @@ const VideoList: React.FC<VideoListProps> = ({
     }
     
     return (
-        <div className="flex gap-4 overflow-x-auto items-center">
+        <div className="flex flex-col gap-4 overflow-y-auto ">
             {videos.map((video, idx) => (
-                <div key={`${video.embedId}-${idx}`} className="space-y-2 min-w-[220px]">
+                <div key={`${video.embedId}-${idx}`} className="space-y-2 min-h-[220px]">
                     <a
                         href={`https://www.youtube.com/watch?v=${video.embedId}`}
                         target="_blank"
@@ -92,7 +92,7 @@ const VideoList: React.FC<VideoListProps> = ({
             ))}
             {/* AI 추천 영상일 때만 더보기 버튼 */}
             {isAiRecommended && nextPageToken && (
-                <div className="flex items-center min-w-[120px]">
+                <div className="flex min-h-[120px] justify-center items-center mb-10" >
                     <Button
                         onClick={() => fetchAndSetVideos && fetchAndSetVideos(true)} 
                         className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg transition-all duration-300"

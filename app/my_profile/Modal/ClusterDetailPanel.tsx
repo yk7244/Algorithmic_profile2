@@ -16,6 +16,7 @@ import { saveWatchedVideoToLocalStorage } from './Hooks/saveExploreWatchHistory'
 import { useRecommend } from './Hooks/useRecommend';
 import VideoList from './Hooks/VideoList'; 
 import { ProfileData } from '@/app/types/profile';
+import VideoList2 from "./Hooks/VideoList2";
 
 interface ClusterDetailPanelProps {
     image: any;
@@ -394,7 +395,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                         /* 다른 사람의 프로필일 때 */
                                         <>
                                             {!isOwner && (
-                                                <div className="fixed bottom-6 left-6 right-6 z-50 group">
+                                                <div className="group fixed bottom-6 left-6 right-6 z-50 group">
                                                     <Button
                                                         className="w-full bg-black hover:bg-gray-800 text-white px-6 py-6 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                                                         onClick={() => handleAddAsInterest(image, ownerId)}
@@ -403,7 +404,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                         이 키워드 나의 알고리즘 시각화에 추가하기
                                                     </Button>
                                                     {/* 호버 툴팁 */}
-                                                    <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap z-50"
+                                                    <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-2xl 
+                                                    shadow-lg text-base font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                                         style={{ pointerEvents: 'none' }}
                                                     >
                                                         관심이 생기셨나요? 나의 알고리즘 시각화에 추가해보세요!
@@ -414,7 +416,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 </div>
                                             )}
                                             
-                                            <VideoList
+                                            <VideoList2
                                                 isLoading={isLoadingAiVideos}
                                                 videos={aiRecommendedVideos}
                                                 watchedVideos={watchedVideos}
