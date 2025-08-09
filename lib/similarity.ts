@@ -274,8 +274,8 @@ export async function calculateUserSimilarity(
 
     // 가중 평균 계산
     const finalSimilarity = 
-      (mainKeywordSimilarity * 0.7) +
-      (keywordSimilarity * 0.2) +
+      (mainKeywordSimilarity * 0.6) +
+      (keywordSimilarity * 0.3) +
       (categorySimilarity * 0.1);
 
     // 캐시에 저장

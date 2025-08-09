@@ -309,7 +309,7 @@ async function fetchVideoInfoInternal(videoId: string): Promise<VideoInfo | null
 
 // 키워드 추출 함수([관리자용] keyword 추출 버튼 클릭 시 호출)
 // selectedItems를 받아 각 영상의 정보를 fetchVideoInfo로 가져오고, 키워드를 가공하여 반환하는 함수
-export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
+export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void, ensureValidSession?: () => Promise<boolean>) {
   const processedItems: any[] = [];
   let processedCount = 0;
   const totalItems = selectedItems.length;
@@ -326,9 +326,21 @@ const watchHistory_temp =[];
   // ✅ 배치 단위로 중간 저장 (100개마다)
   const BATCH_SIZE = 100;
   let batchCount = 0;
+  
+  // 세션 체크 주기 (50개마다)
+  const SESSION_CHECK_INTERVAL = 50;
 
   for (const item of selectedItems) {
     const itemStartTime = Date.now();
+    
+    // 주기적 세션 체크 (50개마다)
+    if (processedCount > 0 && processedCount % SESSION_CHECK_INTERVAL === 0 && ensureValidSession) {
+      console.log(`🔐 [${processedCount}/${totalItems}] 세션 유효성 체크`);
+      const isSessionValid = await ensureValidSession();
+      if (!isSessionValid) {
+        throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+      }
+    }
     
     try {
       console.log(`🔄 [${processedCount + 1}/${totalItems}] 비디오 처리 시작: ${item.videoId}`);

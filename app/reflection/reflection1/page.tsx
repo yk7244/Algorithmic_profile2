@@ -210,7 +210,7 @@ export default function ReflectionQuestionsPage() {
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
-                            router.push("/my_profile?explore=1"); 
+                            router.push("/search"); 
                         }}
                         >
                         다른 사람 알고리즘 탐색하기
