@@ -45,67 +45,111 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // 현재 세션 가져오기
-    const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error getting session:', error);
-      } else {
+    let mounted = true;
+    let authSubscription: any = null;
+
+    const initializeAuth = async () => {
+      try {
+        // 현재 세션 가져오기
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          setIsLoading(false);
+          return;
+        }
+
+        // 세션 상태 업데이트
         setSession(session);
         setUser(session?.user ?? null);
         
-        // 사용자가 있으면 DB에서 추가 정보 가져오기
+        // 사용자 데이터 로드
         if (session?.user) {
-          const dbUser = await getUser(session.user.id);
-          setUserData(dbUser);
+          await loadUserData(session.user);
         } else {
           setUserData(null);
         }
-      }
-      setIsLoading(false);
-    };
-
-    getSession();
-
-    // 인증 상태 변경 리스너
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
+        
         setIsLoading(false);
 
-        // 사용자 데이터 업데이트
-        if (session?.user) {
-          let dbUser = await getUser(session.user.id);
-          if (!dbUser && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
-            // 새 사용자인 경우 DB에 생성
-            console.log('🔄 사용자가 DB에 없습니다. 생성 시도:', session.user.id);
-            await createUserProfile(session.user);
+        // 인증 상태 변경 리스너 설정 (한 번만)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return;
             
-            // 생성 후 다시 조회 (최대 3번 재시도)
-            let retryCount = 0;
-            while (!dbUser && retryCount < 3) {
-              console.log(`🔄 사용자 조회 재시도 ${retryCount + 1}/3`);
-              await new Promise(resolve => setTimeout(resolve, 1000)); // 1초 대기
-              dbUser = await getUser(session.user.id);
-              retryCount++;
-            }
+            console.log('Auth state changed:', event, session?.user?.id);
             
-            if (!dbUser) {
-              console.error('❌ 사용자 생성/조회 최종 실패:', session.user.id);
-            } else {
-              console.log('✅ 사용자 조회 성공:', dbUser.id);
+            // 상태 업데이트를 debounce하여 중복 호출 방지
+            setSession(session);
+            setUser(session?.user ?? null);
+
+            // 사용자 데이터 업데이트 (INITIAL_SESSION은 이미 처리했으므로 스킵)
+            if (event !== 'INITIAL_SESSION') {
+              if (session?.user) {
+                await loadUserData(session.user, event);
+              } else {
+                setUserData(null);
+              }
             }
           }
+        );
+
+        authSubscription = subscription;
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // 사용자 데이터 로드 함수
+    const loadUserData = async (user: any, event?: string) => {
+      try {
+        let dbUser = await getUser(user.id);
+        
+        // 새 사용자인 경우 DB에 생성
+        if (!dbUser && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+          console.log('🔄 사용자가 DB에 없습니다. 생성 시도:', user.id);
+          await createUserProfile(user);
+          
+          // 생성 후 다시 조회 (최대 3번 재시도)
+          let retryCount = 0;
+          while (!dbUser && retryCount < 3 && mounted) {
+            console.log(`🔄 사용자 조회 재시도 ${retryCount + 1}/3`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            dbUser = await getUser(user.id);
+            retryCount++;
+          }
+          
+          if (!dbUser) {
+            console.error('❌ 사용자 생성/조회 최종 실패:', user.id);
+          } else {
+            console.log('✅ 사용자 조회 성공:', dbUser.id);
+          }
+        }
+        
+        if (mounted) {
           setUserData(dbUser);
-        } else {
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        if (mounted) {
           setUserData(null);
         }
       }
-    );
+    };
 
-    return () => subscription.unsubscribe();
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
+    };
   }, []);
 
   // 사용자 프로필 생성 (새 사용자인 경우)

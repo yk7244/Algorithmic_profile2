@@ -237,7 +237,7 @@ useEffect(() => {
     }
 }, [showCompletePage, countdown, router]);
 
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isLoading: authLoading, user } = useAuth();
   const { handleGoogleLogin, handleAppleLogin, handleGithubLogin } = useLoginHandlers();
 
 
@@ -512,8 +512,15 @@ useEffect(() => {
     <div className="flex flex-col items-center space-y-8 text-center relative z-10 w-full">
       <div className="w-full max-w-[900px] ">
 
-        {/* 로그인 여부 확인*/}
-        {isLoggedIn ? (
+        {/* 로딩 중일 때 스피너 표시 */}
+        {authLoading ? (
+          <div className="mt-20 flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        ) : (
+          <>
+            {/* 로그인 여부 확인*/}
+            {isLoggedIn ? (
           <>
             {/* 1-1 로그인O => 업데이트 여부 확인 */}  
             {(upload_check === -1 || upload_check === -2) ? (
@@ -866,31 +873,10 @@ useEffect(() => {
               >
                 <Image src="/images/github.png" alt="GitHub" width={22} height={22} className="mr-2" />
                 GitHub로 시작하기
-                </button>
-                {/*
-                <button onClick={() => {
-                  createUserData(); 
-                  const temp: any = {};
-
-                  saveProfileData(temp);
-                  const result = saveClusterHistory(temp, localStorage); 
-                  console.log('result', result);
-                }}
-                style={{
-                  marginTop: 10, 
-                  color: 'white',
-                  backgroundColor: 'black',
-                  border: '1px solid white',
-                  borderRadius: 10,
-                  padding: '10px 20px',
-                  fontSize: 16,
-                }}
-                >
-                  userdata 생성 테스트용
-                </button>
-                */}
+              </button>
             </div>
-            
+          </>
+        )}
           </>
         )}
       </div>

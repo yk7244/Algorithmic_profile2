@@ -12,7 +12,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'supabase.auth.token',
     // 디버그 모드 (개발 환경에서만)
-    debug: process.env.NODE_ENV === 'development'
+    debug: process.env.NODE_ENV === 'development',
+    // 세션 새로고침 임계값 (초 단위)
+    flowType: 'pkce'
   },
   // 전역 옵션
   global: {

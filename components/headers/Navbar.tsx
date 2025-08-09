@@ -26,7 +26,7 @@ import { isOneWeekPassed } from '@/app/utils/uploadCheck';
 export function Navbar() {
   const pathname = usePathname();
   const isMainPage = pathname === '/';
-  const { isLoggedIn, logout, user, userData } = useAuth();
+  const { isLoggedIn, logout, user, userData, isLoading: authLoading } = useAuth();
   const [language, setLanguage] = useState("KO");
   const router = useRouter();
   const [showOverlayQuestion1, setShowOverlayQuestion1] = useState(false);
@@ -42,6 +42,11 @@ export function Navbar() {
   // 기존 reflection 로드는 아래의 통합된 함수로 대체됨
   
   useEffect(() => {
+    // 인증이 로딩 중이거나 로그인되지 않은 경우 실행하지 않음
+    if (authLoading || !isLoggedIn) {
+      return;
+    }
+
     const loadUploadCheckAndSetLockAndReflection = async () => {
       try {
         const uploadCheck = await isOneWeekPassed();
@@ -93,7 +98,7 @@ export function Navbar() {
     };
 
     loadUploadCheckAndSetLockAndReflection();
-  }, []); // 초기 로드 시에만 실행
+  }, [authLoading, isLoggedIn]); // 인증 상태가 변경될 때만 실행
 
   // 사용자 이름 가져오기 (DB에서 가져온 실제 사용자 데이터 사용)
   const userName = userData?.nickname || 

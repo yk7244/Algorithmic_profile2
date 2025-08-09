@@ -24,9 +24,14 @@ export function useClusterStorage({
     }) {
     // 시청기록, 클러스터 로드 - DB에서 가져오기 (최초 마운트 시 1회만 실행)
     useEffect(() => {
+        let mounted = true;
+        
         const loadUserData = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!mounted) return;
+                
                 if (!user) {
                     console.log('사용자 인증 없음, localStorage 백업 사용');
                     // 인증되지 않은 경우 localStorage 백업 사용
@@ -76,6 +81,10 @@ export function useClusterStorage({
         };
 
         loadUserData();
+        
+        return () => {
+            mounted = false;
+        };
         // eslint-disable-next-line
     }, []);
 
@@ -180,9 +189,14 @@ export function useClusterStorage({
 
     // 분석 기록 로드 - DB에서 가져오기 (최초 마운트 시 1회만 실행)
     useEffect(() => {
+        let mounted = true;
+        
         const loadAnalysisHistory = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!mounted) return;
+                
                 if (!user) {
                     // 인증되지 않은 경우 localStorage 백업 사용
                     const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
@@ -216,16 +230,22 @@ export function useClusterStorage({
 
             } catch (error) {
                 console.error('DB 분석 기록 로드 중 오류:', error);
-                // 오류 시에도 더미 데이터 방지
-                const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
-                if (savedAnalyses.length > 0) {
-                    console.log('⚠️ DB 오류로 인해 localStorage 확인했지만 더미 데이터일 가능성이 높아 무시합니다');
+                if (mounted) {
+                    // 오류 시에도 더미 데이터 방지
+                    const savedAnalyses = JSON.parse(localStorage.getItem('analysisHistory') || '[]');
+                    if (savedAnalyses.length > 0) {
+                        console.log('⚠️ DB 오류로 인해 localStorage 확인했지만 더미 데이터일 가능성이 높아 무시합니다');
+                    }
+                    setAnalysisHistory([]); // 빈 배열로 설정
                 }
-                setAnalysisHistory([]); // 빈 배열로 설정
             }
         };
 
         loadAnalysisHistory();
+        
+        return () => {
+            mounted = false;
+        };
         // eslint-disable-next-line
     }, []);
 } 
