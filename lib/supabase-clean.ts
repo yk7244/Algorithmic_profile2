@@ -13,8 +13,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'supabase.auth.token',
     // 디버그 모드 (개발 환경에서만)
     debug: process.env.NODE_ENV === 'development',
-    // 세션 새로고침 임계값 (초 단위) - 10분 전에 갱신
-    refreshThreshold: 600,
     // PKCE 플로우 사용
     flowType: 'pkce'
   },

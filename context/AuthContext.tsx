@@ -60,12 +60,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
 
-      // 세션 만료 5분 전에 갱신
+      // 세션 만료 10분 전에 갱신 (더 안전한 임계값)
       const expiresAt = session.expires_at || 0;
       const now = Math.floor(Date.now() / 1000);
       const timeUntilExpiry = expiresAt - now;
       
-      if (timeUntilExpiry < 300) { // 5분 미만 남았을 때
+      if (timeUntilExpiry < 600) { // 10분 미만 남았을 때
         console.log('🔄 세션 만료 임박, 갱신 시도');
         const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
         
