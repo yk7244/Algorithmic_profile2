@@ -767,12 +767,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/1.png" alt="Takeout Step 1" layout="fill" objectFit="contain" />
+                                            <Image src="/images/1.jpg" alt="Takeout Step 1" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                         <DialogClose asChild>
-                                            <Image src="/images/1.png" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/1.jpg" alt="Takeout Step 1" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
@@ -784,12 +784,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/2.png" alt="Takeout Step 2" layout="fill" objectFit="contain" />
+                                            <Image src="/images/2.jpg" alt="Takeout Step 2" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                     <DialogClose asChild>
-                                            <Image src="/images/2.png" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/2.jpg" alt="Takeout Step 2" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
@@ -800,12 +800,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/3.png" alt="Takeout Step 3" layout="fill" objectFit="contain" />
+                                            <Image src="/images/3.jpg" alt="Takeout Step 3" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                         <DialogClose asChild>
-                                            <Image src="/images/3.png" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/3.jpg" alt="Takeout Step 3" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
@@ -816,12 +816,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/4.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                            <Image src="/images/4.jpg" alt="Takeout Step 4" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                         <DialogClose asChild>
-                                            <Image src="/images/4.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/4.jpg" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
@@ -832,12 +832,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/5.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                            <Image src="/images/5.jpg" alt="Takeout Step 4" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                         <DialogClose asChild>
-                                            <Image src="/images/5.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/5.jpg" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
@@ -848,12 +848,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/6.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                            <Image src="/images/6.jpg" alt="Takeout Step 4" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                         <DialogClose asChild>
-                                            <Image src="/images/6.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/6.jpg" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
@@ -864,12 +864,12 @@ useEffect(() => {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <div className="mt-4 flex-grow rounded-lg overflow-hidden relative aspect-video bg-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
-                                            <Image src="/images/7.png" alt="Takeout Step 4" layout="fill" objectFit="contain" />
+                                            <Image src="/images/7.jpg" alt="Takeout Step 4" layout="fill" objectFit="contain" />
                                         </div>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-5xl p-0 bg-transparent border-none shadow-none">
                                         <DialogClose asChild>
-                                            <Image src="/images/7.png" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
+                                            <Image src="/images/7.jpg" alt="Takeout Step 4" width={1920} height={1080} className="w-full h-auto rounded-lg cursor-pointer"/>
                                         </DialogClose>
                                     </DialogContent>
                                 </Dialog>
