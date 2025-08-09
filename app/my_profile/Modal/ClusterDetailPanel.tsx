@@ -170,12 +170,12 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             
                             >
                                 이 키워드는 당신의 추천 알고리즘에 <br/>
-                                <span className={`rounded-full font-bold animate-pulse duration-1000 text-blue-400`}
+                                <span className={`rounded-full font-bold animate-pulse duration-1000 text-black`}
                                 style={{
                                     animation: 'pulse 1s ease-in-out infinite'
                                 }}
                                 >
-                                    {image.sizeWeight >= 0.020 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
+                                        {image.sizeWeight >= 0.027 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
                                 </span>
                                 을 주고 있어요.
                             </p>
@@ -265,8 +265,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                         animation: 'pulse 4s ease-in-out infinite '
                                     }}>
                                         이 키워드는 당신의 추천 알고리즘에&nbsp;
-                                        <span className={`ml-1 font-bold text-blue-400`}>
-                                        {image.sizeWeight >= 0.020 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
+                                        <span className={`ml-1 font-bold text-black`}>
+                                        {image.sizeWeight >= 0.027 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
                                         </span>
                                         을 주고 있어요.
                                     </p>
