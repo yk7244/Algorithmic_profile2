@@ -155,7 +155,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                     <br />
                                     관련 키워드 :
                                     {image.keywords.map((keyword: string) => (
-                                        <span key={keyword} className="text-[10px] text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-0.5 mr-1 ml-1 mb-3"> #{keyword} </span>
+                                        <span key={keyword} className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1 mb-3"> #{keyword} </span>
                                     ))}
                                 </p>
                             </div>
@@ -231,7 +231,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                                 {/* 설명 */}
                                 <div className="text-left mb-8 max-w-2xl mx-auto">
-                                    <p className="text-[12px] leading-relaxed text-white/40 mb-2">
+                                    <p className="text-[12px] leading-relaxed text-white/40 mb-2 ">
                                         {descriptionOpen ?   (
                                             <>
                                             {image.description.replace(/당신/g, `${profile?.nickname}님`)}
@@ -240,7 +240,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             <br />
                                             관련 키워드 :
                                             {image.keywords.map((keyword: string) => (
-                                                <span key={keyword} className="text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1"> #{keyword} </span>
+                                                <span key={keyword} className="text-[11px] line-height-2 font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1"> #{keyword} </span>
                                             ))}
                                             
                                             <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>줄이기   </button>

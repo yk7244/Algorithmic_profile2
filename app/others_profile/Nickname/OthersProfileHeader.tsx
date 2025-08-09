@@ -80,9 +80,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
 
                 {/* 유사도 */}
-                <div className="flex items-center mt-6 text-sm text-black/40">  
-                    <span className="text-sm ">{profile?.nickname ? profile.nickname : 'My 알고리즘 시각화'}님은 당신과 전체적으로 </span>
-                    <span className="text-sm ml-1 mr-1 text-blue-600"> {Math.round(similarities[0]*100)}%</span> 유사해요.
+                <div className=" items-center mt-6 text-sm text-black/40">  
+                    <div className="text-sm ">{profile?.nickname ? profile.nickname : 'My 알고리즘 시각화'}님은 당신과 전체적으로 </div>
+                    <div><span className="text-sm ml-1 mr-1 text-blue-600"> {Math.round(similarities[0]*100)}%</span> 유사해요.</div>
                 </div>
             </div>
             
