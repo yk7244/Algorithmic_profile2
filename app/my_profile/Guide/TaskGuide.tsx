@@ -154,7 +154,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                       >
                         {/* 이미지 배경 */}
                         <img
-                          src="/images/guideImg.png"
+                          src="/images/Frame1000009054.jpg"
                           alt="가이드 이미지"
                           className="absolute inset-0 w-full h-full object-contain z-0 p-10"
                         />
