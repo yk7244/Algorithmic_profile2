@@ -7,7 +7,8 @@ import {
   getCachedVideoInfo, 
   upsertVideo, 
   convertYouTubeResponseToVideoData,
-  updateVideoKeywords 
+  updateVideoKeywords,
+  getBulkCachedVideoInfo
 } from '@/lib/database-clean';
 
 // OpenAI 클라이언트 초기화
@@ -143,6 +144,18 @@ const extractVideoKeywords = async (videoInfo: any): Promise<string[]> => {
   }
 };
 
+// fallback 비디오 정보 생성 함수
+function createFallbackVideoInfo(item: any, description?: string): VideoInfo {
+  return {
+    videoId: item.videoId,
+    title: item.title || `Video ${item.videoId}`,
+    description: description || `원본 정보: ${item.title || 'Unknown'}`,
+    tags: [],
+    keywords: item.title ? item.title.split(' ') : [],
+    timestamp: new Date().toISOString()
+  };
+}
+
 // STEP1.비디오 정보 가져오기 함수 -> STEP2키워드 추출 함수호출 (YouTube API 캐싱 적용)
 export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null> {
   const videoInfoStartTime = Date.now();
@@ -150,11 +163,11 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
   try {
     console.log('🎯 비디오 정보 요청 시작:', videoId);
     
-    // ✅ 전체 함수에 30초 타임아웃 적용
+    // ✅ 전체 함수에 10초 타임아웃 적용 (병렬 처리로 단축)
     return await Promise.race([
       fetchVideoInfoInternal(videoId),
       new Promise<VideoInfo | null>((_, reject) =>
-        setTimeout(() => reject(new Error(`fetchVideoInfo 타임아웃 (30초): ${videoId}`)), 30000)
+        setTimeout(() => reject(new Error(`fetchVideoInfo 타임아웃 (10초): ${videoId}`)), 10000)
       )
     ]);
   } catch (error) {
@@ -168,14 +181,9 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
     // 타임아웃이나 에러 발생 시 fallback 비디오 정보 생성
     console.log('🔄 fallback 비디오 정보 생성 시도:', videoId);
     try {
-      const fallbackVideoInfo: VideoInfo = {
-        videoId: videoId,
-        title: `Video ${videoId}`,
-        description: undefined,
-        tags: [],
-        keywords: ['일반', '미디어', '콘텐츠'],
-        timestamp: new Date().toISOString()
-      };
+      const fallbackItem = { videoId, title: `Video ${videoId}` };
+      const fallbackVideoInfo = createFallbackVideoInfo(fallbackItem);
+      fallbackVideoInfo.keywords = ['일반', '미디어', '콘텐츠'];
       
       console.log('✅ fallback 비디오 정보 생성 성공:', videoId);
       return fallbackVideoInfo;
@@ -186,45 +194,20 @@ export async function fetchVideoInfo(videoId: string): Promise<VideoInfo | null>
   }
 }
 
-// 내부 구현 함수 (타임아웃 래핑용)
-async function fetchVideoInfoInternal(videoId: string): Promise<VideoInfo | null> {
+// 내부 구현 함수 (캐시 확인을 건너뛰고 직접 API 호출)
+export async function fetchVideoInfoInternal(videoId: string): Promise<VideoInfo | null> {
   try {
-
-    // 1단계: DB 캐시 확인
-    const cacheInfo = await getCachedVideoInfo(videoId);
-    
-    if (cacheInfo.cached && !cacheInfo.needsRefresh && cacheInfo.data) {
-      console.log('🚀 캐시된 데이터 사용 (YouTube API 호출 생략):', videoId);
-      
-      const cachedData = cacheInfo.data;
-      const videoInfo: VideoInfo = {
-        videoId: cachedData.id,
-        title: cachedData.title,
-        description: cachedData.description || undefined,
-        tags: cachedData.tags || [],
-        keywords: cachedData.keywords || cachedData.tags || [],
-        timestamp: cachedData.last_fetched_at
-      };
-
-      // 캐시된 데이터에 키워드가 없으면 AI 키워드 추출 시도
-      if (!cachedData.keywords || cachedData.keywords.length === 0) {
-        console.log('📝 캐시된 데이터에 키워드 없음, AI 키워드 추출 시도');
-        const extractedKeywords = await extractVideoKeywords(videoInfo);
-        if (extractedKeywords && extractedKeywords.length > 0) {
-          videoInfo.keywords = extractedKeywords;
-          // DB에 키워드 업데이트
-          await updateVideoKeywords(videoId, extractedKeywords);
-          console.log('✅ AI 키워드 DB에 업데이트 완료');
-        }
-      }
-
-      return videoInfo;
-    }
-
-    // 2단계: YouTube API 호출 (캐시 없거나 오래된 경우)
+    // YouTube API 호출 - 최적화된 파라미터
     console.log('🌐 YouTube API 호출:', videoId);
     const response = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=${videoId}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}`
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.NEXT_PUBLIC_GOOGLE_API_KEY}&fields=items(id,snippet(title,description,tags))`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip'
+        }
+      }
     );
     
     if (!response.ok) {
@@ -309,7 +292,7 @@ async function fetchVideoInfoInternal(videoId: string): Promise<VideoInfo | null
 
 // 키워드 추출 함수([관리자용] keyword 추출 버튼 클릭 시 호출)
 // selectedItems를 받아 각 영상의 정보를 fetchVideoInfo로 가져오고, 키워드를 가공하여 반환하는 함수
-export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
+export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void, ensureValidSession?: () => Promise<boolean>) {
   const processedItems: any[] = [];
   let processedCount = 0;
   const totalItems = selectedItems.length;
@@ -326,28 +309,113 @@ const watchHistory_temp =[];
   // ✅ 배치 단위로 중간 저장 (100개마다)
   const BATCH_SIZE = 100;
   let batchCount = 0;
+  
+  // 세션 체크 주기 (50개마다)
+  const SESSION_CHECK_INTERVAL = 50;
 
-  for (const item of selectedItems) {
-    const itemStartTime = Date.now();
+  // ✅ 병렬 처리를 위한 배치 크기 (동시에 처리할 비디오 수)
+  const PARALLEL_BATCH_SIZE = 5;
+  const batches = [];
+  
+  // 배치로 나누기
+  for (let i = 0; i < selectedItems.length; i += PARALLEL_BATCH_SIZE) {
+    batches.push(selectedItems.slice(i, i + PARALLEL_BATCH_SIZE));
+  }
+  
+  console.log(`🚀 병렬 처리 시작: ${batches.length}개 배치, 배치당 최대 ${PARALLEL_BATCH_SIZE}개`);
+  
+  for (const batch of batches) {
+    // ✅ 배치 시작 전 캐시 일괄 조회로 DB 호출 최적화
+    const batchVideoIds = batch.map(item => item.videoId);
+    const bulkCacheInfo = await getBulkCachedVideoInfo(batchVideoIds);
+    console.log(`📦 배치 캐시 조회: ${bulkCacheInfo.cached.length}개 캐시됨, ${bulkCacheInfo.uncached.length}개 API 호출 필요`);
     
-    try {
-      console.log(`🔄 [${processedCount + 1}/${totalItems}] 비디오 처리 시작: ${item.videoId}`);
-      
-      // ✅ 개별 비디오에 대한 추가 타임아웃 적용 (35초)
-      const videoInfo = await Promise.race([
-        fetchVideoInfo(item.videoId),
-        new Promise<VideoInfo | null>((_, reject) =>
-          setTimeout(() => reject(new Error(`개별 비디오 타임아웃 (35초): ${item.videoId}`)), 35000)
-        )
-      ]);
-      
-      const itemElapsed = Date.now() - itemStartTime;
-      console.log(`⏱️ [${processedCount + 1}/${totalItems}] 처리 시간: ${itemElapsed}ms`);
-      
-      if (videoInfo != null) {
-        // ✅ YouTube API에서 정보를 성공적으로 가져온 경우
-        watchHistory_temp.push(videoInfo);
+    // 캐시된 데이터를 Map으로 변환하여 빠른 조회
+    const cacheMap = new Map(bulkCacheInfo.cached.map(video => [video.id, video]));
+    const needsRefreshMap = new Map(bulkCacheInfo.needsRefresh.map(video => [video.id, video]));
+    // 세션 체크 (배치마다)
+    if (processedCount > 0 && ensureValidSession) {
+      console.log(`🔐 [${processedCount}/${totalItems}] 세션 유효성 체크`);
+      const isSessionValid = await ensureValidSession();
+      if (!isSessionValid) {
+        throw new Error('세션이 만료되었습니다. 다시 로그인해주세요.');
+      }
+    }
+    
+    // 배치 내 비디오들을 병렬로 처리
+    const batchPromises = batch.map(async (item) => {
+      const cachedData = cacheMap.get(item.videoId);
+      const needsRefreshData = needsRefreshMap.get(item.videoId);
+
+      // ✅ 캐시된 데이터가 있고 갱신이 필요하지 않은 경우 직접 사용
+      if (cachedData && !needsRefreshData) {
+        console.log(`⚡️ [${processedCount + 1}/${totalItems}] 캐시된 데이터 직접 사용: ${item.videoId}`);
+        const videoInfo: VideoInfo = {
+          videoId: cachedData.id,
+          title: cachedData.title,
+          description: cachedData.description || undefined,
+          tags: cachedData.tags || [],
+          keywords: cachedData.keywords || cachedData.tags || [],
+          timestamp: cachedData.last_fetched_at
+        };
+        return { success: true, videoInfo, item, elapsed: 0 };
+      } else {
+        // ✅ API 호출이 필요한 경우만 fetchVideoInfoInternal 직접 호출
+        console.log(`🌐 [${processedCount + 1}/${totalItems}] API/갱신 필요: ${item.videoId}`);
+        const itemStartTime = Date.now();
         
+        try {
+          // ✅ 개별 비디오에 대한 타임아웃을 15초로 단축 (병렬 처리로 전체 시간 단축)
+          const videoInfo = await Promise.race([
+            fetchVideoInfoInternal(item.videoId),
+            new Promise<VideoInfo | null>((_, reject) =>
+              setTimeout(() => reject(new Error(`개별 비디오 타임아웃 (15초): ${item.videoId}`)), 15000)
+            )
+          ]);
+        
+          const itemElapsed = Date.now() - itemStartTime;
+          
+          if (videoInfo != null) {
+            // ✅ YouTube API에서 정보를 성공적으로 가져온 경우
+            return {
+              success: true,
+              videoInfo,
+              item,
+              elapsed: itemElapsed
+            };
+          } else {
+            // ✅ YouTube API 실패 시 기본 정보라도 유지
+            return {
+              success: false,
+              videoInfo: createFallbackVideoInfo(item),
+              item,
+              elapsed: itemElapsed
+            };
+          }
+        } catch (error) {
+          const itemElapsed = Date.now() - itemStartTime;
+          console.error(`❌ [${processedCount + 1}/${totalItems}] 처리 오류 (${itemElapsed}ms):`, item.videoId, error);
+          
+          // 오류 시 fallback 정보 생성
+          return {
+            success: false,
+            videoInfo: createFallbackVideoInfo(item, `오류 발생: ${item.title || 'Unknown'}`),
+            item,
+            elapsed: itemElapsed,
+            error: error instanceof Error ? error.message : '알 수 없는 오류'
+          };
+        }
+      }
+    });
+    
+    // 배치 결과 처리
+    const batchResults = await Promise.allSettled(batchPromises);
+    
+    for (const result of batchResults) {
+      if (result.status === 'fulfilled') {
+        const { success, videoInfo, item } = result.value;
+        
+        watchHistory_temp.push(videoInfo);
         processedItems.push({
           videoId: videoInfo.videoId,
           title: videoInfo.title,
@@ -357,46 +425,31 @@ const watchHistory_temp =[];
           tags: videoInfo.tags,
           timestamp: new Date().toISOString()
         });
-        successCount++;
-        console.log(`✅ [${processedCount + 1}/${totalItems}] 성공: ${videoInfo.title}`);
+        
+        if (success) {
+          successCount++;
+          console.log(`✅ [${processedCount + 1}/${totalItems}] 성공: ${videoInfo.title}`);
+        } else {
+          failedCount++;
+          console.log(`⚠️ [${processedCount + 1}/${totalItems}] API 실패하여 기본 정보 사용: ${videoInfo.title} (${item.videoId})`);
+        }
       } else {
-        // ✅ YouTube API 실패 시 기본 정보라도 유지
-        const fallbackVideoInfo: VideoInfo = {
-          videoId: item.videoId,
-          title: item.title || `Video ${item.videoId}`,
-          description: `원본 정보: ${item.title || 'Unknown'}`,
-          tags: [],
-          keywords: item.title ? item.title.split(' ') : [],
-          timestamp: new Date().toISOString()
-        };
-        
-        watchHistory_temp.push(fallbackVideoInfo);
-        
-        processedItems.push({
-          videoId: fallbackVideoInfo.videoId,
-          title: fallbackVideoInfo.title,
-          channel: item.channel,
-          date: item.date,
-          keywords: fallbackVideoInfo.keywords,
-          tags: fallbackVideoInfo.tags,
-          timestamp: new Date().toISOString()
-        });
-        
         failedCount++;
-        console.log(`⚠️ [${processedCount + 1}/${totalItems}] API 실패하여 기본 정보 사용: ${fallbackVideoInfo.title} (${item.videoId})`);
+        console.error(`❌ 배치 처리 실패:`, result.reason);
       }
       
       processedCount++;
       batchCount++;
-      
-      // ✅ 진행률 업데이트 및 중간 통계
-      if (onProgress) {
-        onProgress(processedCount, totalItems);
-      }
-      
-      // ✅ 배치 단위로 중간 저장 및 상태 로그
-      if (batchCount >= BATCH_SIZE || processedCount === totalItems) {
-        console.log(`💾 중간 저장 (${processedCount}/${totalItems}): 성공 ${successCount}개, 실패 ${failedCount}개`);
+    }
+    
+    // ✅ 진행률 업데이트 및 중간 통계
+    if (onProgress) {
+      onProgress(processedCount, totalItems);
+    }
+    
+    // ✅ 배치 단위로 중간 저장 및 상태 로그
+    if (batchCount >= BATCH_SIZE || processedCount === totalItems) {
+      console.log(`💾 중간 저장 (${processedCount}/${totalItems}): 성공 ${successCount}개, 실패 ${failedCount}개`);
         
         try {
           // ✅ 중간 저장 전 중복 검사 및 통계
@@ -439,50 +492,11 @@ const watchHistory_temp =[];
         }
         
         batchCount = 0;
-      }
-      
-      // ✅ 매 50개마다 상태 출력
-      if (processedCount % 50 === 0) {
-        const progress = ((processedCount / totalItems) * 100).toFixed(1);
-        console.log(`📊 처리 진행률: ${progress}% (${processedCount}/${totalItems}) - 성공: ${successCount}, 실패: ${failedCount}`);
-      }
-      
-    } catch (error) {
-      const itemElapsed = Date.now() - itemStartTime;
-      console.error(`❌ [${processedCount + 1}/${totalItems}] 비디오 처리 실패 (${itemElapsed}ms): ${item.videoId}`, error);
-      
-      if (error instanceof Error && error.message.includes('타임아웃')) {
-        console.error('🚨 개별 비디오 타임아웃 발생 - 35초 초과');
-      }
-      
-      failedCount++;
-      processedCount++;
-      batchCount++;
-      
-      if (onProgress) {
-        onProgress(processedCount, totalItems);
-      }
-      
-      // ✅ 에러 발생 시에도 중간 저장 체크
-      if (batchCount >= BATCH_SIZE && watchHistory_temp.length > 0) {
-        console.log(`💾 에러 후 중간 저장 (${processedCount}/${totalItems})`);
-        try {
-          const uniqueVideoIds = new Set(watchHistory_temp.map(v => v.videoId));
-          const duplicateCount = watchHistory_temp.length - uniqueVideoIds.size;
-          
-          if (duplicateCount > 0) {
-            console.log(`📊 에러 후 중복 감지: ${duplicateCount}개 중복, ${uniqueVideoIds.size}개 고유`);
-          }
-          
-          await saveWatchHistory(watchHistory_temp);
-          console.log(`✅ 에러 후 저장 완료: ${watchHistory_temp.length}개`);
-          watchHistory_temp.length = 0;
-        } catch (saveError) {
-          console.error('❌ 에러 후 중간 저장 실패:', saveError);
-        }
-        batchCount = 0;
-      }
     }
+    
+    // ✅ 배치 처리 완료 후 상태 출력
+    const progress = ((processedCount / totalItems) * 100).toFixed(1);
+    console.log(`📊 배치 완료: ${progress}% (${processedCount}/${totalItems}) - 성공: ${successCount}, 실패: ${failedCount}`);
   }
   
   // ✅ 최종 남은 데이터 저장

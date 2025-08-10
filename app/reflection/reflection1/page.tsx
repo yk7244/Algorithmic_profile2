@@ -232,11 +232,13 @@ export default function ReflectionQuestionsPage() {
 
                             if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
+
                             if (success) {
                                 router.push("/my_profile?explore=1"); 
                             } else {
                                 setShowTimeoutMsg(true); // 저장 실패 시 안내 메시지 표시
                             }
+
                         }}
                         >
                         다른 사람 알고리즘 탐색하기

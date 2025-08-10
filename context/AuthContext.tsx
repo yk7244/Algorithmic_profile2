@@ -14,6 +14,7 @@ interface AuthContextType {
   signInWithOAuth: (provider: 'google' | 'github') => Promise<void>;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>; // 사용자 데이터 새로고침
+  ensureValidSession: () => Promise<boolean>; // 세션 유효성 확인 및 갱신
   
   // 기존 인터페이스 호환성 유지
   login: () => void;
@@ -44,9 +45,54 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // 세션 유효성 확인 및 갱신
+  const ensureValidSession = async (): Promise<boolean> => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('세션 확인 중 오류:', error);
+        return false;
+      }
+
+      if (!session) {
+        console.warn('세션이 없습니다');
+        return false;
+      }
+
+      // 세션 만료 10분 전에 갱신 (더 안전한 임계값)
+      const expiresAt = session.expires_at || 0;
+      const now = Math.floor(Date.now() / 1000);
+      const timeUntilExpiry = expiresAt - now;
+      
+      if (timeUntilExpiry < 600) { // 10분 미만 남았을 때
+        console.log('🔄 세션 만료 임박, 갱신 시도');
+        const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError) {
+          console.error('세션 갱신 실패:', refreshError);
+          return false;
+        }
+        
+        if (newSession) {
+          setSession(newSession);
+          setUser(newSession.user);
+          console.log('✅ 세션 갱신 성공');
+          return true;
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('세션 유효성 확인 중 오류:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     let authSubscription: any = null;
+    let activityInterval: NodeJS.Timeout | null = null;
 
     const initializeAuth = async () => {
       try {
@@ -97,6 +143,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         );
 
         authSubscription = subscription;
+        
+        // 브라우저 활동 감지를 통한 세션 유지 (5분마다 체크)
+        if (typeof window !== 'undefined') {
+          activityInterval = setInterval(async () => {
+            if (mounted) {
+              await ensureValidSession();
+            }
+          }, 300000); // 5분마다 체크
+        }
+        
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
@@ -148,6 +204,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       mounted = false;
       if (authSubscription) {
         authSubscription.unsubscribe();
+      }
+      if (activityInterval) {
+        clearInterval(activityInterval);
       }
     };
   }, []);
@@ -236,6 +295,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signInWithOAuth,
       signOut,
       refreshUserData,
+      ensureValidSession,
       login,
       logout
     }}>
