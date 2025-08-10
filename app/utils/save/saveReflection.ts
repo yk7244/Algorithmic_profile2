@@ -127,7 +127,9 @@ export function updateReflectionAnswer({
             searched: false,
             tutorial: false,
             reflection1_answer: { answer1: "", answer2: "", answer3: "" },
-            reflection2_answer: { answer1: "", answer2: "" }
+            reflection2_answer: { answer1: "", answer2: "" },
+            reflection1_completed: false,
+            reflection2_completed: false,
         };
         }
     
@@ -152,6 +154,8 @@ export function setReflectionData_reflection1() {
         tutorial: reflectionData?.tutorial,
         reflection1_answer: reflectionData?.reflection1_answer,
         reflection2_answer: reflectionData?.reflection2_answer,
+        reflection1_completed: true,
+        reflection2_completed: reflectionData?.reflection2_completed,
     }   
     localStorage.setItem('reflectionData', JSON.stringify(reflectionData_reflection1));
     return reflectionData_reflection1;
@@ -169,6 +173,8 @@ export function setReflectionData_reflection2() {
         tutorial: reflectionData?.tutorial,
         reflection1_answer: reflectionData?.reflection1_answer,
         reflection2_answer: reflectionData?.reflection2_answer,
+        reflection1_completed: reflectionData?.reflection1_completed,
+        reflection2_completed: true,
     }   
     localStorage.setItem('reflectionData', JSON.stringify(reflectionData_reflection2));
     return reflectionData_reflection2;

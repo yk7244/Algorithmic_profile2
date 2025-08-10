@@ -18,11 +18,12 @@ function SearchPageContent() {
   const { isLoggedIn, isLoading: authLoading, user } = useAuth();
   const [keywords, setKeywords] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [keywordsBySize, setKeywordsBySize] = useState<{ big: string[], mid: string[], small: string[] }>({ big: [], mid: [], small: [] });
+  const [keywordsBySize, setKeywordsBySize] = useState<{ big: string[], mid: string[], small: string[], ds: string[] }>({ big: [], mid: [], small: [], ds: [] });
   // 유상님✅ 더미 데이터로 가져온 이미지들 그냥 검색 결과에 다 ImageData[] 형태로 저장
   const [searchResults, setSearchResults] = useState<ImageData[]>([]);
   const [isSearchMode, setIsSearchMode] = useState(true);
   const [show, setShow] = useState(true); // 안내 문구 표시 여부
+  const [isKeywordPanelOpen, setIsKeywordPanelOpen] = useState(true); // 키워드 패널 열림/닫힘
     
   useEffect(() => {
     (async () => {
@@ -123,15 +124,20 @@ function SearchPageContent() {
     const big: string[] = [];
     const mid: string[] = [];
     const small: string[] = [];
+    const ds: string[] = [];
 
     if(userImageData.length > 0) {
       userImageData.forEach(img => {
-        if (img.sizeWeight > 0.027) {
-          big.push(img.main_keyword);
-        } else if (img.sizeWeight > 0.02) {
-          mid.push(img.main_keyword);
-        } else {
-          small.push(img.main_keyword);
+        if(img.desired_self) {
+          ds.push(img.main_keyword);
+        }else{
+          if (img.sizeWeight > 0.027) {
+            big.push(img.main_keyword);
+          } else if (img.sizeWeight > 0.02) {
+            mid.push(img.main_keyword);
+          } else {
+            small.push(img.main_keyword);
+          }
         }
       });
     }
@@ -139,7 +145,8 @@ function SearchPageContent() {
     return {
       big,   // 큰 영향 키워드 배열
       mid,   // 중간 영향 키워드 배열
-      small  // 작은 영향 키워드 배열
+      small,  // 작은 영향 키워드 배열
+      ds,     // 원하는 자신 키워드 배열
     };
   };
   // 3. 전체 이미지 데이터 받아오기 (DB → ImageData[])
@@ -514,114 +521,153 @@ function SearchPageContent() {
         */}
         {/* 키워드 선택 패널 */}
         <div className="rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800/60 via-slate-800/40 to-slate-900/40 shadow-xl backdrop-blur-xl p-5 mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2 mb-2">
-            내 키워드 선택
+          <h2 className="text-lg md:text-xl font-bold text-white flex items-center justify-between gap-2 mb-2">
+            <span>내 키워드 선택</span>
+            <button
+              onClick={() => setIsKeywordPanelOpen((prev) => !prev)}
+              className="text-xs px-4 py-2 rounded-full bg-slate-700 hover:bg-slate-600 transition"
+              type="button"
+            >
+              {isKeywordPanelOpen ? "접기 ▲" : "펼치기 ▼"}
+            </button>
           </h2>
-          <p className="text-md text-slate-300 mb-6">
-          💡 키워드를 선택하면, 나와 유사한 익명의 알고리즘을 확인할 수 있어요.
-          </p>
+          {/* 패널 내용 토글 */}
+          {isKeywordPanelOpen && (
+            <>
+              <p className="text-md text-slate-300 mb-6">
+              💡 키워드를 선택하면, 나와 유사한 익명의 알고리즘을 확인할 수 있어요.
+              </p>
 
-          <div className="flex flex-row items-left gap-4">
-            {/* 큰 영향 */}
-            <div className="mb-4">
-              {/* 큰 영향 키워드 설명 */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-                <p className="text-sm text-slate-200">
-                  <span className="font-semibold mr-1">큰 영향</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="ml-2 text-slate-300">누적 시청 비중 높음</span>
-                </p>
+              <div className="flex flex-row items-left gap-6">
+                {/* 큰 영향 */}
+                <div className="mb-4">
+                  {/* 큰 영향 키워드 설명 */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                    <p className="text-sm text-slate-200">
+                      <span className="font-semibold mr-1">큰 영향</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="ml-2 text-slate-300">누적 시청 비중 높음</span>
+                    </p>
+                  </div>
+                  {/* 큰 영향 키워드 목록 */}
+                  <div className="flex flex-wrap gap-2.5">
+                    {keywordsBySize.big.map((kw, idx) => {
+                      const isSelected = keywords.includes(kw);
+                      return (
+                        <div
+                          key={kw + idx}
+                          className={
+                            "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                            (isSelected
+                              ? "bg-black text-white"
+                              : "bg-white/90 text-slate-900")
+                          }
+                          onClick={() => setKeywords([kw])}
+                        >
+                          {kw}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 중간 영향 */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                    <p className="text-sm text-slate-200">
+                      <span className="font-semibold mr-1">중간 영향</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="ml-2 text-slate-300">누적 시청 비중 보통</span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {keywordsBySize.mid.map((kw, idx) => {
+                      const isSelected = keywords.includes(kw);
+                      return (
+                        <div
+                          key={kw + idx}
+                          className={
+                            "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                            (isSelected
+                              ? "bg-black text-white"
+                              : "bg-white/90 text-slate-900")
+                          }
+                          onClick={() => setKeywords([kw])}
+                        >
+                          {kw}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 작은 영향 */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                    <p className="text-sm text-slate-200">
+                      <span className="font-semibold mr-1">작은 영향</span>
+                      <span className="text-slate-400">·</span>
+                      <span className="ml-2 text-slate-300">누적 시청 비중 적음</span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {keywordsBySize.small.map((kw, idx) => {
+                      const isSelected = keywords.includes(kw);
+                      return (
+                        <div
+                          key={kw + idx}
+                          className={
+                            "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                            (isSelected
+                              ? "bg-black text-white"
+                              : "bg-white/90 text-slate-900")
+                          }
+                          onClick={() => setKeywords([kw])}
+                        >
+                          {kw}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
-              {/* 큰 영향 키워드 목록 */}
-              <div className="flex flex-wrap gap-2.5">
-                {keywordsBySize.big.map((kw, idx) => {
+              <div className="flex flex-col items-left gap-1 mt-4">
+                <div className="  flex items-center gap-2 mb-2">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
+                  <p className="text-sm text-slate-200">
+                    <span className="font-semibold mr-1">원하는 자신</span>
+                    <span className="text-slate-400">·</span>
+                    <span className="ml-2 text-slate-300">누적 시청 비중 보통</span>
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                {keywordsBySize.ds.map((kw, idx) => {
                   const isSelected = keywords.includes(kw);
                   return (
-                    <div
-                      key={kw + idx}
-                      className={
-                        "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
-                        (isSelected
-                          ? "bg-black text-white"
-                          : "bg-white/90 text-slate-900")
-                      }
-                      onClick={() => setKeywords([kw])}
+                    <div key={kw + idx} className={
+                      "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
+                      (isSelected
+                        ? "bg-black text-white"
+                        : "bg-white/90 text-slate-900")
+                    }
+                    onClick={() => setKeywords([kw])}
                     >
                       {kw}
                     </div>
                   );
                 })}
+                </div>  
               </div>
-            </div>
-
-            {/* 중간 영향 */}
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-sky-400"></span>
-                <p className="text-sm text-slate-200">
-                  <span className="font-semibold mr-1">중간 영향</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="ml-2 text-slate-300">누적 시청 비중 보통</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                {keywordsBySize.mid.map((kw, idx) => {
-                  const isSelected = keywords.includes(kw);
-                  return (
-                    <div
-                      key={kw + idx}
-                      className={
-                        "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
-                        (isSelected
-                          ? "bg-black text-white"
-                          : "bg-white/90 text-slate-900")
-                      }
-                      onClick={() => setKeywords([kw])}
-                    >
-                      {kw}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 작은 영향 */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-block w-2.5 h-2.5 rounded-full bg-slate-300"></span>
-                <p className="text-sm text-slate-200">
-                  <span className="font-semibold mr-1">작은 영향</span>
-                  <span className="text-slate-400">·</span>
-                  <span className="ml-2 text-slate-300">누적 시청 비중 적음</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                {keywordsBySize.small.map((kw, idx) => {
-                  const isSelected = keywords.includes(kw);
-                  return (
-                    <div
-                      key={kw + idx}
-                      className={
-                        "px-3 py-2 rounded-full text-sm font-medium cursor-pointer hover:shadow transition " +
-                        (isSelected
-                          ? "bg-black text-white"
-                          : "bg-white/90 text-slate-900")
-                      }
-                      onClick={() => setKeywords([kw])}
-                    >
-                      {kw}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
 
         {/* 안내 문구 */}
-        {show && (
+        {show && searchResults.length > 0 && (
         <div className="fixed top-22 right-10 bg-white/90 backdrop-blur-lg text-black px-7 py-3 rounded-full shadow-xl flex items-center min-w-[420px] max-w-[600px] z-50 animate-fadeIn">
           <span className="text-base flex items-center p-2 pr-3 pl-3">
             <img src="/images/cokieIcon.svg" alt="click" className="w-4 h-4 mr-4" />
@@ -686,8 +732,8 @@ function SearchPageContent() {
           ) : (
             <div className="text-center py-20">
               <Search className="w-16 h-16 text-black/40 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-black mb-2">아쉽게도 비슷한 취향을 가진 유저가 없습니다.</h3>
-              <p className="text-black/70">다른 관심사를 선택해보거나 나중에 다시 시도해보세요</p>
+              <h3 className="text-2xl font-bold text-black mb-2">검색할 키워드를 선택해주세요</h3>
+              <p className="text-black/70">키워드를 선택하면, 나와 유사한 익명의 알고리즘을 확인할 수 있어요.</p>
             </div>
           )}
         </div>

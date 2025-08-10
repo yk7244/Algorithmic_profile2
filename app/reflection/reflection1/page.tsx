@@ -4,7 +4,7 @@ import { setReflection_answer, setReflectionData_reflection1, setReflectionData_
 import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const subQuestions = [
     "튜브렌즈를 통해 본 당신의 모습은 어땠나요?",
@@ -28,10 +28,12 @@ export default function ReflectionQuestionsPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<string[]>(["", "", ""]);
     const [sliderValue, setSliderValue] = useState(3);
+    const [showTimeoutMsg, setShowTimeoutMsg] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSliderValue(parseInt(e.target.value));
-      };    const router = useRouter();
+    };    const router = useRouter();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const updated = [...answers];
@@ -177,11 +179,18 @@ export default function ReflectionQuestionsPage() {
                 </button>
                 </>
             ):(
+                <>
                 <div className="flex flex-row gap-4">  
                     <button
                         className="mt-10 text-gray-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
                         onClick={async () => {
+                            setShowTimeoutMsg(false);
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                            timeoutRef.current = setTimeout(() => {
+                                setShowTimeoutMsg(true); // 10초 후 안내 메시지 확실히 표시
+                            }, 10000);
+
                             // DB에 reflection1 완료 상태와 답변 저장
                             const reflection1Answers = {
                                 answer1: answers[0],
@@ -190,8 +199,14 @@ export default function ReflectionQuestionsPage() {
                             };
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
+
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
-                            router.push("/my_profile"); 
+                            if (success) {
+                                router.push("/my_profile"); 
+                            } else {
+                                setShowTimeoutMsg(true); // 저장 실패 시 안내 메시지 표시
+                            }
                         }}
                         >
                         돌아가기
@@ -201,6 +216,11 @@ export default function ReflectionQuestionsPage() {
                         className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
                         onClick={async () => {
+                            setShowTimeoutMsg(false);
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                            timeoutRef.current = setTimeout(() => {
+                                setShowTimeoutMsg(true); // 10초 후 안내 메시지 확실히 표시
+                            }, 10);
                             // DB에 reflection1 완료 상태와 답변 저장
                             const reflection1Answers = {
                                 answer1: answers[0],
@@ -209,14 +229,47 @@ export default function ReflectionQuestionsPage() {
                             };
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
+
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
-                            router.push("/my_profile?explore=1"); 
+                            if (success) {
+                                router.push("/my_profile?explore=1"); 
+                            } else {
+                                setShowTimeoutMsg(true); // 저장 실패 시 안내 메시지 표시
+                            }
                         }}
                         >
                         다른 사람 알고리즘 탐색하기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
+                    
                 </div>
+                {/* 안내 메시지 */}
+                {showTimeoutMsg && (
+                    <> 
+                    <div className="w-full text-center mt-4 items-center justify-center flex flex-col ">
+                        <div className="text-red-500 text-sm font-semibold animate-pulse mt-10"> 
+                            저장에 실패했어요🥲 아래 설문조사에 직접 기입해 주세요.
+                        </div>
+                        <div className="text-gray-500 text-xs mt-2 bg-white px-3 py-1 rounded-lg shadow text-center text-[12px] w-fit py-4 px-8 items-center justify-center flex flex-col">
+                            답변1. {answers[0]}<br/>
+                            답변2. 리커트 척도 {sliderValue}점<br/>
+                            답변3. {answers[2]}<br/>
+
+                            <div onClick={() => {
+                                window.open("https://forms.gle/JDQZQssCVJziRafC6", "_blank");
+                            }}
+                            className="text-white text-sm font-semibold hover:text-white transition bg-blue-500 px-3 py-1 cursor-pointer
+                            rounded-full shadow text-center text-[12px] mt-10 w-fit hover:bg-blue-600">
+                                https://forms.gle/JDQZQssCVJziRafC6 
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    </>
+                )}
+                </>
             )}
         </main>
 

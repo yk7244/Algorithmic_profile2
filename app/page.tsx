@@ -139,17 +139,15 @@ useEffect(() => {
       } else {
         // 업로드 기록이 있는 사용자만 reflection 체크
         // reflection1: 첫 업로드 완료 후 아직 reflection1을 하지 않았을 때만 true
-        setIsReflection1(data?.reflection1 !== true);
+        setIsReflection1(data?.reflection1_completed !== true);
         
         // reflection2: reflection1은 완료했지만 reflection2는 아직 하지 않았을 때만 true  
-        setIsReflection2(data?.reflection1 === true && data?.reflection2 !== true);
+        setIsReflection2(data?.reflection1_completed === true && data?.reflection2_completed !== true);
       }
       
       console.log('✅ Home 페이지: 리플렉션 데이터 로드 완료');
       console.log('🔍 Reflection 데이터:', { 
-        upload_check,
-        reflection1: data?.reflection1, 
-        reflection2: data?.reflection2
+        data,
       });
       
       // 실제 상태값은 이후에 로그
