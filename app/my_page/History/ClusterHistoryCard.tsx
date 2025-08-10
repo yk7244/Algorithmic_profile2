@@ -71,7 +71,7 @@ export const ClusterHistoryCard: React.FC<{ history: ClusterHistory, latest: boo
     const totalKeywords = allKeywords.length;
 
     //console.log('확인 reflectionData', reflectionData?.reflection1 ?? false);       
-    const isDisabled = reflectionData?.reflection1 !== false;
+    const isDisabled = reflectionData?.reflection1_completed !== false;
 
     //const reflectionData = getReflectionData();
     //console.log('reflectionData', reflectionData);

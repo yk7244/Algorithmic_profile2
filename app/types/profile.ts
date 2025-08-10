@@ -135,10 +135,12 @@ export interface ReflectionData {
     answer2: string;
     answer3: string;
   }
+  reflection1_completed: boolean;
   reflection2_answer:{
     answer1: string;
     answer2: string;
   }
+  reflection2_completed: boolean;
 }
 
 //[7-2] ReflectionData answer 이전 기록 테이블 

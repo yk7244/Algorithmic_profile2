@@ -62,7 +62,8 @@ export function Navbar() {
           setIsReflection1(false);
           setIsReflection2(false);
           setIsLocked(false); // 락 해제
-        } else {
+        } 
+        {/* else {
           // 업로드 기록이 있는 사용자만 reflection 체크
           // ✅ 수정: reflection1 완료 시 탐색 활성화
           setIsReflection1(reflectionResult?.reflection1 === true);
@@ -86,9 +87,10 @@ export function Navbar() {
             console.log('📅', uploadCheck, '일 지남 - 업데이트 대기');
             setIsLocked(false); 
           }
+          
         }
-        
         console.log('✅ Navbar: 업로드 체크 및 리플렉션 데이터 로드 완료');
+        */}
       } catch (error) {
         console.error('❌ Navbar: 업로드 체크 및 리플렉션 데이터 로드 오류:', error);
         setIsLocked(false); // 오류 시 락 해제
@@ -102,9 +104,9 @@ export function Navbar() {
 
   // 사용자 이름 가져오기 (DB에서 가져온 실제 사용자 데이터 사용)
   const userName = userData?.nickname || 
-                   user?.user_metadata?.full_name || 
-                   user?.email?.split('@')[0] || 
-                   "사용자";
+      user?.user_metadata?.full_name || 
+      user?.email?.split('@')[0] || 
+      "사용자";
 
   return (
     <>
@@ -164,7 +166,7 @@ export function Navbar() {
                 </Button>
                   <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : pathname === "/search" ? "bg-black text-white" : "text-black"} text-sm font-medium rounded-[20px]`}
                 onClick={() => {
-                  if (reflectionData?.reflection1 === true) {
+                  if (reflectionData?.reflection1_completed === true) {
                     router.replace('/search');
                   } else {
                     setShowOverlayQuestion1(true);
@@ -241,7 +243,7 @@ export function Navbar() {
                         <Link href="/my_profile">나의 알고리즘</Link>    
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
-                        {reflectionData?.reflection1 === true ? (
+                        {reflectionData?.reflection1_completed === true ? (
                           <Link href="/search">다른 사람의 알고리즘 탐색</Link>
                         ) : (
                           <div onClick={() => setShowOverlayQuestion1(true)}>다른 사람의 알고리즘 탐색</div>
@@ -280,6 +282,7 @@ export function Navbar() {
           }}
         />
       )}
+      {/*
       {showOverlayQuestion2 && (
         <OverlayQuestion2
           onLeftClick={() => setShowOverlayQuestion2(false)}
@@ -289,6 +292,7 @@ export function Navbar() {
           }}
         />
       )}
+      */}
     </>
   );
 } 

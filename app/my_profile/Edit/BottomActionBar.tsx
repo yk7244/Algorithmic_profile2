@@ -10,6 +10,7 @@ import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { isOneWeekPassed } from "@/app/utils/uploadCheck";
 import OverlayQuestion1 from "../../reflection/reflection1/overlay/OverlayQuestion1";
 import OverlayQuestion2 from "../../reflection/reflection2/overlay/OverlayQuestion2";
+import { setReflectionData_searchedDB } from "@/app/utils/save/saveReflection";
 
 interface BottomActionBarProps {
     isEditing: boolean;
@@ -175,9 +176,10 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                                 : 'bg-gray-200 opacity-50 cursor-not-allowed'
                         }`}
                         disabled={!isReflection1}
-                        onClick={() => {
+                        onClick={async () => {
                             if (isReflection1) {
                                 router.replace('/search');
+                                await setReflectionData_searchedDB(); //추가됨
                             } else {
                                 setShowOverlayQuestion1(true);
                             }
