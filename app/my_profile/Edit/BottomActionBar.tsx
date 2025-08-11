@@ -65,12 +65,12 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 } else {
                                     // 기존 사용자만 reflection 체크
                 // ✅ 수정: reflection1 완료 시 탐색 활성화
-                const reflection1Status = data?.reflection1 === true;
-                const reflection2Status = data?.reflection1 === true && data?.reflection2 !== true;
+                const reflection1Status = data?.reflection1_completed === true;
+                const reflection2Status = data?.reflection1_completed === true && data?.reflection2_completed !== true;
                 
                 console.log('🎯 BottomActionBar Reflection 상태 디버깅:', {
-                    'data?.reflection1': data?.reflection1,
-                    'data?.reflection2': data?.reflection2,
+                    'data?.reflection1_completed': data?.reflection1_completed,
+                    'data?.reflection2_completed': data?.reflection2_completed,
                     'reflection1Status (탐색 활성화)': reflection1Status,
                     'reflection2Status': reflection2Status
                 });
