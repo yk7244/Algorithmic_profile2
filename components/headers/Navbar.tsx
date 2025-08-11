@@ -244,7 +244,7 @@ export function Navbar() {
                         <Link href="/my_profile">나의 알고리즘</Link>    
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
-                        {reflectionData?.reflection1_completed === true ? reflectionData?.reflection1 === true ? (
+                        {reflectionData?.reflection1_completed === true && reflectionData?.reflection2_completed === true ? (
                           <Link href="/search">다른 사람의 알고리즘 탐색</Link>
                         ) : (
                           <div onClick={() => setShowOverlayQuestion1(true)}>다른 사람의 알고리즘 탐색</div>
