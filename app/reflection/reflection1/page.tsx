@@ -19,7 +19,7 @@ const questions = [
     "감상을 남겨주세요.",
     "Q1. 알고리즘이 바라본 ‘나는’ 어떤 사람이었나요?",
     "Q2. 알고리즘이 바라본 ‘나’는, 내가 생각하는 나와 얼마나 닮아 있었나요?",
-    "Q3. 알고리즘 자화상 분석 결과를 보고 어떤 느낌이나 생각이 들었는지 자유롭게 공유해주세요",
+    "Q3. 나의 알고리즘 시각화를 보고 어떤 느낌이나 생각이 들었는지 자유롭게 공유해주세요",
     "스스로의 관심사를 더 또렷하게 마주하게 되었기를 바래요.",
     "새로운 알고리즘을 직접 탐색하는 시간을 가져볼까요? "
 ];
@@ -272,7 +272,7 @@ export default function ReflectionQuestionsPage() {
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
 
                             if (success) {
-                                router.push("/my_profile?explore=1"); 
+                                router.push("/search"); 
                             } else {
                                 setShowTimeoutMsg(true); // 저장 실패 시 안내 메시지 표시
                             }

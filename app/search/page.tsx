@@ -732,7 +732,7 @@ function SearchPageContent() {
           ) : (
             <div className="text-center py-20">
               <Search className="w-16 h-16 text-black/40 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-black mb-2">검색할 키워드를 선택해주세요</h3>
+              <h3 className="text-2xl font-bold text-black mb-2">탐색할 키워드를 선택해주세요</h3>
               <p className="text-black/70">키워드를 선택하면, 나와 유사한 익명의 알고리즘을 확인할 수 있어요.</p>
             </div>
           )}

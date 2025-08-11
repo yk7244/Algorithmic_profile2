@@ -165,12 +165,8 @@ export function Navbar() {
                   나의 알고리즘
                 </Button>
                   <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : pathname === "/search" ? "bg-black text-white" : "text-black"} text-sm font-medium rounded-[20px]`}
-                onClick={() => {
-                  if (reflectionData?.reflection1_completed === true) {
-                    router.replace('/search');
-                  } else {
-                    setShowOverlayQuestion1(true);
-                  }
+                onClick={() => {router.replace('/search');
+                  
                 }}
                 >
                   <span>다른 사람의 알고리즘 탐색</span>
@@ -243,11 +239,8 @@ export function Navbar() {
                         <Link href="/my_profile">나의 알고리즘</Link>    
                       </Button>
                       <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
-                        {reflectionData?.reflection1_completed === true ? (
-                          <Link href="/search">다른 사람의 알고리즘 탐색</Link>
-                        ) : (
-                          <div onClick={() => setShowOverlayQuestion1(true)}>다른 사람의 알고리즘 탐색</div>
-                        )}
+                        <Link href="/search">다른 사람의 알고리즘 탐색</Link>
+                        
                       </Button>
                       
                       
