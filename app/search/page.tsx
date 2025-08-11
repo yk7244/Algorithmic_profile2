@@ -638,7 +638,7 @@ function SearchPageContent() {
                 <div className="  flex items-center gap-2 mb-2">
                   <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
                   <p className="text-sm text-slate-200">
-                    <span className="font-semibold mr-1">원하는 자신</span>
+                    <span className="font-semibold mr-1">추가한 키워드</span>
                     <span className="text-slate-400">·</span>
                     <span className="ml-2 text-slate-300">누적 시청 비중 보통</span>
                   </p>
