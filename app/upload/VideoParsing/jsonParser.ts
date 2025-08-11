@@ -10,6 +10,7 @@ interface JSONWatchHistoryItem {
   time: string;
   subtitles?: Array<{ name: string }>;
   header?: string;
+  details?: string;
 }
 
 interface ProcessedWatchHistoryItem {
@@ -45,8 +46,14 @@ export const parseJSONWatchHistory = async (
     // Extract and validate required fields
     const watchItems = data
       .map((item: JSONWatchHistoryItem) => {
-        // Skip survey items and other non-video content
-        if (item.header === 'YouTube' && item.title === 'Answered survey question') {
+        // 광고(예: details에 name이 '광고' 포함) 제거
+        if (item.details && Array.isArray(item.details)) {
+          if (item.details.some((d: any) => typeof d.name === 'string' && d.name.includes('광고'))) {
+            return null;
+          }
+        }
+        // 기존: 설문조사 등 기타 제외
+        if (item.title === 'Answered survey question') {
           return null;
         }
 
