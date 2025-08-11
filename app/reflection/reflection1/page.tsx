@@ -1,6 +1,6 @@
 "use client";
 
-import { setReflection_answer, setReflectionData_reflection1, setReflectionData_reflection1DB } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData_reflection1, setReflectionData_reflection1DB, setReflection_answerDB } from "@/app/utils/save/saveReflection";
 import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -200,6 +200,25 @@ export default function ReflectionQuestionsPage() {
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
 
+                            // 🔄 reflection_answers 테이블에 히스토리 저장
+                            if (success) {
+                                const historyData = [{
+                                    id: Date.now().toString(),
+                                    user_id: '0', // 실제로는 함수 내부에서 처리됨
+                                    timestamp: new Date().toISOString(),
+                                    reflection1: true,
+                                    reflection2: false,
+                                    searched: false,
+                                    tutorial: false,
+                                    reflection1_answer: reflection1Answers,
+                                    reflection2_answer: { answer1: '', answer2: '' }
+                                }];
+                                
+                                console.log('📚 reflection1 답변 히스토리 저장 중:', historyData);
+                                const historySuccess = await setReflection_answerDB(historyData);
+                                console.log(historySuccess ? '✅ reflection1 히스토리 저장 성공' : '⚠️ reflection1 히스토리 저장 실패 (메인 저장은 성공)');
+                            }
+
                             if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
                             if (success) {
@@ -229,6 +248,25 @@ export default function ReflectionQuestionsPage() {
                             };
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
+
+                            // 🔄 reflection_answers 테이블에 히스토리 저장
+                            if (success) {
+                                const historyData = [{
+                                    id: Date.now().toString(),
+                                    user_id: '0', // 실제로는 함수 내부에서 처리됨
+                                    timestamp: new Date().toISOString(),
+                                    reflection1: true,
+                                    reflection2: false,
+                                    searched: false,
+                                    tutorial: false,
+                                    reflection1_answer: reflection1Answers,
+                                    reflection2_answer: { answer1: '', answer2: '' }
+                                }];
+                                
+                                console.log('📚 reflection1 답변 히스토리 저장 중 (탐색하기):', historyData);
+                                const historySuccess = await setReflection_answerDB(historyData);
+                                console.log(historySuccess ? '✅ reflection1 히스토리 저장 성공 (탐색하기)' : '⚠️ reflection1 히스토리 저장 실패 (메인 저장은 성공)');
+                            }
 
                             if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
