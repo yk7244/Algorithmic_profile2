@@ -15,7 +15,8 @@ export async function getReflectionData(): Promise<ReflectionData | null> {
         let dbReflection = null;
         try {
             dbReflection = await getReflectionDataDB(user.id);
-            console.log('✅ reflections 테이블 정상 접근 성공');
+            console.log('✅ 🟥reflections 테이블 정상 접근 성공');
+            console.log('🟥 조회된 Reflection 데이터:', dbReflection);
         } catch (error) {
             console.warn('⚠️ reflections 테이블 접근 실패, 기본값 사용:', error);
             // DB 접근 실패 시 기본값으로 계속 진행
@@ -43,10 +44,12 @@ export async function getReflectionData(): Promise<ReflectionData | null> {
                     answer2: '',
                     answer3: ''
                 },
+                reflection1_completed: false,
                 reflection2_answer: {
                     answer1: '',
                     answer2: ''
-                }
+                },
+                reflection2_completed: false,
             };
         }
 
@@ -75,10 +78,12 @@ export async function getReflectionData(): Promise<ReflectionData | null> {
                 answer2: '',
                 answer3: ''
             },
+            reflection1_completed: false,
             reflection2_answer: {
                 answer1: '',
                 answer2: ''
-            }
+            },
+            reflection2_completed: false,
         };
     }
 }

@@ -270,8 +270,8 @@ return (
             {/* 안내 문구 */}
             {show && (
             <div
-                className={`relative z-1 mt-[100px] w-fit left-1/2 -translate-x-1/2 items-center text-center bg-white/40 backdrop-blur-lg 
-                    text-black px-6 py-3 rounded-full shadow-lg flex items-end gap-2 animate-fadeIn `}
+                className={`absolute z-10 mt-[100px] w-[800px] left-1/2 -translate-x-1/2 items-center text-center bg-white/40 backdrop-blur-lg 
+                    text-black px-6 py-3 rounded-full shadow-lg flex items-end animate-fadeIn `}
                 role="alert"
                 aria-live="polite"
                 >
@@ -286,7 +286,7 @@ return (
                     <div className="flex flex-row items-center gap-2">
                         <MousePointerClickIcon className="w-6 h-6 text-black animate-pulse " />
                         <div className="text-base text-black">
-                        내 자화상에 담고 싶은 키워드는 이미지를 클릭해 추가해보세요 
+                        내 시각화에 담고 싶은 키워드는 이미지를 클릭해 추가해보세요 
                         </div>
                     </div>
                 </div>

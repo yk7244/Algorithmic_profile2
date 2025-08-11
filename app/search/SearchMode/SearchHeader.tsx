@@ -47,7 +47,7 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
             <h1 className="text-2xl font-bold tracking-tight text-white
             transform transition-transform duration-1000 ease-in-out">
             당신과 비슷한 다른 사람들의  <br/>
-            알고리즘 정체성 키워드를  <br/>
+            알고리즘 키워드를  <br/>
             탐색해보세요.
             </h1>
             </div>
@@ -55,7 +55,7 @@ const SearchHeader = ({ onBack }: SearchHeaderProps) => {
             <div className="text-white text-sm leading-relaxed mt-2
             transform transition-transform duration-1000 ease-in-out pb-14
             ">
-            궁금한 키워드를 선택하면 당신과 유사한 알고리즘 자화상을 확인할 수 있어요.
+            궁금한 키워드를 선택하면 당신과 유사한 알고리즘 시각화를 확인할 수 있어요.
             </div>
             
             

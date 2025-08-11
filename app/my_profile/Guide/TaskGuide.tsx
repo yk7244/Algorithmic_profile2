@@ -103,7 +103,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                       <div className="flex flex-row items-center">
                         <Pen className="w-3 h-3 mr-2 text-black group-hover:text-white transition-colors" />
                         <span className="text-blue-600 font-semibold mr-2">완료</span>
-                        <span className="text-gray-500">1. 알고리즘 자화상 확인하기</span>
+                        <span className="text-gray-500">1. 알고리즘 시각화 확인하기</span>
                       </div>
                       <div className="flex flex-row items-center">
                         <AutoAwesome className="mr-2 text-black group-hover:text-white transition-colors " fontSize="inherit"/>
@@ -112,7 +112,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                         ) : (
                           <span className="text-gray-400 font-semibold mr-2">미완</span>
                         )}
-                        <span className={` ${isReflection1 ? 'text-gray-500' : 'text-gray-400'}`}>2. 알고리즘 자화상 첫인상 남기기</span>
+                        <span className={` ${isReflection1 ? 'text-gray-500' : 'text-gray-400'}`}>2. 알고리즘 시각화 첫인상 남기기</span>
                       </div>
                       <div className="flex flex-row items-center">
                         <SearchIcon className="mr-1 w-3 h-3 mr-2"  />
@@ -121,7 +121,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                         ):(
                           <span className="text-gray-400 font-semibold mr-2">미완</span>
                         )}
-                        <span className={`${isSearched ? 'text-gray-500' : 'text-gray-400'}`}>3. 다른 사람의 알고리즘 자화상에서 새로운 관심사 탐색하기</span>
+                        <span className={`${isSearched ? 'text-gray-500' : 'text-gray-400'}`}>3. 다른 사람의 알고리즘 탐색하기</span>
                       </div>
                     </div>
                 )}
@@ -154,7 +154,7 @@ const TaskGuide = ({ isSearchMode }: { isSearchMode?: boolean }) => {
                       >
                         {/* 이미지 배경 */}
                         <img
-                          src="/images/guideImg.png"
+                          src="/images/Frame1000009054.jpg"
                           alt="가이드 이미지"
                           className="absolute inset-0 w-full h-full object-contain z-0 p-10"
                         />

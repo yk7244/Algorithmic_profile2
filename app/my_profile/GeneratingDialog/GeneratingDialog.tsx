@@ -24,7 +24,7 @@ const GeneratingDialog: React.FC<GeneratingDialogProps> = ({
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="sm:max-w-[500px] bg-black/95 border-none text-white">
       <DialogHeader>
-        <DialogTitle className="text-white text-center">알고리즘 자화상 생성</DialogTitle>
+        <DialogTitle className="text-white text-center">알고리즘 시각화 생성</DialogTitle>
       </DialogHeader>
       <div className="py-10 px-4">
         <div className="flex flex-col items-center space-y-6">

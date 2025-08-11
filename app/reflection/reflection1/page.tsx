@@ -1,17 +1,17 @@
 "use client";
 
-import { setReflection_answer, setReflectionData_reflection1, setReflectionData_reflection1DB } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData_reflection1, setReflectionData_reflection1DB, setReflection_answerDB } from "@/app/utils/save/saveReflection";
 import { updateReflectionAnswer } from "@/app/utils/save/saveReflection";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const subQuestions = [
     "튜브렌즈를 통해 본 당신의 모습은 어땠나요?",
     "질문은 총 3가지예요. 먼저 첫번째 질문을 드려볼게요.",
     "그렇게 느끼셨다니, 흥미로워요! ",
     "마지막으로, ",
-    "알고리즘 자화상 감상 기록이 끝났어요.",    
+    "알고리즘 시각화 감상 기록이 끝났어요.",    
     "이제, "
 ];
 
@@ -19,8 +19,8 @@ const questions = [
     "감상을 남겨주세요.",
     "Q1. 알고리즘이 바라본 ‘나는’ 어떤 사람이었나요?",
     "Q2. 알고리즘이 바라본 ‘나’는, 내가 생각하는 나와 얼마나 닮아 있었나요?",
-    "Q3. 알고리즘 자화상’을 보고 느낀 생각이나 감정은 무엇인가요",
-    "적어주신 감상은 알고리즘에 곧바로 반영되진 않아요. 스스로의 관심사와 그 방향을 더 또렷하게 마주하게 되었기를 바래요.",
+    "Q3. 알고리즘 자화상 분석 결과를 보고 어떤 느낌이나 생각이 들었는지 자유롭게 공유해주세요",
+    "스스로의 관심사를 더 또렷하게 마주하게 되었기를 바래요.",
     "새로운 알고리즘을 직접 탐색하는 시간을 가져볼까요? "
 ];
 
@@ -28,10 +28,12 @@ export default function ReflectionQuestionsPage() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<string[]>(["", "", ""]);
     const [sliderValue, setSliderValue] = useState(3);
+    const [showTimeoutMsg, setShowTimeoutMsg] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSliderValue(parseInt(e.target.value));
-      };    const router = useRouter();
+    };    const router = useRouter();
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const updated = [...answers];
@@ -78,12 +80,20 @@ export default function ReflectionQuestionsPage() {
         
             <h1 className="text-black text-xl font-semibold mb-1">{subQuestions[currentIndex]}</h1> 
             <h1 className="text-black text-xl font-semibold mb-3">{questions[currentIndex]}</h1>
+            {currentIndex === 4 && (
+                <div className="text-gray-400 font-bold text-[14px] mb-4">적어주신 감상은 알고리즘에 반영되진 않습니다. </div>
+            )}
+            {currentIndex === 5 && (
+                <div className="text-gray-400 font-bold text-[14px] mb-4">
+                    적어주신 내용을 저장중이예요. 잠시만 기다려주세요.
+                </div>
+            )}
 
             {/* 입력 필드: Q1~Q3에만 보임 */}
             { currentIndex === 1 || currentIndex === 3 ? (
                 <>
                 <div className="text-gray-400 text-[12px] mb-10">
-                    25자에서 300자 내외로 작성해주세요.
+                    25자 이상 작성해주세요.
                 </div>
                 <div className="flex items-center bg-white rounded-full shadow-2xl px-6 py-4 w-full max-w-2xl">
                     <input
@@ -159,19 +169,28 @@ export default function ReflectionQuestionsPage() {
 
             {/* 하단 Next 버튼: 항상 있음 */}
             {currentIndex < questions.length - 1 ? (
+                <>  
                 <button
                 onClick={handleNext}
                 className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
                 >
-                다음
+                    {currentIndex === 3 ? "완료" : "다음"}
                 <ArrowRight className="ml-1 w-5 h-5" />
                 </button>
+                </>
             ):(
+                <>
                 <div className="flex flex-row gap-4">  
                     <button
                         className="mt-10 text-gray-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
                         onClick={async () => {
+                            setShowTimeoutMsg(false);
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                            timeoutRef.current = setTimeout(() => {
+                                setShowTimeoutMsg(true); // 10초 후 안내 메시지 확실히 표시
+                            }, 10000);
+
                             // DB에 reflection1 완료 상태와 답변 저장
                             const reflection1Answers = {
                                 answer1: answers[0],
@@ -180,17 +199,47 @@ export default function ReflectionQuestionsPage() {
                             };
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
+
+                            // 🔄 reflection_answers 테이블에 히스토리 저장
+                            if (success) {
+                                const historyData = [{
+                                    id: Date.now().toString(),
+                                    user_id: '0', // 실제로는 함수 내부에서 처리됨
+                                    timestamp: new Date().toISOString(),
+                                    reflection1: true,
+                                    reflection2: false,
+                                    searched: false,
+                                    tutorial: false,
+                                    reflection1_answer: reflection1Answers,
+                                    reflection2_answer: { answer1: '', answer2: '' }
+                                }];
+                                
+                                console.log('📚 reflection1 답변 히스토리 저장 중:', historyData);
+                                const historySuccess = await setReflection_answerDB(historyData);
+                                console.log(historySuccess ? '✅ reflection1 히스토리 저장 성공' : '⚠️ reflection1 히스토리 저장 실패 (메인 저장은 성공)');
+                            }
+
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
-                            router.push("/my_profile"); 
+                            if (success) {
+                                router.push("/my_profile"); 
+                            } else {
+                                setShowTimeoutMsg(true); // 저장 실패 시 안내 메시지 표시
+                            }
                         }}
                         >
-                        나의 알고리즘 자화상으로 돌아가기
+                        돌아가기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                     <button
                         className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
 
                         onClick={async () => {
+                            setShowTimeoutMsg(false);
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                            timeoutRef.current = setTimeout(() => {
+                                setShowTimeoutMsg(true); // 10초 후 안내 메시지 확실히 표시
+                            }, 10);
                             // DB에 reflection1 완료 상태와 답변 저장
                             const reflection1Answers = {
                                 answer1: answers[0],
@@ -199,14 +248,68 @@ export default function ReflectionQuestionsPage() {
                             };
                             console.log('🔄 reflection1 답변 DB 저장 중:', reflection1Answers);
                             const success = await setReflectionData_reflection1DB(reflection1Answers);
+
+                            // 🔄 reflection_answers 테이블에 히스토리 저장
+                            if (success) {
+                                const historyData = [{
+                                    id: Date.now().toString(),
+                                    user_id: '0', // 실제로는 함수 내부에서 처리됨
+                                    timestamp: new Date().toISOString(),
+                                    reflection1: true,
+                                    reflection2: false,
+                                    searched: false,
+                                    tutorial: false,
+                                    reflection1_answer: reflection1Answers,
+                                    reflection2_answer: { answer1: '', answer2: '' }
+                                }];
+                                
+                                console.log('📚 reflection1 답변 히스토리 저장 중 (탐색하기):', historyData);
+                                const historySuccess = await setReflection_answerDB(historyData);
+                                console.log(historySuccess ? '✅ reflection1 히스토리 저장 성공 (탐색하기)' : '⚠️ reflection1 히스토리 저장 실패 (메인 저장은 성공)');
+                            }
+
+                            if (timeoutRef.current) clearTimeout(timeoutRef.current); // 저장 요청이 끝나면(성공/실패 상관없이) 타이머를 해제합니다.
                             console.log(success ? '✅ reflection1 답변 DB 저장 성공' : '❌ reflection1 답변 DB 저장 실패');
-                            router.push("/my_profile?explore=1"); 
+
+                            if (success) {
+                                router.push("/my_profile?explore=1"); 
+                            } else {
+                                setShowTimeoutMsg(true); // 저장 실패 시 안내 메시지 표시
+                            }
+
                         }}
                         >
-                        알고리즘 탐색하기
+                        다른 사람 알고리즘 탐색하기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
+                    
                 </div>
+                {/* 안내 메시지 */}
+                {showTimeoutMsg && (
+                    <> 
+                    <div className="w-full text-center mt-4 items-center justify-center flex flex-col ">
+                        <div className="text-red-500 text-sm font-semibold animate-pulse mt-10"> 
+                            저장에 실패했어요🥲 아래 설문조사에 직접 기입해 주세요.
+                        </div>
+                        <div className="text-gray-500 text-xs mt-2 bg-white px-3 py-1 rounded-lg shadow text-center text-[12px] w-fit py-4 px-8 items-center justify-center flex flex-col">
+                            답변1. {answers[0]}<br/>
+                            답변2. 리커트 척도 {sliderValue}점<br/>
+                            답변3. {answers[2]}<br/>
+
+                            <div onClick={() => {
+                                window.open("https://forms.gle/JDQZQssCVJziRafC6", "_blank");
+                            }}
+                            className="text-white text-sm font-semibold hover:text-white transition bg-blue-500 px-3 py-1 cursor-pointer
+                            rounded-full shadow text-center text-[12px] mt-10 w-fit hover:bg-blue-600">
+                                https://forms.gle/JDQZQssCVJziRafC6 
+                            </div>
+                        </div>
+                        
+                    </div>
+                    
+                    </>
+                )}
+                </>
             )}
         </main>
 

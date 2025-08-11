@@ -60,7 +60,7 @@ export const saveSliderHistory = async (
         }
         
         if (!currentDescription) {
-            currentDescription = '나만의 알고리즘 자화상을 만들어보세요';
+            currentDescription = '나만의 알고리즘 시각화를 만들어보세요';
         }
 
         // DB에 저장

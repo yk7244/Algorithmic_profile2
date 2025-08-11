@@ -30,7 +30,7 @@ const OverlayQuestion2: React.FC<OverlayQuestionProps> = ({
                 {week}주차가 시작되었어요.
                 </span>
                 <span className="block mt-2">
-                다음 알고리즘 자화상을 업데이트 하기전, <br />저번 주의 튜브렌즈 여정을 잠시 돌아보는 시간이 필요해요.
+                다음 알고리즘 시각화을 업데이트 하기전, <br />저번 주의 튜브렌즈 여정을 잠시 돌아보는 시간이 필요해요.
                 </span> <br />
                 Week1 리뷰를 시작해주세요.
             </div>

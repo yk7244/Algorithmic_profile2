@@ -184,35 +184,48 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
             >
                 {/* 이미지 묶음 */}
                 <div className={`absolute inset-0  ${!isEditing ? 'transition-all duration-300 hover:scale-110 hover:z-30' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
-                >
-                    {mainKeyword == image.main_keyword && (
-                        <div className="text-black/80 font-bold text-[12px] mr-1 -mt-2 mb-2"> 
-                        <span className="bg-black/80 text-white backdrop-blur-lg px-2 py-1 rounded-full text-[10px] mr-1 -mt-2 mb-2"> 
-                            #{searchKeyword} 
-                        </span>
-                        와 가장 유사한 키워드
+                >   
+                    {/* 유사 키워드 배지 */}
+                    {mainKeyword === image.main_keyword && !!searchKeyword && (
+                        <div
+                        className="absolute w-full -top-6 z-30 flex items-center rounded-full
+                                    bg-blue-600/70 text-white px-2.5 py-1 backdrop-blur-md shadow-lg
+                                    pointer-events-none"
+                        >
+                        <span className="text-[10px] font-semibold">#{searchKeyword}</span>
+                        <span className="text-[10px] opacity-85">와 가장 유사한 키워드</span>
                         </div>
-                    )} 
-                    {/* 메인키워드 */}
-                    <div 
-                        className="absolute -top-6 z-20 whitespace-nowrap"
-                        style={{
-                        fontSize: `${fontSize}px`,
-                        }}
+                    )}
+                    {/* 메인 키워드 라벨 (배지와 안 겹치게 top 보정) */}
+                    <div
+                        className={`${
+                        image.desired_self
+                            ? 'text-center'
+                            : `absolute left-2 z-20 ${mainKeyword === image.main_keyword ? 'top-2' : 'top-2'}`
+                        } whitespace-nowrap`}
+                        style={{ fontSize: `${fontSize}px` }}
                     >
-                        
-                        <div className="group relative -top-2">
-                            {mainKeyword == image.main_keyword ? (
-                                <span className={`font-semibold text-blue-600`}>
-                                    #{image.main_keyword}
-                                </span>
-                            ) : (
-                                <span className={`font-semibold text-gray-800`}>
-                                    #{image.main_keyword}
-                                </span>
-                            )}
+                        <div className="group items-center gap-1">
+                        {mainKeyword === image.main_keyword ? (
+                            <>
+                            <div className="font-semibold text-blue-600">
+                                #{image.main_keyword}
+                            </div>
+
+                            {/* 퍼센트 pill: 해시태그 옆에 붙이기 */}
+                            <TooltipWithPortal tooltip="키워드와 비슷한 정도예요" searchKeyword={searchKeyword || ''}>
+                                <div className="inline-flex items-center rounded-full text-white
+                                                text-[10px] px-1.5 py-0.5">
+                                {Math.round(((image as any).similarity || 0.85) * 100)}%
+                                </div>
+                            </TooltipWithPortal>
+                            </>
+                        ) : (
+                            <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-white'}`}>
+                            #{image.main_keyword}
+                            </span>
+                        )}
                         </div>
-                        
                     </div>
 
                     {/* 이미지 */}
@@ -222,19 +235,21 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                         >
                         <div
                             style={{
-                            ...getClipPath(),
+                            
                             }}
                             className={`group hover:scale-105 transition-transform duration-300 relative w-full h-full ${getFrameStyle()} overflow-hidden ${
                                 false ? 'ring-2 ring-white ring-opacity-70 shadow-xl' : ''
                             }`}
                         >
+                            {/* 🔽 그라디언트 오버레이 추가 */}
+                            {!image.desired_self && <div className="absolute top-0 left-0 w-full h-1/5 bg-gradient-to-b from-black/90 to-transparent z-10 pointer-events-none" />}
+                            
                             <img
                                 src={imageLoadError ? "/images/default_image.png" : image.src}
                                 alt={image.main_keyword}
                                 className={`group w-full h-full object-cover shadow-xl transition-transform duration-300 
                                     ${!isEditing ? 'group-hover:scale-105' : ''}
-                                    ${image.main_keyword == mainKeyword ? 'border-2 border-blue-600' : ''}
-                                    `}
+                                    ${image.desired_self ? 'rounded-full' : ''}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onImageSelect(image);
@@ -242,13 +257,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                                 }}
                                 onError={() => setImageLoadError(true)}
                             />
-                            <div className="absolute top-4 left-4 flex items-center gap-2 z-20">
-                                {mainKeyword == image.main_keyword && (
-                                    <TooltipWithPortal tooltip=" 키워드와 비슷한 정도예요" searchKeyword={searchKeyword || ''}>
-                                        {Math.round(((image as any).similarity || 0.85) * 100)}%
-                                    </TooltipWithPortal>
-                                )}
-                            </div>
+                            
                             
                         </div>
                         

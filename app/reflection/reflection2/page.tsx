@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { getUserData } from "@/app/utils/get/getUserData";
 import { getLatestProfileData, getProfileData } from "@/app/utils/get/getProfileData";
 import { useRouter } from "next/navigation";
-import { setReflection_answer, setReflectionData, setReflectionData_reflection2, setReflectionData_reflection2DB, updateReflectionAnswer } from "@/app/utils/save/saveReflection";
+import { setReflection_answer, setReflectionData, setReflectionData_reflection2, setReflectionData_reflection2DB, updateReflectionAnswer, setReflection_answerDB } from "@/app/utils/save/saveReflection";
 
 const subQuestions = [
     "지난 한 주, 튜브렌즈에서의 경험은 어떠셨나요?",
@@ -143,11 +143,31 @@ export default function ReflectionQuestionsPage2() {
                             };
                             console.log('🔄 reflection2 답변 DB 저장 중:', reflection2Answers);
                             const success = await setReflectionData_reflection2DB(reflection2Answers);
+                            
+                            // 🔄 reflection_answers 테이블에 히스토리 저장
+                            if (success) {
+                                const historyData = [{
+                                    id: Date.now().toString(),
+                                    user_id: '0', // 실제로는 함수 내부에서 처리됨
+                                    timestamp: new Date().toISOString(),
+                                    reflection1: true, // reflection2를 하려면 reflection1은 이미 완료된 상태
+                                    reflection2: true,
+                                    searched: false,
+                                    tutorial: false,
+                                    reflection1_answer: { answer1: '', answer2: '', answer3: '' }, // 이전 답변은 빈 값
+                                    reflection2_answer: reflection2Answers
+                                }];
+                                
+                                console.log('📚 reflection2 답변 히스토리 저장 중:', historyData);
+                                const historySuccess = await setReflection_answerDB(historyData);
+                                console.log(historySuccess ? '✅ reflection2 히스토리 저장 성공' : '⚠️ reflection2 히스토리 저장 실패 (메인 저장은 성공)');
+                            }
+                            
                             console.log(success ? '✅ reflection2 답변 DB 저장 성공' : '❌ reflection2 답변 DB 저장 실패');
                             router.push("/"); 
                         }}
                         >
-                        알고리즘 자화상 업데이트 하러 가기
+                        알고리즘 시각화 업데이트 하러 가기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                 </div>

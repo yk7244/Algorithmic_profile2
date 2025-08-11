@@ -10,6 +10,7 @@ import { getReflectionData } from "@/app/utils/get/getReflectionData";
 import { isOneWeekPassed } from "@/app/utils/uploadCheck";
 import OverlayQuestion1 from "../../reflection/reflection1/overlay/OverlayQuestion1";
 import OverlayQuestion2 from "../../reflection/reflection2/overlay/OverlayQuestion2";
+import { setReflectionData_searchedDB } from "@/app/utils/save/saveReflection";
 
 interface BottomActionBarProps {
     isEditing: boolean;
@@ -159,7 +160,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                     <AutoAwesomeIcon className="w-5 h-5 text-black group-hover:text-white transition-colors" />
                     </button>
                     <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg  text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
-                    나의 알고리즘 자화상에 대한 첫인상을 남겨보세요
+                    나의 알고리즘 시각화에 대한 첫인상을 남겨보세요
                     </div>
                 </div>
 
@@ -175,9 +176,10 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                                 : 'bg-gray-200 opacity-50 cursor-not-allowed'
                         }`}
                         disabled={!isReflection1}
-                        onClick={() => {
+                        onClick={async () => {
                             if (isReflection1) {
-                                router.replace('/my_profile?explore=1');
+                                router.replace('/search');
+                                await setReflectionData_searchedDB(); //추가됨
                             } else {
                                 setShowOverlayQuestion1(true);
                             }
@@ -214,8 +216,8 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                     </button>
                     <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
                         {isReflection1 
-                            ? '다른 사람의 알고리즘이 궁금한가요? 다른 사람들의 알고리즘 자화상을 탐색해보세요! '
-                            : '알고리즘 자화상 첫인상 남기기(2번)을 먼저 완료해주세요.'
+                            ? '다른 사람의 알고리즘이 궁금한가요?  나의 키워드를 기준으로 새로운 알고리즘을 탐색할 수 있어요! '
+                            : '알고리즘 시각화 첫인상 남기기(2번)을 먼저 완료해주세요.'
                         }
                     </div>
                 </div>

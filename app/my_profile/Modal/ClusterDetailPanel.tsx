@@ -16,6 +16,7 @@ import { saveWatchedVideoToLocalStorage } from './Hooks/saveExploreWatchHistory'
 import { useRecommend } from './Hooks/useRecommend';
 import VideoList from './Hooks/VideoList'; 
 import { ProfileData } from '@/app/types/profile';
+import VideoList2 from "./Hooks/VideoList2";
 
 interface ClusterDetailPanelProps {
     image: any;
@@ -153,32 +154,29 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                                     <br />
                                     <br />
-                                    <span className="text-white/90 font-bold"> #{image.main_keyword} </span>
-                                    와 관련된 키워드는 
+                                    관련 키워드 :
                                     {image.keywords.map((keyword: string) => (
-                                        <span key={keyword} className="text-blue-200 font-bold "> #{keyword} </span>
+                                        <span key={keyword} className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1 mb-3"> #{keyword} </span>
                                     ))}
-                                    이 있어요.
                                 </p>
                             </div>
 
                             
                         </div>
 
-                        {/* 하단 버튼 */}
                         {isOwner && !image.desired_self && (
                         <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
-                            <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
-                            flex items-center text-sm font-medium transition-all duration-300 "
+                            <p className="backdrop-blur-sm text-black  px-8 py-4 rounded-full 
+                            items-center text-sm font-medium transition-all duration-300 bg-white/20 backdrop-blur-lg"
                             
                             >
-                                이 알고리즘 정체성 키워드는 당신의 추천 알고리즘에 &nbsp;
-                                <span className={`rounded-full font-bold animate-pulse duration-1000`}
+                                이 키워드는 당신의 추천 알고리즘에 <br/>
+                                <span className={`rounded-full font-bold animate-pulse duration-1000 text-black`}
                                 style={{
                                     animation: 'pulse 1s ease-in-out infinite'
                                 }}
                                 >
-                                    {image.sizeWeight >= 1.2 ? ' 큰 영향 ' : image.sizeWeight >= 0.8 ? ' 중간 영향 ' : ' 작은 영향 '}
+                                        {image.sizeWeight >= 0.027 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
                                 </span>
                                 을 주고 있어요.
                             </p>
@@ -195,7 +193,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                             >
                                 
                                 <ChevronDown className="h-5 w-5" />
-                                알고리즘 더 살펴보기   
+                                더 살펴보기   
                             </Button>
                         </div>
                     </div>
@@ -234,19 +232,18 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                                 {/* 설명 */}
                                 <div className="text-left mb-8 max-w-2xl mx-auto">
-                                    <p className="text-[12px] leading-relaxed text-white/40 mb-2">
+                                    <p className="text-[12px] leading-relaxed text-white/40 mb-2 ">
                                         {descriptionOpen ?   (
                                             <>
                                             {image.description.replace(/당신/g, `${profile?.nickname}님`)}
 
                                             <br />
                                             <br />
-                                            <span className="text-white/90 font-bold"> #{image.main_keyword} </span>
-                                            와 관련된 키워드는 
+                                            관련 키워드 :
                                             {image.keywords.map((keyword: string) => (
-                                                <span key={keyword} className="text-blue-200 font-bold "> #{keyword} </span>
+                                                <span key={keyword} className="text-[11px] line-height-2 font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1"> #{keyword} </span>
                                             ))}
-                                            이 있어요.
+                                            
                                             <button className="text-blue-500 underline text-xs focus:outline-none" onClick={() => setDescriptionOpen((prev) => !prev)}>줄이기   </button>
 
                                             </>
@@ -263,14 +260,14 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                 {/* 설명 텍스트 */}
                                 {isOwner && !image.desired_self && (
                                 <div className="text-left max-w-2xl text-white/90">
-                                    <p className="backdrop-blur-sm bg-black/90 text-white px-6 py-3 rounded-3xl 
-                                    text-xs font-medium transition-all duration-300"
+                                    <p className="backdrop-blur-sm bg-white/90 text-black px-6 py-3 rounded-3xl 
+                                    text-xs font-medium transition-all duration-300 text-center"
                                     style={{
-                                        animation: 'pulse 4s ease-in-out infinite'
+                                        animation: 'pulse 4s ease-in-out infinite '
                                     }}>
-                                        이 알고리즘 정체성 키워드는 당신의 추천 알고리즘에&nbsp;
-                                        <span className={`ml-1 font-bold`}>
-                                            {image.sizeWeight >= 1.2 ? '큰 영향' : image.sizeWeight >= 0.8 ? '중간 영향' : '작은 영향'}
+                                        이 키워드는 당신의 추천 알고리즘에&nbsp;
+                                        <span className={`ml-1 font-bold text-black`}>
+                                        {image.sizeWeight >= 0.027 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
                                         </span>
                                         을 주고 있어요.
                                     </p>
@@ -290,7 +287,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             {/* 일반 클러스터 */}
                                             {!image.desired_self ? (
                                                 <>
-                                                <p className="mt-8 mb-4 text-md text-black font-bold"> 아래의 {image.relatedVideos.length}개의 시청 기록들이 <br/> 알고즘 정체성 키워드에 반영되었어요.</p>
+                                                <p className="mt-8 mb-4 text-md text-black font-bold"> 아래의 {image.relatedVideos.length}개의 시청 기록들이 <br/> 이 키워드에 반영되었어요.</p>
                                     
                                                 {!showWatchHistory && (
                                                     <Button
@@ -310,7 +307,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 )}
                                                 
                                                 <p className="mt-16 mb-4 text-md text-black font-bold">
-                                                    이 영상들을 기반으로 유튜브 추천 알고리즘은 <br/> 아래와 같은 영상을 계속 추천하게 될거에요.
+                                                    시청했던 위 영상들을 기반으로 유튜브 추천 알고리즘은 <br/> 아래와 같은 영상을 계속 추천하게 될거에요.
                                                 </p>
                                                 {!showRecommendations && (
                                                     <Button
@@ -398,19 +395,20 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                         /* 다른 사람의 프로필일 때 */
                                         <>
                                             {!isOwner && (
-                                                <div className="fixed bottom-6 left-6 right-6 z-50 group">
+                                                <div className="group fixed bottom-6 left-6 right-6 z-50 group">
                                                     <Button
                                                         className="w-full bg-black hover:bg-gray-800 text-white px-6 py-6 rounded-full text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105"
                                                         onClick={() => handleAddAsInterest(image, ownerId)}
                                                     >
                                                         <img src="/images/cokieIcon_white.svg" alt="click" className="w-4 h-4 mr-4" />
-                                                        이 키워드 나의 알고리즘 자화상에 추가하기
+                                                        이 키워드 나의 알고리즘 시각화에 추가하기
                                                     </Button>
                                                     {/* 호버 툴팁 */}
-                                                    <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap z-50"
+                                                    <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 bg-white text-black px-6 py-3 rounded-2xl 
+                                                    shadow-lg text-base font-medium whitespace-nowrap z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                                                         style={{ pointerEvents: 'none' }}
                                                     >
-                                                        관심이 생기셨나요? 나의 알고리즘 자화상에 추가해보세요!
+                                                        관심이 생기셨나요? 나의 알고리즘 시각화에 추가해보세요!
                                                         {/* 꼬리 */}
                                                         <div className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0 border-x-8 border-x-transparent border-t-8 border-t-white"></div>
                                                     </div>
@@ -418,7 +416,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 </div>
                                             )}
                                             
-                                            <VideoList
+                                            <VideoList2
                                                 isLoading={isLoadingAiVideos}
                                                 videos={aiRecommendedVideos}
                                                 watchedVideos={watchedVideos}

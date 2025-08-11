@@ -164,13 +164,13 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                 >
                     {/* 메인키워드 */}
                     <div 
-                        className="absolute -top-6 z-20 whitespace-nowrap"
+                        className={`${image.desired_self ? 'text-center' : 'absolute top-1 ml-2 z-20 whitespace-nowrap'}`}
                         style={{
                         fontSize: `${fontSize}px`,
                         }}
                     >
                         <div className="group relative y-2">
-                            <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-gray-800'}`}>
+                            <span className={`font-semibold ${image.desired_self ? 'text-purple-600' : 'text-white'}`}>
                                 #{image.main_keyword}
                             </span>
                             {/* 호버 툴팁 
@@ -195,21 +195,27 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
 
                     {/* 이미지 */}
                     <SheetTrigger asChild>
+                        
                         <div 
                         className={`group relative w-full h-[calc(100%-40px)] ${updatedFrameStyle === 'people' ? 'overflow-hidden' : ''} ${!isEditing && !isSearchMode ? 'cursor-pointer' : ''} ${isEditing ? 'pointer-events-none' : ''}`}
                         >
                         <div
                             style={{
-                            ...getClipPath(),
+                            
                             }}
                             className={`group hover:scale-105 transition-transform duration-300 relative w-full h-full ${getFrameStyle()} overflow-hidden ${
                                 isSelected ? 'ring-2 ring-white ring-opacity-70 shadow-xl' : ''
                             }`}
                         >
+                            {/* 🔽 그라디언트 오버레이 추가 */}
+                            {!image.desired_self && <div className="absolute top-0 left-0 w-full h-1/5 bg-gradient-to-b from-black/90 to-transparent z-10 pointer-events-none" />}
+                            
                             <img
                                 src={imageLoadError ? "/images/default_image.png" : image.src}
                                 alt={image.main_keyword}
-                                className={`group w-full h-full object-cover shadow-xl transition-transform duration-300 ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}`}
+                                className={`group w-full h-full object-cover shadow-xl transition-transform duration-300 
+                                    ${!isEditing && isSearchMode ? 'group-hover:scale-105' : ''}
+                                    ${image.desired_self ? 'rounded-full' : ''}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     if (!isEditing && isSearchMode) {
@@ -227,19 +233,7 @@ const DraggableImage: React.FC<DraggableImageProps> = ({
                             */}
                         </div>
                         
-                        {/* 키워드를 이미지 하단에 배치 
-                        <div className="absolute bottom-0.5 left-0 right-0 flex flex-wrap gap-1 justify-center items-center p-1">
-                            {image.keywords.map((keyword: string, idx: number) => (
-                            <span
-                                key={idx}
-                                className="inline-block px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm rounded-full shadow-sm transition-colors"
-                            >
-                                #{keyword}
-                            </span>
-                            ))}
-                        </div>
                         
-                        */}
                         
                         </div>
                     </SheetTrigger>

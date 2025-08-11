@@ -20,6 +20,7 @@ const formatSafeDate = (dateValue: any): string => {
 };
 
 interface HistorySliderProps {
+    originalImage: any[];
     histories: any[];
     currentHistoryIndex: number;
     isPlaying: boolean;
@@ -30,6 +31,7 @@ interface HistorySliderProps {
 }
 
 const HistorySlider: React.FC<HistorySliderProps> = ({
+    originalImage,
     histories,
     currentHistoryIndex,
     isPlaying,
@@ -61,7 +63,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
             {/* 3초간 보여주는 안내 메시지 */}
             {showToast && (
                 <div className="relative flex items-center justify-center mt-4 bg-black/80 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-fadeIn text-base mb-5">
-                    {currentHistoryIndex === -1 ? '현재 자화상' : formatSafeDate(histories[currentHistoryIndex]?.created_at || histories[currentHistoryIndex]?.timestamp)} 모습이예요.
+                    {currentHistoryIndex === -1 ? '현재 시각화' : formatSafeDate(histories[currentHistoryIndex]?.created_at || histories[currentHistoryIndex]?.timestamp)} 모습이예요.
                 </div>
             )}
         <div className="relative bg-white/50 backdrop-blur-lg w-full flex flex-col items-center">
@@ -73,7 +75,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                     style={{
                         left: `${100 / (histories.length + 3) -17}%`,
                     }}>
-                        <span className="text-sm font-semibold text-gray-500 ml-1 ">과거 자화상</span>
+                        <span className="text-sm font-semibold text-gray-500 ml-1 ">과거 시각화</span>
                         <svg display="block" width="20" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 19l-7-7 7-7" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                     {/* 오른쪽: 화살표 + 텍스트 (선 바로 바깥) */}
@@ -82,7 +84,7 @@ const HistorySlider: React.FC<HistorySliderProps> = ({
                         right: `${100 / (histories.length + 3) -17}%`,
                     }}>
                         <svg display="block" width="20" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                        <span className="text-sm font-semibold text-gray-500 mr-1">현재 자화상</span>
+                        <span className="text-sm font-semibold text-gray-500 mr-1">현재 시각화</span>
                     </div>
                     {/* 선 */}
                     <div

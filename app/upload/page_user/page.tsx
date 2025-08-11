@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
 import { getParseHistory } from '@/app/utils/get/getparseHistory';
+import { useAuth } from '@/context/AuthContext';
 
 
 // 기본 이미지를 데이터 URI로 정의
@@ -61,6 +62,7 @@ const steps = [
 export default function Home() {
 
 const router = useRouter();
+const { ensureValidSession, isLoggedIn } = useAuth();
 const [isLoading, setIsLoading] = useState(false);
 const [error, setError] = useState<string | null>(null);
 const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
@@ -81,6 +83,7 @@ const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [profile, setProfile] = useState({ nickname: '', description: '' });
+const [sessionCheckInterval, setSessionCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
 // useClusterStorage 커스텀 훅 사용
 useClusterStorage({
@@ -139,8 +142,36 @@ useEffect(() => {
         if (hasRunRef.current) return; // 이미 실행되었으면 아무것도 안함
         hasRunRef.current = true; // 처음이면 실행 기록
 
+        // 로그인 상태 확인
+        if (!isLoggedIn) {
+            console.error('로그인이 필요합니다');
+            router.push('/');
+            return;
+        }
+
+        // 세션 유효성 확인
+        const isSessionValid = await ensureValidSession();
+        if (!isSessionValid) {
+            console.error('세션이 유효하지 않습니다. 다시 로그인해주세요');
+            router.push('/');
+            return;
+        }
+
         setShowGeneratingDialog(true);
         setGeneratingStep(1);
+        
+        // 장시간 작업을 위한 주기적 세션 체크 시작 (2분마다)
+        const interval = setInterval(async () => {
+            const isValid = await ensureValidSession();
+            if (!isValid) {
+                console.error('주기적 세션 체크 실패');
+                clearInterval(interval);
+                setError('세션이 만료되었습니다. 다시 로그인해주세요');
+                router.push('/');
+            }
+        }, 120000); // 2분마다 체크
+        setSessionCheckInterval(interval);
+        
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
@@ -154,12 +185,21 @@ useEffect(() => {
                 console.log(`${current}/${total} 처리 중`);
                 setCurrent(current);
                 setTotal(total);
-            });
+            }, ensureValidSession);
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             
 
             await new Promise(resolve => setTimeout(resolve, 2000)); // 클러스터 분석 시뮬레이션
+
+            // 세션 유효성 재확인 (1단계 완료 후)
+            const isStillValid = await ensureValidSession();
+            if (!isStillValid) {
+                console.error('분석 중 세션이 만료되었습니다');
+                setError('세션이 만료되었습니다. 다시 로그인해주세요');
+                router.push('/');
+                return;
+            }
 
             // 2단계: 클러스터 분석
             setGeneratingStep(2);
@@ -185,6 +225,15 @@ useEffect(() => {
             );
             
             
+            // 세션 유효성 재확인 (2단계 완료 후)
+            const isStillValidAfterCluster = await ensureValidSession();
+            if (!isStillValidAfterCluster) {
+                console.error('클러스터 분석 후 세션이 만료되었습니다');
+                setError('세션이 만료되었습니다. 다시 로그인해주세요');
+                router.push('/');
+                return;
+            }
+
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 2000)); // 이미지 생성 시뮬레이션
             // 4단계: clusterHistory, sliderHistory 저장하기
@@ -202,11 +251,26 @@ useEffect(() => {
             console.error('분석 중 오류:', error);
             setError('분석 중 오류가 발생했습니다.');
             setShowGeneratingDialog(false);
+        } finally {
+            // 세션 체크 인터벌 정리
+            if (sessionCheckInterval) {
+                clearInterval(sessionCheckInterval);
+                setSessionCheckInterval(null);
+            }
         }
     };
     startAnalysis();
     // eslint-disable-next-line
 }, []);
+
+// 컴포넌트 언마운트 시 세션 체크 인터벌 정리
+useEffect(() => {
+    return () => {
+        if (sessionCheckInterval) {
+            clearInterval(sessionCheckInterval);
+        }
+    };
+}, [sessionCheckInterval]);
 
 useEffect(() => {
     if (showCompletePage && countdown > 0) {
@@ -226,16 +290,18 @@ useEffect(() => {
 return (
     <main className={`flex min-h-screen items-center p-4 py-40 relative overflow-hidden scroll-none 
         ${
-        showCompletePage
-        ? " " // showCompletePage가 true면 이 색
-        : bgColorByStep[generatingStep] || "bg-[#777E90]" // 아니면 step에 따라
+            showCompletePage ? '' :
+            generatingStep === 1 ? 'bg-[#000000]' : 
+            generatingStep === 2 ? 'bg-gradient-to-r from-[#000000] to-[#FFFFFF]' :
+            'bg-gradient-to-r from-[#8F8F8F] to-[#FFFFFF]'
+        }
     }`}
     >  
     
     {/* 하단 퍼지는 블러 애니메이션 배경 */}
     {showCompletePage ? (
         <div
-            className={`scroll-none min-h-screen bg-[#777E90] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
+            className={`scroll-none min-h-screen {bg-[#777E90] absolute inset-0 overflow-hidden -z-20 pointer-events-none`}
             style={{
             backgroundImage: "url('/images/upload_bg.svg')",
             backgroundSize: 'contain',
@@ -248,14 +314,15 @@ return (
             animation: 'fadeIn 2s ease-in-out',            
             }}>
             <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '0s' }} />
-            <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
+            <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[120px] animate-blob" style={{ animationDelay: '2s' }} />
             <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />      
         </div>
     ):(
     <div className="absolute inset-0 overflow-hidden z-2 pointer-events-none">
-        <div className="absolute -bottom-[30%] -left-[20%] w-[40%] h-[60%] rounded-full bg-[#98B5FF] blur-[120px] animate-blob" style={{ animationDelay: '0s' }} />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[30%] h-[60%] rounded-full bg-[#98B5FF] blur-[220px] animate-blob" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-[10%] left-[30%] w-[40%] h-[20%] rounded-full bg-[#98B5FF]  blur-[170px] animate-blob" style={{ animationDelay: '4s' }} />
+        <div className="absolute -bottom-[30%] -left-[20%] w-[60%] h-[80%] rounded-full bg-[#82A5FF] blur-[120px] animate-blob" style={{ animationDelay: '0s' }} />
+        <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-[#82A5FF] blur-[120px] animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-[10%] left-[10%] w-[40%] h-[20%] rounded-full bg-white blur-[70px] animate-blob" style={{ animationDelay: '2s' }} />
+        <div className="absolute -bottom-[10%] left-[20%] w-[50%] h-[50%] rotate-20 rounded-full bg-[#98B5FF]  blur-[70px] animate-blob" style={{ animationDelay: '4s' }} />
     </div>
     )}
 
@@ -270,8 +337,8 @@ return (
                     style={{
                         animation: 'fadeIn 2s ease-in-out',
                     }}>
-                        알고리즘이 본 당신의 알고리즘 자화상이 완성되었습니다. <br/>
-                        {countdown}초 뒤 나의 알고리즘 자화상으로 이동할게요. 
+                        알고리즘이 본 당신의 알고리즘 시각화가 완성되었습니다. <br/>
+                        {countdown}초 뒤 나의 알고리즘 시각화로 이동할게요. 
                     </h1>
                 </div>
             </div>

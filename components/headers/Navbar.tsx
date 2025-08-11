@@ -26,7 +26,7 @@ import { isOneWeekPassed } from '@/app/utils/uploadCheck';
 export function Navbar() {
   const pathname = usePathname();
   const isMainPage = pathname === '/';
-  const { isLoggedIn, logout, user, userData } = useAuth();
+  const { isLoggedIn, logout, user, userData, isLoading: authLoading } = useAuth();
   const [language, setLanguage] = useState("KO");
   const router = useRouter();
   const [showOverlayQuestion1, setShowOverlayQuestion1] = useState(false);
@@ -42,6 +42,11 @@ export function Navbar() {
   // 기존 reflection 로드는 아래의 통합된 함수로 대체됨
   
   useEffect(() => {
+    // 인증이 로딩 중이거나 로그인되지 않은 경우 실행하지 않음
+    if (authLoading || !isLoggedIn) {
+      return;
+    }
+
     const loadUploadCheckAndSetLockAndReflection = async () => {
       try {
         const uploadCheck = await isOneWeekPassed();
@@ -57,7 +62,8 @@ export function Navbar() {
           setIsReflection1(false);
           setIsReflection2(false);
           setIsLocked(false); // 락 해제
-        } else {
+        } 
+        {/* else {
           // 업로드 기록이 있는 사용자만 reflection 체크
           // ✅ 수정: reflection1 완료 시 탐색 활성화
           setIsReflection1(reflectionResult?.reflection1 === true);
@@ -81,9 +87,10 @@ export function Navbar() {
             console.log('📅', uploadCheck, '일 지남 - 업데이트 대기');
             setIsLocked(false); 
           }
+          
         }
-        
         console.log('✅ Navbar: 업로드 체크 및 리플렉션 데이터 로드 완료');
+        */}
       } catch (error) {
         console.error('❌ Navbar: 업로드 체크 및 리플렉션 데이터 로드 오류:', error);
         setIsLocked(false); // 오류 시 락 해제
@@ -93,13 +100,13 @@ export function Navbar() {
     };
 
     loadUploadCheckAndSetLockAndReflection();
-  }, []); // 초기 로드 시에만 실행
+  }, [authLoading, isLoggedIn]); // 인증 상태가 변경될 때만 실행
 
   // 사용자 이름 가져오기 (DB에서 가져온 실제 사용자 데이터 사용)
   const userName = userData?.nickname || 
-                   user?.user_metadata?.full_name || 
-                   user?.email?.split('@')[0] || 
-                   "사용자";
+      user?.user_metadata?.full_name || 
+      user?.email?.split('@')[0] || 
+      "사용자";
 
   return (
     <>
@@ -116,10 +123,11 @@ export function Navbar() {
               <div className="h-5 w-5 flex items-center justify-center">
                 <Image src="/images/logo.png" alt="TubeLens Logo" width={18} height={18} />
               </div>
-              <span className={`${pathname === "/" ? "text-white" : pathname === "/upload" ? "text-black" : "text-black"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
+              <span className={`${pathname === "/" ? "text-white bg-shadow-lg shadow-white  " : pathname === "/upload" ? "text-black" : "text-black"} text-lg font-bold tracking-[-0.4px] leading-snug whitespace-nowrap`}>
                 TubeLens
               </span>
             </Link>
+            {/*
             <HoverCard openDelay={100} closeDelay={200}>
               <HoverCardTrigger asChild>
                 <Link href="/introduction" className={`hidden md:flex items-center gap-1 transition-colors ml-3 
@@ -128,8 +136,9 @@ export function Navbar() {
                   <HelpCircle className="w-4 h-4" />
                 </Link>
               </HoverCardTrigger>
-              
+                          
             </HoverCard>
+            */}
           </div>
 
           <nav className="hidden md:flex items-center gap-x-4 md:pr-0">
@@ -139,7 +148,7 @@ export function Navbar() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className={`${pathname === "/" ? "text-white " : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                  className={`${pathname === "/" ? "text-white " : pathname === "/my_profile" ? "bg-black text-white" : "text-black"} text-sm font-medium px-6 rounded-[20px]`}
                   onClick={() => {
                     // 페이지 이동 시 강제로 새로고침 파라미터 추가 (중복 클릭 방지)
                     if (window.location.pathname === '/my_profile') {
@@ -153,18 +162,18 @@ export function Navbar() {
                     }
                   }}
                 >
-                  나의 알고리즘 자화상
+                  나의 알고리즘
                 </Button>
-                <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium hover:bg-white hover:text-black px-6 hover: rounded-[20px]`}
+                  <Button asChild variant="ghost" size="sm" className={`${pathname === "/" ? "text-white" : pathname === "/search" ? "bg-black text-white" : "text-black"} text-sm font-medium rounded-[20px]`}
                 onClick={() => {
-                  if (isReflection1) {
-                    router.replace('/my_profile?explore=1');
+                  if (reflectionData?.reflection1_completed === true) {
+                    router.replace('/search');
                   } else {
                     setShowOverlayQuestion1(true);
                   }
                 }}
                 >
-                  <span>다른 사람의 알고리즘 자화상 탐색</span>
+                  <span>다른 사람의 알고리즘 탐색</span>
                 </Button>
                 
                 {/* 언어 선택 버튼 
@@ -172,7 +181,7 @@ export function Navbar() {
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
                 */}
-                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/" ? "text-white" : "text-black"} text-sm font-medium px-6 py-1.5 rounded-md hover:bg-white hover:text-black hover: rounded-[20px]`}>
+                <Button asChild variant="ghost" size="sm" className={`flex items-center gap-1.5 ${pathname === "/" ? "text-white" : pathname === "/my_page" ? "bg-black text-white" : "text-black"} text-sm font-medium px-6 py-1.5 rounded-full`}>
                   <Link href="/my_page" className="flex items-center gap-1.5">
                     <UserCircle2 className="w-4 h-4" />
                     <span>{userName}</span>
@@ -230,11 +239,15 @@ export function Navbar() {
                         </Link>
                       </Button>
 
-                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile">나의 알고리즘 자화상</Link>    
+                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
+                        <Link href="/my_profile">나의 알고리즘</Link>    
                       </Button>
-                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black rounded-[20px]`}>
-                        <Link href="/my_profile?explore=1">다른 사람의 알고리즘 자화상 탐색</Link>
+                      <Button asChild variant="ghost" size="lg" className={`w-full h-auto py-6 text-lg font-medium justify-start hover:bg-white hover:text-black  hover:bg-shadow-lg rounded-[20px]`}>
+                        {reflectionData?.reflection1_completed === true ? (
+                          <Link href="/search">다른 사람의 알고리즘 탐색</Link>
+                        ) : (
+                          <div onClick={() => setShowOverlayQuestion1(true)}>다른 사람의 알고리즘 탐색</div>
+                        )}
                       </Button>
                       
                       
@@ -244,13 +257,14 @@ export function Navbar() {
                     </>
                   ) : (
                     <>
-                      
+                      {/*
                       {isMainPage && (
                         <div className="px-4 pt-5 flex items-center gap-1.5 text-gray-400 border-t border-gray-700 mt-1.5 rounded-[20px]">
                           <HelpCircle className="w-5 h-5" />
                           <span className="text-base">TubeLens가 궁금하신가요?</span>
                         </div>
                       )}
+                      */}
                     </>
                   )}
                 </nav>
@@ -268,6 +282,7 @@ export function Navbar() {
           }}
         />
       )}
+      {/*
       {showOverlayQuestion2 && (
         <OverlayQuestion2
           onLeftClick={() => setShowOverlayQuestion2(false)}
@@ -277,6 +292,7 @@ export function Navbar() {
           }}
         />
       )}
+      */}
     </>
   );
 } 
