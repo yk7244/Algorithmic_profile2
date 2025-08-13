@@ -603,7 +603,7 @@ export default function Home() {
                                     {cluster.category}
                                   </span>
                                   <span className="text-sm text-gray-500">
-                                    영상 {cluster.related_videos.length}개 {cluster.mood_keyword && `• ${cluster.mood_keyword}`}
+                                    영상 {cluster.related_videos}개 {cluster.mood_keyword && `• ${cluster.mood_keyword}`}
                                   </span>
                                 </div>
                                 {cluster.description && (
