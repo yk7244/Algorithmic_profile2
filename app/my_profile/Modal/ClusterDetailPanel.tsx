@@ -332,8 +332,10 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                             isAiRecommended={true}
                                                             nextPageToken={nextPageToken}
                                                             fetchAndSetVideos={fetchAndSetVideos}
+                                                            related_videos={image.relatedVideos}   // ★ 이 줄 추가!
+
                                                         />
-                                                        
+
                                                     </>
                                                 )}
                                                 </>
@@ -385,6 +387,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                                 isAiRecommended={true}
                                                                 nextPageToken={nextPageToken}
                                                                 fetchAndSetVideos={fetchAndSetVideos}
+                                                                related_videos={image.relatedVideos}   // ★ 이 줄 추가!
+
                                                             />
                                                         </>
                                                     )}
@@ -428,6 +432,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                                 isAiRecommended={true}
                                                 nextPageToken={nextPageToken}
                                                 fetchAndSetVideos={fetchAndSetVideos}
+                                                related_videos={image.relatedVideos}   // ★ 이 줄 추가!
+
                                             />
                                         </>
                                     )}

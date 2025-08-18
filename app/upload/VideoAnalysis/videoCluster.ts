@@ -284,7 +284,10 @@ CLUSTER_END`;
 
   // 기존 클러스터에 OpenAI 분석 결과 병합
   updatedClusters.forEach((cluster, index) => {
+    console.log('cluster', cluster);
     if (analysisResults[index]) {
+      console.log('index', index);
+      console.log('analysisResults', analysisResults);
       cluster.main_keyword = analysisResults[index].main_keyword;
       cluster.category = analysisResults[index].category;
       cluster.description = analysisResults[index].description;

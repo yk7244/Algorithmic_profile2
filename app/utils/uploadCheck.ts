@@ -29,7 +29,7 @@ export async function isOneWeekPassed(): Promise<number> {
 
     const diffDays = (now.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24);
     
-    return diffDays >= 7 ? -2 : diffDays; // 일주일 지났으면 -2(두번째 없데이트 유저), 안 지났으면 diffDays
+    return diffDays >= 3 ? -2 : diffDays; // 일주일 지났으면 -2(두번째 없데이트 유저), 안 지났으면 diffDays
   } catch (error) {
     console.error('ClusterHistory 확인 중 오류:', error);
     return -3; // 오류 시 거짓
