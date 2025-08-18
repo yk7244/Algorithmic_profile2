@@ -654,10 +654,7 @@ useEffect(() => {
                           parseWatchHistory
                         }));
                         
-                        // 초기 사용자는 reflection 불필요
-                        if (upload_check !== -1) {
-                          setShowOverlayQuestion(true);
-                        }
+                        
                       }}
                   >
                           

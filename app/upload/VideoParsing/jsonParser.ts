@@ -53,7 +53,7 @@ export const parseJSONWatchHistory = async (
           }
         }
         // 기존: 설문조사 등 기타 제외
-        if (item.title === 'Answered survey question') {
+        if (item.title === 'Answered survey question'&&item.header === 'YouTube Music') {
           return null;
         }
 

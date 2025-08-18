@@ -16,6 +16,7 @@ interface VideoListProps {
     isAiRecommended?: boolean;
     nextPageToken?: string;
     fetchAndSetVideos?: (isLoadMore?: boolean) => void;
+    related_videos?: any[];
 }
 
 const VideoList: React.FC<VideoListProps> = ({
@@ -30,7 +31,8 @@ const VideoList: React.FC<VideoListProps> = ({
     // 추가
     isAiRecommended = false,
     nextPageToken,
-    fetchAndSetVideos
+    fetchAndSetVideos,
+    related_videos
 }) => {
     if (isLoading) {
         return (

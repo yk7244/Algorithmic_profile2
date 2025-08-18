@@ -640,8 +640,7 @@ function SearchPageContent() {
                   <p className="text-sm text-slate-200">
                     <span className="font-semibold mr-1">추가한 키워드</span>
                     <span className="text-slate-400">·</span>
-                    <span className="ml-2 text-slate-300">누적 시청 비중 보통</span>
-                  </p>
+ㅈ                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2.5">
                 {keywordsBySize.ds.map((kw, idx) => {
