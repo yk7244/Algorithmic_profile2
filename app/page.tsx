@@ -616,12 +616,12 @@ useEffect(() => {
                   <div
                       onClick={e => {
                         // 초기 사용자는 reflection 불필요, 바로 업로드 진행
-                        if (upload_check === -1) {
+                        if (true) {
                           console.log('🔵 초기 사용자: 바로 업로드 진행');
                           fileInputRef.current?.click();
                           return;
                         }
-                        
+                        {/*
                         // 기존 사용자만 reflection 체크
                         if (isReflection2) {  // 리플렉션 2 여부 확인
                           setPendingUploadAction(() => () => fileInputRef.current?.click());
@@ -630,6 +630,7 @@ useEffect(() => {
                         } else {
                           setShowOverlayQuestion(true);
                         }
+                        */}
                       }}
                       className={`max-w-[700px] mx-auto cursor-pointer backdrop-blur-sm rounded-2xl p-8 transition-all duration-300 ${
                       isDragging 
