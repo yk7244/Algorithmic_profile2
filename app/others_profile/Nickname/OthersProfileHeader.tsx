@@ -76,7 +76,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
                 {/* 닉네임 설명 */}
                 <div className="text-gray-700 text-sm leading-relaxed mt-2">
-                {displayProfile?.description.replace(/당신/g, `${profile?.nickname}님`) || '설명을 찾는데 실패했어요.'}
+                {profile?.description.replace(/당신/g, `${profile?.nickname}님`) || '설명을 찾는데 실패했어요.'}
 
                 </div>
 
