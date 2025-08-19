@@ -155,8 +155,10 @@ useEffect(() => {
                     setCurrent(current);
                     setTotal(total);
                 }
+
+                
             );
-            
+
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             
