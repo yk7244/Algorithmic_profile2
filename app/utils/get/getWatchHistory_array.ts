@@ -56,10 +56,13 @@ export function getWatchHistory_arraySync(): WatchHistory_array[] {
 export async function getWatchHistory_by_clusterHistory_id(clusterHistory: ClusterHistory): Promise<WatchHistory[]> {
     try {
         const watchHistory_array = await getWatchHistory_array();
-        
+        console.log('🩷 [DEBUG] clusterHistory.id:', clusterHistory.id);
+        console.log('🩷 [DEBUG] watchHistory_array:', watchHistory_array);
         const matchingArrays = watchHistory_array.filter(item => {
             return item.clusterHistory_id === clusterHistory.id;
         });
+        console.log('🩷 [DEBUG] matchingArrays:', matchingArrays);
+        console.log('🩷 가져온 시청 기록 배열:', matchingArrays);
         
         return matchingArrays.flatMap(item => item.watchHistory);
     } catch (error) {

@@ -175,7 +175,7 @@ useEffect(() => {
     // 초기 사용자: 4주치 (28일) 데이터 범위
     console.log('📅 초기 사용자: 4주치(28일) 날짜 범위 설정');
     setDateRange({
-      from: new Date(today.getTime() - 28 * 24 * 60 * 60 * 1000), // 28일 전
+      from: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000), // 28일 전
       to: today,
     });
   } else if (upload_check === -2) {

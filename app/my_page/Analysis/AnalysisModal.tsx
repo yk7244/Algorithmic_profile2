@@ -67,7 +67,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
                 // clusterHistory_id로부터 watchHistory 배열 가져오기 (비동기)
                 const getwatchHistory = await getWatchHistory_by_clusterHistory_id(history);
                 
-                console.log('✅ AnalysisModal: 시청 기록 로드 완료', getwatchHistory.length, '개');
+                console.log('🩷 AnalysisModal: 시청 기록 로드 완료', getwatchHistory.length, '개');
                 setWatchHistory(getwatchHistory);
             } catch (error) {
                 console.error('❌ AnalysisModal: 시청 기록 로드 오류', error);
@@ -91,7 +91,8 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({ open, onClose, his
     const allKeywords = Array.isArray(watchHistory) ? watchHistory.flatMap((v) => v.keywords || []) : [];
     const totalKeywords = allKeywords.length;
     
-    //console.log('현재 history', history);
+    console.log('🩷 현재 history', history);
+    console.log('🩷 현재 watchHistory', watchHistory);
 
     if (!open) return null;
 

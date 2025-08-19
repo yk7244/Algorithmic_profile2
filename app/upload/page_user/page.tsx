@@ -176,10 +176,10 @@ useEffect(() => {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
             const parseHistory = await getParseHistory() || [];
-            console.log('✅ parseHistory 불러오기 완료:', parseHistory.length, '개');
+            //console.log('🩷 parseHistory 불러오기 완료:', parseHistory );
             console.log('fetchVideoInfo:', fetchVideoInfo);
 
-            
+            //키워드 추출함수 -> 받아온 parseHistory 중에서 오늘 날짜만 
             const result = await handleKeyword(parseHistory, fetchVideoInfo, 
                 (current, total) => {
                 console.log(`${current}/${total} 처리 중`);
