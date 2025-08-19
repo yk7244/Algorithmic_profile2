@@ -31,8 +31,7 @@ export const parseJSONWatchHistory = async (
 ): Promise<ProcessedWatchHistoryItem[]> => {
   try {
     console.log('Starting JSON watch history parsing...');
-    console.log("✅dateRange", dateRange);
-    console.log("✅maxVideosPerDay", maxVideosPerDay);
+    console.log("🩷 dateRange 확인", dateRange);    
     
     const text = await file.text();
     const data = JSON.parse(text);
@@ -91,7 +90,7 @@ export const parseJSONWatchHistory = async (
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
 
-    console.log(`1)파싱된 영상 수: ${watchItems.length}개`);
+    console.log(`🩷1)파싱된 영상 수: ${watchItems.length}개`);
 
     // Apply date range filtering if specified
     let filteredItems = watchItems;
@@ -99,7 +98,7 @@ export const parseJSONWatchHistory = async (
       filteredItems = watchItems.filter(item => 
         item.date >= dateRange.from! && item.date <= dateRange.to!
       );
-      console.log(`2)날짜 범위 필터링 후 영상 수: ${filteredItems.length}개`);
+      console.log(`🩷2)날짜 범위 필터링 후 영상 수: ${filteredItems.length}개`);
     }
 
     // Group by date and limit videos per day
@@ -115,7 +114,7 @@ export const parseJSONWatchHistory = async (
     }, {} as Record<string, typeof filteredItems>);
 
     const selectedItems = Object.values(groupedByDate).flat();
-    console.log(`3)그룹화 및 제한 후 영상 수: ${selectedItems.length}개`);
+    console.log(`🩷3)그룹화 및 제한 후 영상 수: ${selectedItems.length}개`);
     console.log('selectedItems:', selectedItems);
     
     // 파싱 히스토리 저장 (DB 저장으로 마이그레이션됨)

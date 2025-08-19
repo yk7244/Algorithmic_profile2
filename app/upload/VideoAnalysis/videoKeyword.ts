@@ -9,6 +9,7 @@ import {
   convertYouTubeResponseToVideoData,
   updateVideoKeywords 
 } from '@/lib/database-clean';
+import { Today } from '@mui/icons-material';
 
 // OpenAI 클라이언트 초기화
 const openai = new OpenAI({
@@ -312,11 +313,21 @@ async function fetchVideoInfoInternal(videoId: string): Promise<VideoInfo | null
 export async function handleKeyword(selectedItems: any[], fetchVideoInfo: any, onProgress?: (current: number, total: number) => void) {
   const processedItems: any[] = [];
   let processedCount = 0;
-  const totalItems = selectedItems.length;
-  console.log('selectedItems:', selectedItems);
 
+  //const totalItems = selectedItems.length;
+  // 오늘 날짜 yyyy-mm-dd 포맷 만들기
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  // 오늘 날짜에 해당하는 아이템만 필터링
+  const totalItems = selectedItems.filter(item => {
+    if (!item.created_at) return false;
+    // createdAt이 ISO 문자열일 경우
+    return item.created_at.slice(0, 10) === todayStr;
+  });
+
+  console.log('🩷 totalItems:', totalItems);
   if (onProgress) {
-    onProgress(0, totalItems);
+    onProgress(0, totalItems.length);
   }
 const watchHistory_temp =[];
 
@@ -327,11 +338,10 @@ const watchHistory_temp =[];
   const BATCH_SIZE = 100;
   let batchCount = 0;
 
-  for (const item of selectedItems) {
+  for (const item of totalItems) {
     const itemStartTime = Date.now();
-    
     try {
-      console.log(`🔄 [${processedCount + 1}/${totalItems}] 비디오 처리 시작: ${item.videoId}`);
+      console.log(`🔄 [${processedCount + 1}/${totalItems.length}] 비디오 처리 시작: ${item.videoId}`);
       
       // ✅ 개별 비디오에 대한 추가 타임아웃 적용 (35초)
       const videoInfo = await Promise.race([
@@ -342,7 +352,7 @@ const watchHistory_temp =[];
       ]);
       
       const itemElapsed = Date.now() - itemStartTime;
-      console.log(`⏱️ [${processedCount + 1}/${totalItems}] 처리 시간: ${itemElapsed}ms`);
+      console.log(`⏱️ [${processedCount + 1}/${totalItems.length}] 처리 시간: ${itemElapsed}ms`);
       
       if (videoInfo != null) {
         // ✅ YouTube API에서 정보를 성공적으로 가져온 경우
@@ -358,7 +368,7 @@ const watchHistory_temp =[];
           timestamp: new Date().toISOString()
         });
         successCount++;
-        console.log(`✅ [${processedCount + 1}/${totalItems}] 성공: ${videoInfo.title}`);
+        console.log(`✅ [${processedCount + 1}/${totalItems.length}] 성공: ${videoInfo.title}`);
       } else {
         // ✅ YouTube API 실패 시 기본 정보라도 유지
         const fallbackVideoInfo: VideoInfo = {
@@ -383,20 +393,19 @@ const watchHistory_temp =[];
         });
         
         failedCount++;
-        console.log(`⚠️ [${processedCount + 1}/${totalItems}] API 실패하여 기본 정보 사용: ${fallbackVideoInfo.title} (${item.videoId})`);
+        console.log(`⚠️ [${processedCount + 1}/${totalItems.length}] API 실패하여 기본 정보 사용: ${fallbackVideoInfo.title} (${item.videoId})`);
       }
-      
       processedCount++;
       batchCount++;
       
       // ✅ 진행률 업데이트 및 중간 통계
       if (onProgress) {
-        onProgress(processedCount, totalItems);
+        onProgress(processedCount, totalItems.length);
       }
       
       // ✅ 배치 단위로 중간 저장 및 상태 로그
-      if (batchCount >= BATCH_SIZE || processedCount === totalItems) {
-        console.log(`💾 중간 저장 (${processedCount}/${totalItems}): 성공 ${successCount}개, 실패 ${failedCount}개`);
+      if (batchCount >= BATCH_SIZE || processedCount === totalItems.length) {
+        console.log(`💾 중간 저장 (${processedCount}/${totalItems.length}): 성공 ${successCount}개, 실패 ${failedCount}개`);
         
         try {
           // ✅ 중간 저장 전 중복 검사 및 통계
@@ -443,13 +452,13 @@ const watchHistory_temp =[];
       
       // ✅ 매 50개마다 상태 출력
       if (processedCount % 50 === 0) {
-        const progress = ((processedCount / totalItems) * 100).toFixed(1);
-        console.log(`📊 처리 진행률: ${progress}% (${processedCount}/${totalItems}) - 성공: ${successCount}, 실패: ${failedCount}`);
+        const progress = ((processedCount / totalItems.length) * 100).toFixed(1);
+        console.log(`📊 처리 진행률: ${progress}% (${processedCount}/${totalItems.length}) - 성공: ${successCount}, 실패: ${failedCount}`);
       }
       
     } catch (error) {
       const itemElapsed = Date.now() - itemStartTime;
-      console.error(`❌ [${processedCount + 1}/${totalItems}] 비디오 처리 실패 (${itemElapsed}ms): ${item.videoId}`, error);
+      console.error(`❌ [${processedCount + 1}/${totalItems.length}] 비디오 처리 실패 (${itemElapsed}ms): ${item.videoId}`, error);
       
       if (error instanceof Error && error.message.includes('타임아웃')) {
         console.error('🚨 개별 비디오 타임아웃 발생 - 35초 초과');
@@ -460,12 +469,12 @@ const watchHistory_temp =[];
       batchCount++;
       
       if (onProgress) {
-        onProgress(processedCount, totalItems);
+        onProgress(processedCount, totalItems.length);
       }
       
       // ✅ 에러 발생 시에도 중간 저장 체크
       if (batchCount >= BATCH_SIZE && watchHistory_temp.length > 0) {
-        console.log(`💾 에러 후 중간 저장 (${processedCount}/${totalItems})`);
+        console.log(`💾 에러 후 중간 저장 (${processedCount}/${totalItems.length  })`);
         try {
           const uniqueVideoIds = new Set(watchHistory_temp.map(v => v.videoId));
           const duplicateCount = watchHistory_temp.length - uniqueVideoIds.size;
@@ -511,7 +520,7 @@ const watchHistory_temp =[];
   }
   
   // ✅ 처리 결과 통계 로그
-  const successRate = ((successCount / totalItems) * 100).toFixed(1);
+  const successRate = ((successCount / totalItems.length) * 100).toFixed(1);
   console.log(`🎯 비디오 처리 완료 - 성공: ${successCount}개 (${successRate}%), 실패: ${failedCount}개, 전체: ${totalItems}개`);
   console.log(`📈 최종 처리된 아이템: ${processedItems.length}개`);
   

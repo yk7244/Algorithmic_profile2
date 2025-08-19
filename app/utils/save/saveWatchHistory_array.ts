@@ -51,14 +51,26 @@ export async function saveWatchHistory_array(): Promise<{ success: boolean, resu
             throw new Error('watchHistory must be an array');
         }
 
-        // 가장 최근 클러스터 히스토리 ID 찾기
-        const latestClusterId = clusterHistory && clusterHistory.length > 0 
-            ? clusterHistory[clusterHistory.length - 1].id 
-            : null;
-            
-        console.log('🎯 최신 클러스터 ID:', latestClusterId);
-
+        // user_id별 최신 클러스터 히스토리 ID 찾기
+        const userClusterHistories = clusterHistory?.filter(
+          (ch) => ch.user_id === user.id
+        );
+        const latestUserCluster = userClusterHistories?.reduce((latest: ClusterHistory | null, current: ClusterHistory) => {
+          if (!latest) return current;
+          const latestTime = new Date(latest.created_at || 0);
+          const currentTime = new Date(current.created_at || 0);
+          return currentTime > latestTime ? current : latest;
+        }, null);
+        
+        const latestClusterId = latestUserCluster ? latestUserCluster.id : null;
+        console.log('🩷 [DEBUG] user_id별 최신 클러스터:', latestUserCluster);
+        console.log('🎯 user_id별 최신 클러스터 ID:', latestClusterId);
         // DB에 저장
+        console.log('🩷 [DEBUG] saveWatchHistoryArray 저장값:', {
+            userId: user.id,
+            watchHistory,
+            latestClusterId
+        });
         const dbResult = await saveWatchHistoryArray(
             user.id,
             watchHistory,

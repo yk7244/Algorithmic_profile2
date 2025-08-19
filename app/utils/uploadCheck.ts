@@ -7,18 +7,18 @@ export async function isOneWeekPassed(): Promise<number> {
     
     if (!clusterHistory || clusterHistory.length === 0){
       console.log('✅ 클러스터가 없습니다 -> 초기유저 4주치 데이터 범위 설정')
-      return -1; // 초기 유저
+      return -2; // 초기 유저
     } 
 
     const parsedHistory = clusterHistory; 
     if (!Array.isArray(parsedHistory) || parsedHistory.length === 0) {
       console.log('✅ 파싱된 히스토리가 없습니다 -> 초기유저');
-      return -1; // 초기 유저
+      return -2; // 초기 유저
     }
 
     // 가장 최근 항목의 date 가져오기
     const latestEntry = parsedHistory[parsedHistory.length - 1];
-    if (!latestEntry || !latestEntry.created_at) return -1; // 초기 유저
+    if (!latestEntry || !latestEntry.created_at) return -2; // 초기 유저
 
     const updated = new Date(latestEntry.created_at);
     const now = new Date();
