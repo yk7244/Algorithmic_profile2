@@ -62,6 +62,22 @@ type ClusterImage = {
   };
 };
 
+// 클러스터 타입 정의 추가
+type Cluster = {
+  main_keyword?: string;
+  category?: string;
+  description?: string;
+  keyword_list?: string;
+  mood_keyword?: string;
+  strength?: number;
+  thumbnailUrl?: string;
+  related_videos?: {
+    title: string;
+    embedId: string;
+  }[];
+  metadata?: any;
+};
+
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +85,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
-  const [clusters, setClusters] = useState<any[]>([]);
+  const [clusters, setClusters] = useState<Cluster[]>([]);
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [expandedClusters, setExpandedClusters] = useState<Set<number>>(new Set());
   // clusterImages state 타입 수정
@@ -78,7 +94,7 @@ export default function Home() {
   const [analysisHistory, setAnalysisHistory] = useState<{
     id: string;
     date: string;
-    clusters: any[];
+    clusters: Cluster[];
   }[]>([]);
   const [showVisionResults, setShowVisionResults] = useState(false);
   
@@ -580,7 +596,7 @@ export default function Home() {
                       )}
                       {/* 클러스터 분석 결과 표시 */}
                       <div className="space-y-4">
-                        {clusters.map((cluster, index) => (
+                        {clusters.filter(cluster => cluster && cluster.main_keyword).map((cluster, index) => (
                           <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
                             <button
                               onClick={() => {
@@ -597,13 +613,15 @@ export default function Home() {
                               <div className="flex flex-col items-start">
                                 <div className="flex items-center gap-4 mb-1">
                                   <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                    {cluster.main_keyword}
+                                    {cluster.main_keyword || '키워드 없음'}
                                   </span>
-                                  <span className="px-3 py-1.5 bg-blue-100 rounded-full text-sm font-medium text-blue-700">
-                                    {cluster.category}
-                                  </span>
+                                  {cluster.category && (
+                                    <span className="px-3 py-1.5 bg-blue-100 rounded-full text-sm font-medium text-blue-700">
+                                      {cluster.category}
+                                    </span>
+                                  )}
                                   <span className="text-sm text-gray-500">
-                                    영상 {cluster.related_videos.length}개 {cluster.mood_keyword && `• ${cluster.mood_keyword}`}
+                                    영상 {cluster.related_videos?.length || 0}개 {cluster.mood_keyword && `• ${cluster.mood_keyword}`}
                                   </span>
                                 </div>
                                 {cluster.description && (
@@ -633,7 +651,7 @@ export default function Home() {
                                     <Button
                                       onClick={async () => {
                                         try {
-                                          const keyword = cluster.main_keyword;
+                                          const keyword = cluster.main_keyword || `cluster_${index}`;
                                           console.log('Pinterest 이미지 검색 시작:', cluster);
                                           
                                           // 캐시 초기화
@@ -642,7 +660,9 @@ export default function Home() {
                                           
                                           // 기존 저장된 이미지 삭제 (clusterImages 상태 및 localStorage)
                                           const currentSavedImages = JSON.parse(localStorage.getItem('clusterImages') || '{}');
-                                          delete currentSavedImages[keyword]; // 키워드 기준으로 삭제
+                                          if (keyword) {
+                                            delete currentSavedImages[keyword]; // 키워드 기준으로 삭제
+                                          }
                                           localStorage.setItem('clusterImages', JSON.stringify(currentSavedImages));
                                           setClusterImages(prev => {
                                             const newImages = { ...prev };
@@ -651,8 +671,17 @@ export default function Home() {
                                           });
 
 
-                                          // Pinterest 이미지 검색 호출
-                                          const pinterestResults = await searchClusterImage_pinterest(cluster, 1); 
+                                          // Pinterest 이미지 검색 호출 (main_keyword가 있는 경우에만)
+                                          if (!cluster.main_keyword) {
+                                            throw new Error('클러스터에 main_keyword가 없습니다.');
+                                          }
+                                          const pinterestResults = await searchClusterImage_pinterest({
+                                            main_keyword: cluster.main_keyword,
+                                            category: cluster.category,
+                                            mood_keyword: cluster.mood_keyword,
+                                            description: cluster.description,
+                                            keyword_list: cluster.keyword_list
+                                          }, 1); 
                                           console.log('검색된 Pinterest 이미지:', pinterestResults);
 
                                           if (pinterestResults && pinterestResults.length > 0 && pinterestResults[0].thumbnailLink) {
@@ -666,7 +695,10 @@ export default function Home() {
                                               return newImages;
                                             });
                                             // localStorage에도 url만 저장
-                                            const updatedSavedImages = { ...currentSavedImages, [keyword]: newImage };
+                                            const updatedSavedImages = { ...currentSavedImages };
+                                            if (keyword) {
+                                              updatedSavedImages[keyword] = newImage;
+                                            }
                                             localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
                                             localStorage.setItem(imageAttemptKey, 'success'); // 성공 기록
                                           } else {
@@ -680,7 +712,10 @@ export default function Home() {
                                               return newImages;
                                             });
                                             // localStorage에서도 default_image URL로 업데이트
-                                            const updatedSavedImages = { ...currentSavedImages, [keyword]: defaultImage }; // 기본 이미지로 저장
+                                            const updatedSavedImages = { ...currentSavedImages };
+                                            if (keyword) {
+                                              updatedSavedImages[keyword] = defaultImage; // 기본 이미지로 저장
+                                            }
                                             localStorage.setItem('clusterImages', JSON.stringify(updatedSavedImages));
                                             localStorage.setItem(imageAttemptKey, 'failed'); // 실패 기록
                                           }

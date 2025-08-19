@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 
 import { useGenerateUserProfile } from '../../my_profile/Nickname/Hooks/useGenerateUserProfile';    
 import { getParseHistory } from '@/app/utils/get/getparseHistory';
+import { useAuth } from '@/context/AuthContext';
 
 
 // 기본 이미지를 데이터 URI로 정의
@@ -61,6 +62,7 @@ const steps = [
 export default function Home() {
 
 const router = useRouter();
+const { ensureValidSession, isLoggedIn } = useAuth();
 const [isLoading, setIsLoading] = useState(false);
 const [error, setError] = useState<string | null>(null);
 const [watchHistory, setWatchHistory] = useState<WatchHistoryItem[]>([]);
@@ -81,6 +83,7 @@ const [showCompletePage, setShowCompletePage] = useState(false);
 const [countdown, setCountdown] = useState(200000000);
 const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
 const [profile, setProfile] = useState({ nickname: '', description: '' });
+const [sessionCheckInterval, setSessionCheckInterval] = useState<NodeJS.Timeout | null>(null);
 
 // useClusterStorage 커스텀 훅 사용
 useClusterStorage({
@@ -139,8 +142,36 @@ useEffect(() => {
         if (hasRunRef.current) return; // 이미 실행되었으면 아무것도 안함
         hasRunRef.current = true; // 처음이면 실행 기록
 
+        // 로그인 상태 확인
+        if (!isLoggedIn) {
+            console.error('로그인이 필요합니다');
+            router.push('/');
+            return;
+        }
+
+        // 세션 유효성 확인
+        const isSessionValid = await ensureValidSession();
+        if (!isSessionValid) {
+            console.error('세션이 유효하지 않습니다. 다시 로그인해주세요');
+            router.push('/');
+            return;
+        }
+
         setShowGeneratingDialog(true);
         setGeneratingStep(1);
+        
+        // 장시간 작업을 위한 주기적 세션 체크 시작 (2분마다)
+        const interval = setInterval(async () => {
+            const isValid = await ensureValidSession();
+            if (!isValid) {
+                console.error('주기적 세션 체크 실패');
+                clearInterval(interval);
+                setError('세션이 만료되었습니다. 다시 로그인해주세요');
+                router.push('/');
+            }
+        }, 120000); // 2분마다 체크
+        setSessionCheckInterval(interval);
+        
         try {
             // 1단계: 키워드 추출
             setGeneratingStep(1);
@@ -154,12 +185,21 @@ useEffect(() => {
                 console.log(`${current}/${total} 처리 중`);
                 setCurrent(current);
                 setTotal(total);
-            });
+            }, ensureValidSession);
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             
 
             await new Promise(resolve => setTimeout(resolve, 2000)); // 클러스터 분석 시뮬레이션
+
+            // 세션 유효성 재확인 (1단계 완료 후)
+            const isStillValid = await ensureValidSession();
+            if (!isStillValid) {
+                console.error('분석 중 세션이 만료되었습니다');
+                setError('세션이 만료되었습니다. 다시 로그인해주세요');
+                router.push('/');
+                return;
+            }
 
             // 2단계: 클러스터 분석
             setGeneratingStep(2);
@@ -185,6 +225,15 @@ useEffect(() => {
             );
             
             
+            // 세션 유효성 재확인 (2단계 완료 후)
+            const isStillValidAfterCluster = await ensureValidSession();
+            if (!isStillValidAfterCluster) {
+                console.error('클러스터 분석 후 세션이 만료되었습니다');
+                setError('세션이 만료되었습니다. 다시 로그인해주세요');
+                router.push('/');
+                return;
+            }
+
             setGeneratingStep(3);
             await new Promise(resolve => setTimeout(resolve, 2000)); // 이미지 생성 시뮬레이션
             // 4단계: clusterHistory, sliderHistory 저장하기
@@ -202,11 +251,26 @@ useEffect(() => {
             console.error('분석 중 오류:', error);
             setError('분석 중 오류가 발생했습니다.');
             setShowGeneratingDialog(false);
+        } finally {
+            // 세션 체크 인터벌 정리
+            if (sessionCheckInterval) {
+                clearInterval(sessionCheckInterval);
+                setSessionCheckInterval(null);
+            }
         }
     };
     startAnalysis();
     // eslint-disable-next-line
 }, []);
+
+// 컴포넌트 언마운트 시 세션 체크 인터벌 정리
+useEffect(() => {
+    return () => {
+        if (sessionCheckInterval) {
+            clearInterval(sessionCheckInterval);
+        }
+    };
+}, [sessionCheckInterval]);
 
 useEffect(() => {
     if (showCompletePage && countdown > 0) {
