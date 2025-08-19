@@ -182,10 +182,11 @@ useEffect(() => {
             //키워드 추출함수 -> 받아온 parseHistory 중에서 오늘 날짜만 
             const result = await handleKeyword(parseHistory, fetchVideoInfo, 
                 (current, total) => {
-                console.log(`${current}/${total} 처리 중`);
-                setCurrent(current);
-                setTotal(total);
-            }, ensureValidSession);
+                    console.log(`${current}/${total} 처리 중`);
+                    setCurrent(current);
+                    setTotal(total);
+                }
+            );
             setWatchHistory(result);
             console.log('키워드 추출 결과:', result);
             
