@@ -149,15 +149,25 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                             {/* 설명 */}
                             <div className="text-left mb-8 max-w-2xl mx-auto">
-                                <p className="text-[15px] leading-relaxed text-white/90 mb-2">
+                                <p className="text-[15px] leading-relaxed text-white/90 mb-2 ">
                                     {image.description.replace(/당신/g, `${profile?.nickname}님`)}
 
                                     <br />
                                     <br />
                                     관련 키워드 :
-                                    {image.keywords.map((keyword: string) => (
-                                        <span key={keyword} className="text-[11px] font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1 mb-3"> #{keyword} </span>
+                                    {image.keywords
+                                    .filter((keyword: any) =>
+                                        typeof keyword === 'string' && keyword.trim() !== ''
+                                    )
+                                    .map((keyword: string) => (
+                                        <span
+                                        key={keyword}
+                                        className="text-[13px] mb-2 font-bold text-white bg-white/20 rounded-full px-2 py-1 mr-1 ml-1 mb-3"
+                                        >
+                                        #{keyword}
+                                        </span>
                                     ))}
+
                                 </p>
                             </div>
 
@@ -166,12 +176,12 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
 
                         {isOwner && !image.desired_self && (
                         <div className="text-center mb-8 max-w-2xl mx-auto text-white/90">
-                            <p className="backdrop-blur-sm text-black  px-8 py-4 rounded-full 
+                            <p className="backdrop-blur-sm text-white  px-8 py-4 rounded-full 
                             items-center text-sm font-medium transition-all duration-300 bg-white/20 backdrop-blur-lg"
                             
                             >
                                 이 키워드는 당신의 추천 알고리즘에 <br/>
-                                <span className={`rounded-full font-bold animate-pulse duration-1000 text-black`}
+                                <span className={`rounded-full font-bold animate-pulse duration-1000 text-blue-300`}
                                 style={{
                                     animation: 'pulse 1s ease-in-out infinite'
                                 }}
@@ -186,8 +196,8 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                 
                             <Button
                                 onClick={() => setCurrentPage(2)}
-                                className="font-bold bg-black/100 backdrop-blur-sm hover:bg-white/30 text-white px-8 py-6 rounded-full flex items-center 
-                                gap-4 text-base font-medium transition-all duration-1000 hover:scale-105
+                                className="font-bold bg-white/80 backdrop-blur-sm hover:bg-white/100 text-black px-8 py-6 rounded-full flex items-center 
+                                gap-4 text-base font-medium transition-all duration-1000 hover:scale-105 
                                 shadow-[0_0_30px_rgba(255,255,255,0.3),inset_0_2px_10px_rgba(255,255,255,0.1),inset_0_-2px_10px_rgba(0,0,0,0.3)]
                                 "
                             >
@@ -240,7 +250,7 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                             <br />
                                             <br />
                                             관련 키워드 :
-                                            {image.keywords.map((keyword: string) => (
+                                            {image.keywords.filter((keyword: string) => keyword && keyword.trim() !== '').map((keyword: string) => (
                                                 <span key={keyword} className="text-[11px] line-height-2 font-bold text-white bg-white/20 backdrop-blur-sm rounded-full px-2 py-1 mr-1 ml-1"> #{keyword} </span>
                                             ))}
                                             
@@ -260,13 +270,13 @@ const ClusterDetailPanel: React.FC<ClusterDetailPanelProps> = ({
                                 {/* 설명 텍스트 */}
                                 {isOwner && !image.desired_self && (
                                 <div className="text-left max-w-2xl text-white/90">
-                                    <p className="backdrop-blur-sm bg-white/90 text-black px-6 py-3 rounded-3xl 
+                                    <p className="backdrop-blur-sm bg-white/90 text-white px-6 py-3 rounded-3xl 
                                     text-xs font-medium transition-all duration-300 text-center"
                                     style={{
                                         animation: 'pulse 4s ease-in-out infinite '
                                     }}>
                                         이 키워드는 당신의 추천 알고리즘에&nbsp;
-                                        <span className={`ml-1 font-bold text-black`}>
+                                        <span className={`ml-1 font-bold text-white`}>
                                         {image.sizeWeight >= 0.027 ? ' 큰 영향 ' : image.sizeWeight > 0.02 ? ' 중간 영향 ' : ' 작은 영향 '}
                                         </span>
                                         을 주고 있어요.

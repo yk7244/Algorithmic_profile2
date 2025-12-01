@@ -32,7 +32,8 @@ const [user, setUser] = useState<UserData | null>(null);
 const [images, setImages] = useState<ImageData[]>([]);
 const [positions, setPositions] = useState<Record<string, ImageData['position']>>({});
 const [frameStyles, setFrameStyles] = useState<Record<string, string>>({});
-const [bgColor, setBgColor] = useState(''); // 기본 배경색
+const [bgColor, setBgColor] = useState('#d1fae5');
+
 const [isLoading, setIsLoading] = useState(true);
 const boardRef = useRef<HTMLDivElement>(null);
 const [show, setShow] = useState(true);
@@ -62,7 +63,9 @@ useEffect(() => {
                 
                 // 사용자 정보 설정
                 setUser(fullProfile.user);
-                setBgColor(fullProfile.user.background_color || '#ffffff');
+                setBgColor(fullProfile.user.background_color || '#d1fae5');
+                console.log('🟨배경색:', fullProfile.user.background_color);
+                console.log('🟨배경색:', bgColor);
                 
                 // 프로필 정보 설정
                 setProfile(fullProfile.profile);
@@ -167,6 +170,10 @@ useEffect(() => {
     calculateSimilarity();
 }, [profile, user, images.length]);
 
+useEffect(() => {
+    console.log('🌈 실제 state bgColor 변경됨:', bgColor);
+  }, [bgColor]);
+
 // 인증 로딩 중일 때
 if (authLoading) {
   return (
@@ -233,12 +240,12 @@ return (
         <div className="absolute inset-0 overflow-hidden z-0 pointer-events-none">
             <div className="z-0 absolute -top-[10%] left-[10%] w-[40%] h-[30%] rounded-full blur-[130px] animate-blob"
             style={{
-                backgroundColor: bgColor,
+                backgroundColor: bgColor ,
             }}
             />
             <div className="z-0 absolute -bottom-[10%] -right-[5%] w-[40%] h-[40%] rounded-full blur-[130px] animate-blob animation-delay-20"
             style={{
-                backgroundColor: bgColor,
+                backgroundColor: bgColor ,
             }} />
         </div>
         {/* 왼쪽: 프로필/설명/닉네임 등 */}

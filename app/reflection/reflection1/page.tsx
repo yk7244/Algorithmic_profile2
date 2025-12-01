@@ -7,21 +7,21 @@ import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 
 const subQuestions = [
-    "What did the portrait describe about you?",
-    "There are 3 questions in total. Let's start with the first question.",
-    "I'm interested in that! ",
-    "Finally, ",
-    "The algorithm visualization recording is over.",    
-    "Now, "
+    "튜브렌즈를 통해 본 당신의 유튜브 속 모습은 어땠나요?",
+    "질문은 총 3가지예요. 먼저 첫번째 질문을 드려볼게요.",
+    "그렇게 느끼셨다니, 흥미로워요! ",
+    "마지막으로, ",
+    "알고리즘 시각화 감상 기록이 끝났어요.",    
+    "이제, "
 ];
 
 const questions = [
-    "Leave your impressions.",
-    "Q1. How did the portrait describe you?",
-    "Q2. How similar was the self represented by the algorithm with the way you perceive yourself? ",
-    "Q3. Were there any thoughts and feelings evoked by the portrait? ",
-    "I hope you can more clearly face your own interests. ",
-    "Let's take some time to explore a new algorithm. "
+    "감상을 남겨주세요.",
+    "Q1. 유튜브 알고리즘이 바라본 ‘나’ 어떤 사람이었나요?",
+    "Q2. 유튜브 알고리즘이 바라본 '나'는, 내가 생각했던 유튜브 속 내 모습과 얼마나 일치했었나요? ",
+    "Q3. 나의 유튜브 알고리즘 시각화를 보고 들었던 느낌이나 생각을 자유롭게 공유해주세요",
+    "스스로의 관심사를 더 또렷하게 마주하게 되었기를 바래요. ",
+    "새로운 알고리즘을 직접 탐색하는 시간을 가져볼까요?"
 ];
 
 export default function ReflectionQuestionsPage() {
@@ -48,7 +48,7 @@ export default function ReflectionQuestionsPage() {
         
         if (currentIndex === 1 || currentIndex === 3) {
             if (answers[currentIndex - 1].length <= 25){
-                alert("Please write at least 25 characters.");
+                alert("25자 이상 작성해주세요.");
                 return;
             }
             // localStorage 저장은 완료 시 한 번에 처리
@@ -56,12 +56,12 @@ export default function ReflectionQuestionsPage() {
         }
         // Q2: 슬라이더 값 로그
         if (currentIndex === 2) {
-            console.log('Q2 slider value:', sliderValue);
+            console.log('슬라이더 값:', sliderValue);
         }
         if (currentIndex < questions.length - 1) {
         setCurrentIndex(currentIndex + 1);
         } else {
-        console.log("Final answer:", answers);
+        console.log("최종 답변:", answers);
         // router.push("/thanks") 가능
         }
         if (currentIndex === questions.length - 2) {
@@ -81,11 +81,11 @@ export default function ReflectionQuestionsPage() {
             <h1 className="text-black text-xl font-semibold mb-1">{subQuestions[currentIndex]}</h1> 
             <h1 className="text-black text-xl font-semibold mb-3">{questions[currentIndex]}</h1>
             {currentIndex === 4 && (
-                <div className="text-gray-400 font-bold text-[14px] mb-4">The impressions you wrote will not be reflected in the algorithm. </div>
+                <div className="text-gray-400 font-bold text-[14px] mb-4">적어주신 감상은 알고리즘에 반영되진 않습니다.  </div>
             )}
             {currentIndex === 5 && (
                 <div className="text-gray-400 font-bold text-[14px] mb-4">
-                    The contents you wrote are being saved. Please wait a moment.
+                    적어주신 내용을 저장중이예요. 잠시만 기다려주세요.
                 </div>
             )}
 
@@ -93,15 +93,15 @@ export default function ReflectionQuestionsPage() {
             { currentIndex === 1 || currentIndex === 3 ? (
                 <>
                 <div className="text-gray-400 text-[12px] mb-10">
-                    Please write at least 25 characters.
+                25자 이상 작성해주세요.
                 </div>
                 <div className="flex items-center bg-white rounded-full shadow-2xl px-6 py-4 w-full max-w-2xl">
                     <input
                     type="text"
                     value={answers[currentIndex - 1]}
                     onChange={handleInputChange}
-                    placeholder={`${currentIndex === 1 ? "Example answer: I really seem to be interested in cats." : 
-                        currentIndex === 3 ? "Example answer: I thought I should use YouTube more productively." : ""}`}
+                    placeholder={`${currentIndex === 1 ? "예시 답안: 고양이에 정말 관심이 많은 사람처럼 보여졌어요." : 
+                        currentIndex === 3 ? "예시 답안: 유튜브를 더 내가 생산적인 방법으로 사용해야겠다는 생각이 들었어요." : ""}`}
                     minLength={25}
                     maxLength={300}
                     className="flex-grow text-black bg-transparent outline-none text-base placeholder-gray-400 pl-4 placeholder:text-sm placeholder:text-gray-300"
@@ -146,19 +146,19 @@ export default function ReflectionQuestionsPage() {
 
                     <div className="flex justify-between w-full max-w-2xl text-sm text-gray-600 font-medium ">
                         <div className={`${sliderValue === 1 ? "opacity-100" : "opacity-0"} bg-white px-3 py-1 rounded-full shadow text-center text-[12px]`}>
-                            ❌ I couldn't agree
+                            ❌ 전혀 동의하기 어려웠어요
                         </div>
                         <div className={`${sliderValue === 2 ? "opacity-100" : "opacity-0"} bg-white px-3 py-1 rounded-full shadow text-center text-[12px]`}>
-                            🤔 I think it's a bit different
+                            🤔 저랑은 다른 것 같아요
                         </div>
                         <div className={`${sliderValue === 3 ? "opacity-100" : "opacity-0"} bg-white px-3 py-1 rounded-full shadow text-center text-[12px]`}>
-                            😐 I don't know
+                            😐 잘 모르겠어요
                         </div>
                         <div className={`${sliderValue === 4 ? "opacity-100" : "opacity-0"} bg-white px-3 py-1 rounded-full shadow text-center text-[12px]`}>
-                            🙂 I agree partially
+                            🙂 부분적으로 동의해요
                         </div>
                         <div className={`${sliderValue === 5 ? "opacity-100" : "opacity-0"} bg-white px-3 py-1 rounded-full shadow text-center text-[12px]`}>
-                            👍 I agree mostly
+                            👍 대부분 정확했어요
                         </div>
                     </div>
                 </>
@@ -174,7 +174,7 @@ export default function ReflectionQuestionsPage() {
                 onClick={handleNext}
                 className="mt-10 text-blue-500 text-lg font-semibold inline-flex items-center hover:text-blue-600 transition"
                 >
-                    {currentIndex === 3 ? "Complete" : "Next"}
+                    {currentIndex === 3 ? "완료" : "다음"}
                 <ArrowRight className="ml-1 w-5 h-5" />
                 </button>
                 </>
@@ -228,7 +228,7 @@ export default function ReflectionQuestionsPage() {
                             }
                         }}
                         >
-                        Go back
+                        뒤로가기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                     <button
@@ -279,7 +279,7 @@ export default function ReflectionQuestionsPage() {
 
                         }}
                         >
-                        Explore other algorithms
+                        다른 사람의 알고리즘 탐색하기
                         <ArrowRight className="ml-1 w-5 h-5" />
                     </button>
                     
@@ -289,11 +289,11 @@ export default function ReflectionQuestionsPage() {
                     <> 
                     <div className="w-full text-center mt-4 items-center justify-center flex flex-col ">
                         <div className="text-red-500 text-sm font-semibold animate-pulse mt-10"> 
-                           
+                        저장에 실패했어요🥲 아래 설문조사에 직접 기입해 주세요.
                         </div>
                         <div className="text-gray-500 text-xs mt-2 bg-white px-3 py-1 rounded-lg shadow text-center text-[12px] w-fit py-4 px-8 items-center justify-center flex flex-col">
                             Answer1. {answers[0]}<br/>
-                            Answer2. Recurrence scale {sliderValue} points<br/>
+                            Answer2. 리커트 척도 {sliderValue}점<br/>
                             Answer3. {answers[2]}<br/>
 
                             <div onClick={() => {

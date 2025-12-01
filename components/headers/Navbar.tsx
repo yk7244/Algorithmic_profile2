@@ -106,7 +106,7 @@ export function Navbar() {
   const userName = userData?.nickname || 
       user?.user_metadata?.full_name || 
       user?.email?.split('@')[0] || 
-      "anonymous";
+      "사용자";
 
       //dddd
   return (
@@ -232,7 +232,7 @@ export function Navbar() {
                       >
                         <Link href="/my_page" className="flex items-center gap-2">
                           <UserCircle2 className="w-5 h-5 mr-2" />
-                          {userName}
+                          {userName}님의 페이지
                         </Link>
                       </Button>
 

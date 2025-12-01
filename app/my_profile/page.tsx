@@ -595,11 +595,11 @@ useEffect(() => {
                     </DndContext>
                   )}
                 </div>
-                {/* 자동 정렬 버튼 (편집 모드일 때만 표시) */}
+                {/* 자동 정렬 버튼 (편집 모드일 때만 표시) 
                 <AutoArrangeButton 
                   isEditing={isEditing}
                   onAutoArrange={handleAutoArrange}
-                />
+                />*/}
                 <DragNotice 
                   showDragNotice={!showTutorial}
                   isEditing={isEditing}
