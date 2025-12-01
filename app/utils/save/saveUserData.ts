@@ -26,7 +26,7 @@ export async function createUserData(): Promise<boolean> {
             nickname: user.user_metadata?.full_name || user.email?.split('@')[0] || null,
             avatar_url: user.user_metadata?.avatar_url || null,
             provider: user.app_metadata?.provider || 'unknown',
-            background_color: '#000000',  
+            background_color: '#d1fae5',  
             open_to_connect: true  // ✅ 기본값을 true로 변경
         };
 

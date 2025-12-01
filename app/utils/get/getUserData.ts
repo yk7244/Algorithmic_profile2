@@ -33,13 +33,13 @@ export async function getUserFullProfileById(userId: string): Promise<{
       
       // DB 형식을 기존 형식으로 변환
       const user: UserData = {
-        id: userData.id,
-        nickname: userData.nickname,
-        email: userData.email || '', // 기본값 설정
-        background_color: userData.background_color || '#000000', // 기본값 설정
+        id: publicProfile.id,
+        nickname: publicProfile.nickname,
+        email:  '', // 기본값 설정
+        background_color: publicProfile.background_color || '#000000', // 기본값 설정
         open_to_connect: userData.open_to_connect,
         last_analysis_time: undefined, // 현재 DB에서 지원하지 않는 필드
-        created_at: userData.created_at
+        created_at: publicProfile.created_at
       };
 
       const profile: ProfileData = {
@@ -47,7 +47,7 @@ export async function getUserFullProfileById(userId: string): Promise<{
         user_id: publicProfile.user_id || userId,
         nickname: publicProfile.nickname || userData.nickname,
         description: (publicProfile as any).main_description || '',
-        backgroundColor: userData.background_color,
+        backgroundColor: publicProfile.background_color,
         created_at: publicProfile.created_at || userData.created_at
       };
 

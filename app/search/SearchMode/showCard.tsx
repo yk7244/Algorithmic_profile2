@@ -7,6 +7,7 @@ import { ImageData } from '@/app/types/profile';
 import { getUserFullProfileById } from "@/app/utils/get/getUserData";
 import { calculateUserSimilarity } from "@/lib/similarity";
 import { useAuth } from '@/context/AuthContext';
+import { ArrowRight } from "lucide-react";
 
 // 3D 카드 스택 컴포넌트
 interface CardStack3DProps {
@@ -249,19 +250,19 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                         <div className="w-72 object-cover flex flex-col group">
                             {/* main_keyword는 카드 상단 */}
                             <span className="mb-2 ml-2 font-semibold text-gray-800 text-lg z-10">
-                                <span className="text-sm">{profile?.nickname || '이름 없음'}님의</span> <br/>
+                                
                                 #{card.main_keyword}
                             </span>
                             <div className="w-72 h-72 object-cover flex flex-col items-start relative overflow-hidden">
                                 {/* 이미지 */}
                                 <img src={cardSrc} alt="" className="w-72 h-full object-cover shadow-lg z-0" />
                                 {/* 이미지 내 좌측 상단 70% + 비슷한 키워드예요 */}
-                                <div className="absolute top-4 left-4 flex flex-col items-end gap-2 z-20">
+                                <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
                                     <div className="bg-blue-700 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
                                         키워드 유사도 {Math.round((card.similarity || 0) * 100)}%
                                     </div>
                                     <div className="bg-white/20 backdrop-blur-lg text-white font-bold px-2 py-0.5 rounded-full text-[12px]">
-                                        이 사람과의 전체 유사도  {Math.round((userId && userSimilarities[userId] ? userSimilarities[userId] : 0) * 100)}%
+                                        전체 유사도  {Math.round((userId && userSimilarities[userId] ? userSimilarities[userId] : 0) * 100)}%
                                     </div>
                                 </div>
                                 {/* 중앙 하단 그라데이션 오버레이 */}
@@ -282,16 +283,17 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                     </div>
                                     */}
                                     <button
-                                        className="z-20 bg-white/30 backdrop-blur-sm text-white font-bold px-3 py-2 rounded-full shadow-lg mt-2 text-xs -mb-8 group-hover:mb-3 
-                                        transform translate-y-8 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300
-                                        hover:bg-white/80 hover:shadow-lg hover:text-black "
+                                        className="z-20 bg-white/20 backdrop-blur-sm text-white font-bold px-4 py-6 w-full block mx-0 rounded-none shadow-lg mt-2 text-xs -mb-14 group-hover:mb-0
+                                        transform translate-y-8 opacity-40 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300
+                                        hover:bg-white/20 text-white hover:shadow-lg"
                                     >
-                                        알고리즘 전체 보러가기
+                                        <span className="text-white text-md font-bold">{profile?.nickname || '이름 없음'}님의</span> <br/>
+                                        <span className="text-white text-sm font-bold">알고리즘 전체 보러가기 &gt;</span> 
                                     </button>
                                 </div>
                                 )}
                             </div>
-                            <div className="mt-2 text-[12px] z-10">
+                            {/*<div className="mt-2 text-[12px] z-10">
                                 <div className="text-white">
                                     {(card?.description || '').slice(0, 60)}{card?.description && card.description.length > 60 ? '...' : ''}
                                 </div>
@@ -302,7 +304,7 @@ const CardStack3D: React.FC<CardStack3DProps> = ({ cards, searchKeyword }) => {
                                         </span>
                                     ))}
                                 </div>
-                            </div>
+                            </div>*/}
                         </div>
                         
                 
