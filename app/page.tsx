@@ -101,7 +101,7 @@ useEffect(() => {
   const loadUploadCheck = async () => {
     try {
       const checkResult = await isOneWeekPassed();
-      setUploadCheck(checkResult);
+      setUploadCheck(-2);
       console.log('🔍 Upload Check 결과:', checkResult);
       console.log('📅 Upload Check 의미:', 
         checkResult === -1 ? '초기 유저 (4주치)' :
@@ -521,7 +521,7 @@ useEffect(() => {
             {isLoggedIn ? (
           <>
             {/* 1-1 로그인O => 업데이트 여부 확인 */}  
-            {(upload_check === -1 || upload_check === -2) ? (
+            {/*(upload_check === -1 || upload_check === -2)*/ true ? ( //업데이트 여부 확인 주석 처리-> 항상 업데이트 할 수 있도록 
               
               isFileUploaded ? (
                 <>  
@@ -608,7 +608,7 @@ useEffect(() => {
                     >
                       나의 알고리즘 시각화 보기
                     </button>
-                  )
+                  
                 </>
               ) : (
                 <>

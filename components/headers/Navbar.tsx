@@ -106,8 +106,9 @@ export function Navbar() {
   const userName = userData?.nickname || 
       user?.user_metadata?.full_name || 
       user?.email?.split('@')[0] || 
-      "사용자";
+      "anonymous";
 
+      //dddd
   return (
     <>
         <header
@@ -192,7 +193,7 @@ export function Navbar() {
                   {language === "KO" ? "KO" : "EN"} 
                 </Button>
                 <Button asChild variant="ghost" size="sm" className={`${pathname === "/my_profile" || pathname === "/search" ? "text-black" : "text-white"} text-sm font-medium hover:bg-white hover:text-black px-6 rounded-[20px]`}>
-                  <Link href="/login">로그인</Link>
+                    <Link href="/login">Login</Link>
                 </Button>
                 */}
                 
@@ -231,7 +232,7 @@ export function Navbar() {
                       >
                         <Link href="/my_page" className="flex items-center gap-2">
                           <UserCircle2 className="w-5 h-5 mr-2" />
-                          {userName}님 페이지
+                          {userName}
                         </Link>
                       </Button>
 

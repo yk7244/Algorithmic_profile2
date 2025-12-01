@@ -52,8 +52,8 @@ credit?: {
 };
 
 const steps = [
-    { id: 1, title: "키워드 추출", description: "유튜브 알고리즘이 당신에 대해 무엇을 학습했을지 살펴보고 있어요... " },
-    { id: 2, title: "클러스터 분석", description: "흥미로운 시각을 발견했어요!" },
+    { id: 1, title: "키워드 추출", description: "당신의 알고리즘은 무엇을 학습했을지 살펴보고 있어요...  " },
+    { id: 2, title: "클러스터 분석", description: "흥미로운 시각을 발견했어요! " },
     { id: 3, title: "이미지 생성", description: "이제 알고리즘이 생각한 당신의 모습을 보여줄게요." },
 ];
 
@@ -338,8 +338,8 @@ return (
                     style={{
                         animation: 'fadeIn 2s ease-in-out',
                     }}>
-                        알고리즘이 본 당신의 알고리즘 시각화가 완성되었습니다. <br/>
-                        {countdown}초 뒤 나의 알고리즘 시각화로 이동할게요. 
+                        유튜브 알고리즘이  바라본 당신의 알고리즘 자화상이 완성되었습니다.  <br/>
+                        {countdown}초 뒤, 나의 알고리즘 페이지로 이동할게요
                     </h1>
                 </div>
             </div>
@@ -391,7 +391,7 @@ return (
                             style={generatingStep === 3 ? { boxShadow: '0 0 60px #fff, 0 0 0 0 #fff', animation: 'glow-pulse 0.7s infinite alternate' } : {}}
                             >3</div>
                         </div>
-                    </div>
+                    </div>  
 
                     {/* Current Step -현재 단계 설명  */}
                     <div className="space-y-4" style={{marginTop: '300px'}}>
@@ -406,10 +406,16 @@ return (
                             {steps[displayedStep - 1]?.description}
                             
                         </p>
-                        {generatingStep === 1 &&(
-                            <p className="mt-200 text-black text-md font-bold mx-auto text-center">
-                                {Math.round((current / total) * 100)}% 진행 중
-                            </p>
+                        {(generatingStep === 1 || generatingStep === 2) && (
+                        <p className="mt-200 text-black text-md font-bold mx-auto text-center">
+                            {Math.round((current / total) * 100)}% 진행중
+                            
+                        </p>
+                        )}
+                        {generatingStep === 1 && (
+                        <p className="mt-200 text-white text-sm font-medium mx-auto text-center">
+                            약 10분 정도 소요됩니다. 잠시만 기다려주세요.
+                        </p>
                         )}
                     </div>
                 </div>

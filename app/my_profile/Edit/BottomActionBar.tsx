@@ -171,11 +171,9 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
                     <button
                         className={`group relative w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 overflow-hidden ${
-                            isReflection1 
-                                ? 'bg-white hover:scale-110 active:scale-95' 
-                                : 'bg-gray-200 opacity-50 cursor-not-allowed'
+                                'bg-white hover:scale-110 active:scale-95' 
                         }`}
-                        disabled={!isReflection1}
+                        disabled={isReflection1}
                         onClick={async () => {
                             if (isReflection1) {
                                 router.replace('/search');
@@ -187,7 +185,7 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                         aria-label={isSearchMode ? '검색 모드 종료' : '검색하기'}
                     >
                         {/* 애니메이션 그라데이션 테두리 - 활성화 상태에서만 */}
-                        {isReflection1 && (
+                        {(
                             <>
                                 <div className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-400 via-purple-500 via-pink-500 via-red-500 via-orange-500 via-yellow-400 via-green-400 to-blue-400 bg-[length:400%_400%] animate-gradient-border p-1">
                                     <div className="w-full h-full rounded-full bg-white group-hover:bg-transparent group-active:bg-transparent transition-colors duration-300"></div>
@@ -206,19 +204,15 @@ const BottomActionBar: React.FC<BottomActionBarProps> = ({
                         
                         {/* 아이콘 */}
                         <svg xmlns="http://www.w3.org/2000/svg" className={`relative z-10 w-5 h-5 transition-colors duration-200 ${
-                            isReflection1 
-                                ? 'text-black group-hover:text-white group-active:text-white' 
-                                : 'text-gray-400'
+                                 
+                                 'text-black group-hover:text-white group-active:text-white' 
                         }`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
                     </button>
                     <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-lg text-white px-6 py-3 rounded-2xl shadow-lg text-base font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none after:content-[''] after:absolute after:left-full after:top-1/2 after:-translate-y-1/2 after:border-8 after:border-y-transparent after:border-l-black/80 after:border-r-transparent after:ml-[-1px]">
-                        {isReflection1 
-                            ? '다른 사람의 알고리즘이 궁금한가요?  나의 키워드를 기준으로 새로운 알고리즘을 탐색할 수 있어요! '
-                            : '알고리즘 시각화 첫인상 남기기(2번)을 먼저 완료해주세요.'
-                        }
+                    다른 사람의 알고리즘이 궁금한가요?  나의 키워드를 기준으로 새로운 알고리즘을 탐색할 수 있어요! 
                     </div>
                 </div>
                 

@@ -13,6 +13,8 @@ export async function POST(req: Request) {
     if (!imageUrl) {
       return NextResponse.json({ error: '이미지 URL이 필요합니다.' }, { status: 400 });
     }
+    //ddd
+    console.log('imageUrl', imageUrl);
 
     // 이미지 분석 수행
     const [result] = await client.webDetection({
